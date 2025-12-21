@@ -542,15 +542,14 @@ with st.sidebar:
         "🏷️ CATEGORIAS",
         "📄 RELATÓRIO EXECUTIVO",
         "⚙️ CONFIGURAÇÕES",
-        "👥 USUÁRIOS",
         
     ]
 
     # ===============================
     # MENU ADMIN
     # ===============================
-    if st.session_state.get("perfil") == "admin":
-        menu_itens.append("👥 USUÁRIOS")
+if st.session_state.get("perfil") == "admin":
+    menu_itens.append("👥 USUÁRIOS")
 
     # ===============================
     # RADIO DE NAVEGAÇÃO
