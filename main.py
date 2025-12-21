@@ -12,7 +12,6 @@ import bcrypt
 
 
 
-import bcrypt
 
 teste_hash = "$2b$12$9yPp2K4z9l0y5Hnq1gC0QeZxD5jP1d2fH9sZQjFZ9Kp0J3WcXyV5y"
 
