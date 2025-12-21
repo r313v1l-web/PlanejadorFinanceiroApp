@@ -2,52 +2,93 @@ import streamlit as st
 import pandas as pd
 from supabase import create_client
 
-@st.cache_resource
-def get_supabase():
-    return create_client(
-        st.secrets["SUPABASE_URL"],
-        st.secrets["SUPABASE_KEY"]
-    )
 
 class DatabaseManager:
 
-    # =====================
-    # USERS
-    # =====================
+    TABLE_MAP = {
+        "usuarios": "usuarios",
+        "historico": "historico",
+        "investimentos": "investimentos",
+        "sonhos_projetos": "sonhos_projetos",
+        "config": "config",
+        "categorias": "categorias",
+        "fluxo_fixo": "fluxo_fixo",
+        "relatorios_historicos": "relatorios_historicos",
+        "controle_gastos": "controle_gastos"
+    }
+
+    # ===============================
+    # CONEXÃO SUPABASE
+    # ===============================
+    @staticmethod
+    def _get_client():
+        return create_client(
+            st.secrets["SUPABASE_URL"],
+            st.secrets["SUPABASE_KEY"]
+        )
+
+    # ===============================
+    # USUÁRIOS
+    # ===============================
     @staticmethod
     def load_users():
-        sb = get_supabase()
-        res = sb.table("usuarios").select("*").execute()
-        return pd.DataFrame(res.data)
+        supabase = DatabaseManager._get_client()
+
+        res = supabase.table("usuarios").select("*").execute()
+        if not res.data:
+            return pd.DataFrame(
+                columns=["usuario", "senha", "nome", "perfil", "ativo"]
+            )
+
+        df = pd.DataFrame(res.data)
+
+        df["usuario"] = df["usuario"].str.strip().str.lower()
+        df["perfil"] = df["perfil"].fillna("user")
+        df["ativo"] = df["ativo"].str.strip().str.lower()
+
+        return df
 
     @staticmethod
     def save_users(df):
-        sb = get_supabase()
-        sb.table("usuarios").delete().neq("usuario", "").execute()
-        sb.table("usuarios").insert(df.to_dict("records")).execute()
+        supabase = DatabaseManager._get_client()
 
-    # =====================
-    # LOAD ALL
-    # =====================
+        supabase.table("usuarios").delete().neq("usuario", "").execute()
+
+        records = df.to_dict(orient="records")
+        if records:
+            supabase.table("usuarios").insert(records).execute()
+
+        return True
+
+    # ===============================
+    # DADOS GERAIS
+    # ===============================
     @staticmethod
     def load_all(usuario):
-        sb = get_supabase()
-        tabelas = [
-            "config", "historico", "investimentos",
-            "sonhos_projetos", "fluxo_fixo",
-            "categorias", "controle_gastos",
-            "relatorios_historicos"
-        ]
-
+        supabase = DatabaseManager._get_client()
         dados = {}
-        for t in tabelas:
-            res = sb.table(t).select("*").eq("usuario", usuario).execute()
-            dados[t] = pd.DataFrame(res.data)
+
+        for key, table in DatabaseManager.TABLE_MAP.items():
+            if key == "usuarios":
+                continue
+
+            res = supabase.table(table).select("*").execute()
+            dados[key] = pd.DataFrame(res.data) if res.data else pd.DataFrame()
 
         return dados
 
     @staticmethod
-    def save(tabela, df, usuario):
-        sb = get_supabase()
-        sb.table(tabela).delete().eq("usuario", usuario).execute()
-        sb.table(tabela).insert(df.to_dict("records")).execute()
+    def save(table_name, df, usuario):
+        table = DatabaseManager.TABLE_MAP.get(table_name)
+        if not table:
+            raise ValueError("Tabela inválida")
+
+        supabase = DatabaseManager._get_client()
+
+        supabase.table(table).delete().neq("id", "").execute()
+
+        records = df.to_dict(orient="records")
+        if records:
+            supabase.table(table).insert(records).execute()
+
+        return True
