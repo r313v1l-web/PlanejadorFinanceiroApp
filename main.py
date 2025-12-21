@@ -13,14 +13,6 @@ import bcrypt
 
 
 
-senha = "admin123"
-hash_correto = bcrypt.hashpw(
-    senha.encode("utf-8"),
-    bcrypt.gensalt()
-).decode("utf-8")
-
-print(hash_correto)
-
 # =========================================================
 # AUTENTICAÇÃO
 # =========================================================
