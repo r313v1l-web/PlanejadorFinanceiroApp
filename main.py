@@ -53,7 +53,7 @@ def tela_login():
         st.session_state["logado"] = True
         st.session_state["usuario"] = usuario_input
         st.session_state["nome"] = user.iloc[0]["nome"]
-        st.session_state["perfil"] = user.iloc[0]["perfil"]
+        st.session_state["perfil"] = str(user.iloc[0]["perfil"]).strip().lower()
 
         st.success("Login realizado com sucesso.")
         st.rerun()
@@ -548,8 +548,8 @@ with st.sidebar:
     # ===============================
     # MENU ADMIN
     # ===============================
-if st.session_state.get("perfil") == "admin":
-    menu_itens.append("👥 USUÁRIOS")
+    if st.session_state.get("perfil") == "admin":
+        menu_itens.append("👥 USUÁRIOS")
 
     # ===============================
     # RADIO DE NAVEGAÇÃO
