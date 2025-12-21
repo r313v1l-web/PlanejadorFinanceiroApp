@@ -12,6 +12,7 @@ import bcrypt
 
 
 
+
 # =========================================================
 # AUTENTICAÇÃO
 # =========================================================
@@ -64,6 +65,54 @@ def tela_admin_usuarios():
 
     df = DatabaseManager.load_users()
 
+    # ===============================
+    # ➕ CRIAR NOVO USUÁRIO
+    # ===============================
+    st.subheader("➕ Novo Usuário")
+
+    with st.form("form_novo_usuario", clear_on_submit=True):
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            novo_usuario = st.text_input("Usuário").strip().lower()
+        with col2:
+            novo_nome = st.text_input("Nome")
+        with col3:
+            nova_senha = st.text_input("Senha", type="password")
+
+        novo_perfil = st.selectbox("Perfil", ["user", "admin"])
+
+        if st.form_submit_button("Criar Usuário"):
+            if novo_usuario == "" or nova_senha == "":
+                st.error("Usuário e senha são obrigatórios.")
+            elif novo_usuario in df["usuario"].values:
+                st.error("Usuário já existe.")
+            else:
+                senha_hash = bcrypt.hashpw(
+                    nova_senha.encode("utf-8"),
+                    bcrypt.gensalt()
+                ).decode("utf-8")
+
+                novo = pd.DataFrame([{
+                    "usuario": novo_usuario,
+                    "senha": senha_hash,
+                    "nome": novo_nome,
+                    "perfil": novo_perfil,
+                    "ativo": "ativo"
+                }])
+
+                df = pd.concat([df, novo], ignore_index=True)
+                DatabaseManager.save_users(df)
+                st.success("Usuário criado com sucesso.")
+                st.rerun()
+
+    st.divider()
+
+    # ===============================
+    # 👤 USUÁRIOS EXISTENTES
+    # ===============================
+    st.subheader("Usuários Existentes")
+
     for i, row in df.iterrows():
         col1, col2, col3 = st.columns([3, 2, 2])
 
@@ -79,17 +128,17 @@ def tela_admin_usuarios():
             )
 
         with col3:
-            status = st.selectbox(
+            df.at[i, "ativo"] = st.selectbox(
                 "Status",
                 ["ativo", "inativo"],
                 index=0 if row["ativo"] == "ativo" else 1,
                 key=f"ativo_{row['usuario']}"
             )
 
-            df.at[i, "ativo"] = status
-    if st.button("💾 Salvar"):
+    if st.button("💾 Salvar Alterações"):
         DatabaseManager.save_users(df)
         st.success("Usuários atualizados.")
+        st.rerun()
 
 # =========================================================
 # FUNÇÃO: SALVAR RELATÓRIO MENSAL
@@ -165,9 +214,7 @@ if not st.session_state["logado"]:
 
 st.write(f"Bem-vindo, {st.session_state.get('nome', '')}")
 
-# 🔐 TELA ADMIN (SÓ SE FOR ADMIN)
-if st.session_state.get("perfil") == "admin":
-    tela_admin_usuarios()
+
 
 
 
@@ -495,6 +542,8 @@ with st.sidebar:
         "🏷️ CATEGORIAS",
         "📄 RELATÓRIO EXECUTIVO",
         "⚙️ CONFIGURAÇÕES",
+        "👥 USUÁRIOS",
+        
     ]
 
     # ===============================
@@ -1349,6 +1398,17 @@ elif menu == "⚙️ CONFIGURAÇÕES":
             st.session_state["msg"] = "Salvo"
             st.session_state["msg_tipo"] = "success"
             st.rerun()
+
+# =========================================================
+# 📄 USUÁRIOS
+# =========================================================
+
+elif menu == "👥 USUÁRIOS":
+    if st.session_state.get("perfil") != "admin":
+        st.error("Acesso restrito.")
+        st.stop()
+
+    tela_admin_usuarios()
 
 
 # =========================================================
