@@ -533,9 +533,9 @@ with st.sidebar:
     # MENU BASE
     # ===============================
     menu_itens = [
-        "📊 DASHBOARD",
-        "📝 LANÇAMENTOS",
         "💸 CONTROLE DE GASTOS",
+        "📊 DASHBOARD",
+        "📝 LANÇAMENTOS",        
         "💰 INVESTIMENTOS",
         "🎯 SONHOS & METAS",
         "🏢 FLUXOS FIXOS",
