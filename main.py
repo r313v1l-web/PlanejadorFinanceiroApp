@@ -78,57 +78,72 @@ def tela_admin_usuarios():
         with col2:
             novo_nome = st.text_input("Nome")
         with col3:
-            nova_senha = st.text_input("Senha", type="password")
+            nova_senha = st.text_input("Senha Inicial", type="password")
 
         novo_perfil = st.selectbox("Perfil", ["user", "admin"])
 
         if st.form_submit_button("Criar Usuário"):
-            if novo_usuario == "" or nova_senha == "":
+            if not novo_usuario or not nova_senha:
                 st.error("Usuário e senha são obrigatórios.")
-            elif novo_usuario in df["usuario"].values:
+                return
+
+            if novo_usuario in df["usuario"].values:
                 st.error("Usuário já existe.")
-            else:
-                senha_hash = bcrypt.hashpw(
-                    nova_senha.encode("utf-8"),
-                    bcrypt.gensalt()
-                ).decode("utf-8")
+                return
 
-                novo = pd.DataFrame([{
-                    "usuario": novo_usuario,
-                    "senha": senha_hash,
-                    "nome": novo_nome,
-                    "perfil": novo_perfil,
-                    "ativo": "ativo"
-                }])
+            senha_hash = bcrypt.hashpw(
+                nova_senha.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
 
-                df = pd.concat([df, novo], ignore_index=True)
-                DatabaseManager.save_users(df)
-                st.success("Usuário criado com sucesso.")
-                st.rerun()
+            novo = pd.DataFrame([{
+                "usuario": novo_usuario,
+                "senha": senha_hash,
+                "nome": novo_nome,
+                "perfil": novo_perfil,
+                "ativo": "ativo"   # 🔥 PADRÃO DO SEU SISTEMA
+            }])
+
+            df = pd.concat([df, novo], ignore_index=True)
+            DatabaseManager.save_users(df)
+            st.success("Usuário criado com sucesso.")
+            st.rerun()
 
     st.divider()
-
-    # ===============================
-    # 👤 USUÁRIOS EXISTENTES
-    # ===============================
     st.subheader("Usuários Existentes")
 
-    for i, row in df.iterrows():
-        col1, col2, col3 = st.columns([3, 2, 2])
+    # ===============================
+    # EDIÇÃO DOS USUÁRIOS
+    # ===============================
+    senhas_para_reset = {}
+    df_edit = df.copy()
+
+    for i, row in df_edit.iterrows():
+        col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
 
         with col1:
-            st.write(f"{row['usuario']} ({row['nome']})")
+            st.write(f"**{row['usuario']}** ({row['nome']})")
 
         with col2:
-            df.at[i, "perfil"] = st.selectbox(
+            nova_senha = st.text_input(
+                "Nova Senha",
+                type="password",
+                key=f"senha_{row['usuario']}"
+            )
+            if nova_senha:
+                senhas_para_reset[row["usuario"]] = nova_senha
+                st.warning("Senha será atualizada ao salvar.")
+
+        with col3:
+            df_edit.at[i, "perfil"] = st.selectbox(
                 "Perfil",
                 ["user", "admin"],
                 index=0 if row["perfil"] == "user" else 1,
                 key=f"perfil_{row['usuario']}"
             )
 
-        with col3:
-            df.at[i, "ativo"] = st.selectbox(
+        with col4:
+            df_edit.at[i, "ativo"] = st.selectbox(
                 "Status",
                 ["ativo", "inativo"],
                 index=0 if row["ativo"] == "ativo" else 1,
@@ -136,7 +151,14 @@ def tela_admin_usuarios():
             )
 
     if st.button("💾 Salvar Alterações"):
-        DatabaseManager.save_users(df)
+        for usuario, nova_senha in senhas_para_reset.items():
+            idx = df_edit[df_edit["usuario"] == usuario].index[0]
+            df_edit.at[idx, "senha"] = bcrypt.hashpw(
+                nova_senha.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
+
+        DatabaseManager.save_users(df_edit)
         st.success("Usuários atualizados.")
         st.rerun()
 
