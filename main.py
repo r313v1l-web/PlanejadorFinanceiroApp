@@ -1393,7 +1393,7 @@ elif menu == "⚙️ CONFIGURAÇÕES":
 
             dados["config"] = df_config
             st.session_state["dados"] = dados
-            DatabaseManager.save("config", df_config, usuario)
+            DatabaseManager.save("config", df_config, st.session_state["usuario"])
             st.session_state["msg"] = "Salvo"
             st.session_state["msg_tipo"] = "success"
             st.rerun()
