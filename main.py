@@ -1,4 +1,5 @@
 import streamlit as st
+st.set_option("server.fileWatcherType", "none")
 import pandas as pd
 from datetime import date, datetime, timedelta
 import plotly.express as px
