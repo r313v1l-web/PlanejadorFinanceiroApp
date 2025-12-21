@@ -1,8 +1,6 @@
 streamlit
 pandas
-numpy
 plotly
-st-gsheets-connection
-python-dateutil
-weasyprint
+supabase
 bcrypt
+python-dateutil
