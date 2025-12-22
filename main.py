@@ -413,9 +413,9 @@ def projetar_patrimonio(
         resultados.append({
             "data": data_ref,
             "patrimonio": patrimonio,
-            "Rendimento": rendimento,
-            "Aporte_Fixo": saldo_fixo_mensal if i > 0 else 0,
-            "Meta_Atingida": patrimonio >= meta_patrimonio
+            "rendimento": rendimento,
+            "aporte_fixo": saldo_fixo_mensal if i > 0 else 0,
+            "meta_atingida": patrimonio >= meta_patrimonio
         })
 
         if patrimonio >= meta_patrimonio and i >= 12:
@@ -472,7 +472,7 @@ def gerar_texto_executivo(
         meses = len(df_projecao)
         ultimo = df_projecao.iloc[-1]
 
-        if ultimo["Meta_Atingida"]:
+        if ultimo["meta_atingida"]:
             texto.append(
                 f"Mantidas as condições atuais, a projeção indica que a meta patrimonial "
                 f"será atingida dentro de aproximadamente {meses} meses."
@@ -668,20 +668,22 @@ if menu == "📝 LANÇAMENTOS":
             fixo = st.checkbox("Recorrente")
 
         descricao = st.text_input("descrição")
-
+        
+        
         submitted = st.form_submit_button("💾 SALVAR")
-
+        
         if submitted:
             nova = pd.DataFrame([{
                 "data": data,
                 "tipo": tipo,
                 "valor": valor,
                 "categoria": categoria,
-                "Subcategoria": "",
+                "subcategoria": "",
                 "descricao": descricao,
-                "Responsavel": responsavel,
-                "Fixo": "Sim" if fixo else "Não"
+                "responsavel": responsavel,
+                "fixo": "Sim" if fixo else "Não"
             }])
+            
 
             df = dados["historico"].copy()
             df = pd.concat([df, nova], ignore_index=True)
@@ -1214,7 +1216,7 @@ elif menu == "📊 DASHBOARD":
             annotation_position="top left"
         )
 
-        meta_df = df_projecao[df_projecao["Meta_Atingida"]]
+        meta_df = df_projecao[df_projecao["meta_atingida"]]
 
         if not meta_df.empty:
             data_meta = meta_df.iloc[0]["data"]
@@ -1267,7 +1269,7 @@ elif menu == "📊 DASHBOARD":
         colp1.metric("📅 Horizonte da Projeção", f"{meses_proj} meses")
         colp2.metric("📈 Patrimônio Projetado", f"R$ {ultimo['patrimonio']:,.2f}")
 
-        if ultimo["Meta_Atingida"]:
+        if ultimo["meta_atingida"]:
             colp3.metric(
                 "🎯 Meta Atingida em",
                 meta_df.iloc[0]["data"].strftime("%m/%Y")
@@ -1587,7 +1589,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
             f"{meses_ate_meta} meses."
         )
 
-        if ultimo["Meta_Atingida"]:
+        if ultimo["meta_atingida"]:
             texto_proj += " 🎯 A meta será atingida dentro do horizonte projetado."
         else:
             texto_proj += " ⚠️ A meta não será atingida sem ajustes no plano."
