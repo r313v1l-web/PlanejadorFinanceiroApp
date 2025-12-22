@@ -294,7 +294,6 @@ def salvar_relatorio_mensal(
 st.set_page_config(
     page_title="Gestão Financeira",
     page_icon="assets/images/logo.png",
-    page_icon="💎",
     layout="wide",
     initial_sidebar_state="expanded"
 )
