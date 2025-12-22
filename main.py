@@ -10,8 +10,8 @@ from dateutil.relativedelta import relativedelta
 import io
 import os
 import bcrypt
-import extra_streamlit_components as stx  # ✅ NOVO
-from streamlit_cookies_manager import CookieManager  # ✅ NOVO
+import extra_streamlit_components as stx  
+from streamlit_cookies_manager import CookieManager  
 
 # =========================================================
 # GERENCIADOR DE COOKIES E LOCALSTORAGE
