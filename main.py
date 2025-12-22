@@ -349,17 +349,104 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-# =========================================================
-# INJEÇÃO DE CSS PERSONALIZADO
-# =========================================================
-try:
-    with open("assets/css/style.css") as f:  # ✅ Caminho correto
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-except FileNotFoundError:
-    st.warning("Arquivo de estilo não encontrado. Usando estilos padrão.")
-except Exception as e:
-    st.error(f"Erro ao carregar CSS: {e}")
-# =========================================================_allow_html=True)
+
+st.markdown("""
+<style>
+
+/* ====== RESET BÁSICO ====== */
+html, body, [class*="css"]  {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* ====== FUNDO GERAL ====== */
+.stApp {
+    background-color: #0e1117;
+    color: #e6e6e6;
+}
+
+/* ====== SIDEBAR ====== */
+section[data-testid="stSidebar"] {
+    background-color: #111827;
+    border-right: 1px solid #1f2933;
+}
+
+/* Título sidebar */
+section[data-testid="stSidebar"] h2 {
+    color: #f9fafb;
+}
+
+/* ====== CARDS (metric) ====== */
+div[data-testid="metric-container"] {
+    background: linear-gradient(145deg, #111827, #0b1220);
+    border: 1px solid #1f2933;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+/* Valor do metric */
+div[data-testid="metric-container"] > div:nth-child(2) {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* ====== BOTÕES ====== */
+button[kind="primary"] {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    border-radius: 8px;
+    border: none;
+}
+
+button[kind="secondary"] {
+    border-radius: 8px;
+}
+
+/* ====== INPUTS ====== */
+input, textarea, select {
+    background-color: #020617 !important;
+    color: #e5e7eb !important;
+    border-radius: 8px !important;
+    border: 1px solid #1f2933 !important;
+}
+
+/* ====== DATAFRAME ====== */
+div[data-testid="stDataFrame"] {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #1f2933;
+}
+
+/* ====== EXPANDERS ====== */
+details {
+    border-radius: 10px;
+    border: 1px solid #1f2933;
+    padding: 8px;
+}
+
+/* ====== DIVISOR ====== */
+hr {
+    border: none;
+    border-top: 1px solid #1f2933;
+}
+
+/* ====== TOAST / ALERTAS ====== */
+.stAlert {
+    border-radius: 10px;
+}
+
+/* ====== SCROLLBAR ====== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: #1f2933;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-track {
+    background: #020617;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 
 # ===============================
