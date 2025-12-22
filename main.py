@@ -33,46 +33,80 @@ def normalizar_df(df):
 
 def tela_login():
     import os
+    import requests
     
     # Container principal centralizado
-    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    
-    # Colunas para centralização real
     col_esq, col_centro, col_dir = st.columns([1, 1.5, 1])
     
     with col_centro:
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
         
-        # 🔥 LOGO CENTRALIZADA E MAIOR
-        logo_path = "assets/images/logo.png"
-        if os.path.exists(logo_path):
-            # Container especial para a logo
-            st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
-            # Forçar tamanho maior e centralização
-            st.markdown(f"""
-            <div style="text-align: center; margin: 0 auto 20px auto;">
-                <img src="{logo_path}" 
-                     style="width: 180px; height: 180px; 
-                            object-fit: contain; 
-                            border-radius: 50%;
-                            padding: 10px;
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
-            </div>
-            """, unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-        else:
-            # Placeholder se não tiver logo
+        # 🔥 LOGO - URL CORRETA do GitHub Raw
+        github_logo_url = "https://raw.githubusercontent.com/r313v1l-web/PlanejadorFinanceiroApp/main/assets/images/logo.png"
+        
+        # Container especial para a logo
+        st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
+        
+        # Verificar se a URL funciona
+        try:
+            response = requests.head(github_logo_url, timeout=3)
+            if response.status_code == 200:
+                # URL funciona - mostrar logo
+                st.markdown(f"""
+                <div style="text-align: center; margin: 0 auto 20px auto;">
+                    <img src="{github_logo_url}" 
+                         style="width: 180px; height: 180px; 
+                                object-fit: contain; 
+                                border-radius: 50%;
+                                padding: 10px;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                # URL não funciona - usar placeholder
+                st.markdown("""
+                <div style="text-align: center; margin: 0 auto 20px auto;">
+                    <div style="width: 180px; height: 180px; 
+                                border-radius: 50%;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                margin: 0 auto;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
+                        <span style="color: white; font-size: 48px; font-weight: bold;">💎</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.info("Logo carregando...")
+        except:
+            # Erro na conexão
             st.markdown("""
-            <div class='logo-container'>
-                <div class='logo-placeholder'>💎</div>
+            <div style="text-align: center; margin: 0 auto 20px auto;">
+                <div style="width: 180px; height: 180px; 
+                            border-radius: 50%;
+                            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+                            margin: 0 auto;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);">
+                    <span style="color: white; font-size: 48px; font-weight: bold;">💰</span>
+                </div>
             </div>
             """, unsafe_allow_html=True)
         
+        st.markdown("</div>", unsafe_allow_html=True)
+        
         # TÍTULO
         st.markdown("""
-        <h1 class='login-title'>Gestão Financeira</h1>
-        <p class='login-subtitle'>Acesso ao sistema</p>
+        <h2 style="text-align: center; color: #1e293b; margin-bottom: 5px;">
+            Gestão Financeira
+        </h2>
+        <p style="text-align: center; color: #64748b; margin-bottom: 25px;">
+            Sistema de Controle Patrimonial
+        </p>
         """, unsafe_allow_html=True)
         
         # CAMPOS DO FORMULÁRIO
@@ -116,7 +150,6 @@ def tela_login():
             st.session_state["perfil"] = str(user.iloc[0]["perfil"]).strip().lower()
             
             st.success("✅ Login realizado com sucesso!")
-            st.balloons()
             st.rerun()
         
         # Rodapé do card
@@ -129,8 +162,6 @@ def tela_login():
         """, unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)  # Fecha login-card
-    
-    st.markdown("</div>", unsafe_allow_html=True)  # Fecha login-container
 
 
 
