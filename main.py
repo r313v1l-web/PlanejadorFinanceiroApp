@@ -35,18 +35,7 @@ def tela_login():
 
     import os
 
-    # CSS específico do login
-    st.markdown("""
-    <style>
-    .login-card {
-        background: #0e1117;
-        padding: 40px;
-        border-radius: 16px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-        border: 1px solid #1f2933;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+
 
     # Centralização real
     col_esq, col_centro, col_dir = st.columns([1, 1.2, 1])
