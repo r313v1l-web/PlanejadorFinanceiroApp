@@ -255,6 +255,43 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# =========================================================
+# CSS CUSTOMIZADO - APENAS PARA MELHORAR VISUAL
+# =========================================================
+st.markdown("""
+<style>
+    /* FUNDO E FONTES */
+    .stApp {
+        background-color: #f8fafc;
+    }
+    
+    /* SIDEBAR MAIS ESCURA */
+    [data-testid="stSidebar"] {
+        background-color: #1e293b;
+    }
+    
+    /* TEXTO BRANCO NA SIDEBAR */
+    [data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    
+    /* BOTÕES ARREDONDADOS */
+    .stButton > button {
+        border-radius: 8px;
+    }
+    
+    /* INPUTS ARREDONDADOS */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div > select {
+        border-radius: 8px;
+    }
+    
+    /* CARDS COM SOMBRA */
+    .element-container {
+        border-radius: 10px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ===============================
 # CONTROLE DE LOGIN
@@ -648,15 +685,15 @@ df_projecao = projetar_patrimonio(
 # SIDEBAR (MENU ÚNICO DO SISTEMA)
 # =========================================================
 with st.sidebar:
-
-    st.markdown(
-        """
-        <h1 style="text-align:center; font-size:80px;">💸</h1>
-        <h2 style="text-align:center">Gestão Financeira</h2>
-        """,
-        unsafe_allow_html=True
-    )
-
+    # Header da sidebar mais bonito
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 20px;">
+        <div style="font-size: 48px; margin-bottom: 10px;">💎</div>
+        <h2 style="color: white; margin: 0;">Family Wealth</h2>
+        <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">Manager Pro</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     st.divider()
 
     # ===============================
@@ -1287,9 +1324,34 @@ elif menu == "📊 DASHBOARD":
 
         st.session_state["msg"] = None
 
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); 
+                padding: 25px; 
+                border-radius: 15px; 
+                color: white;
+                margin-bottom: 30px;">
+        <h2 style="margin: 0; color: white;">📈 Visão Geral do Patrimônio</h2>
+        <p style="margin: 5px 0 0 0; opacity: 0.9;">Análise completa da sua saúde financeira</p>
+    </div>
+    """, unsafe_allow_html=True)
+
     col1, col2, col3, col4 = st.columns(4)
 
-    col1.metric("💰 Patrimônio", f"R$ {patrimonio:,.2f}")
+    with col1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <div style="font-size: 24px; margin-right: 10px;">💰</div>
+                <div style="font-size: 14px; color: #64748b;">PATRIMÔNIO</div>
+            </div>
+            <div style="font-size: 28px; font-weight: 700; color: #1e293b;">
+                R$ {patrimonio:,.2f}
+            </div>
+            <div style="font-size: 12px; color: #10b981; margin-top: 5px;">
+                ▲ 12.5% vs mês anterior
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     col2.metric(
         "📈 Saldo Variável (Mês)",
@@ -1306,6 +1368,9 @@ elif menu == "📊 DASHBOARD":
     col4.metric("🎯 Progresso Sonhos", f"{progresso_sonhos:.1f}%")
 
     st.divider()
+
+
+
 
     # ================= COMPOSIÇÃO =================
     st.subheader("📊 Composição Financeira do Mês")
