@@ -1,8 +1,0 @@
-# Python environment
-__pycache__/
-*.pyc
-venv/
-.venv/
-
-# Streamlit Cache
-.streamlit/
