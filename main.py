@@ -28,6 +28,62 @@ def normalizar_df(df):
 # AUTENTICAÇÃO
 # =========================================================
 
+st.markdown("""
+<style>
+
+/* Fundo da tela */
+.stApp {
+    background: linear-gradient(135deg, #020617, #0f172a);
+}
+
+/* Centralização total */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Card de login */
+.login-card {
+    background: #0e1117;
+    padding: 40px;
+    border-radius: 16px;
+    width: 380px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    border: 1px solid #1f2933;
+}
+
+/* Título */
+.login-title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+/* Subtítulo */
+.login-subtitle {
+    text-align: center;
+    color: #9ca3af;
+    margin-bottom: 30px;
+}
+
+/* Inputs */
+.login-card input {
+    border-radius: 8px !important;
+}
+
+/* Botão */
+.login-card button {
+    width: 100%;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 def tela_login():
     st.markdown("🔐 Login")
 
