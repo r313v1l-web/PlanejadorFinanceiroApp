@@ -921,8 +921,8 @@ elif menu == "🏢 FLUXOS FIXOS":
 
         st.session_state["msg"] = None
 
-    receitas = dados["fluxo_fixo"][dados["fluxo_fixo"]["Tipo"] == "Receita"]
-    despesas = dados["fluxo_fixo"][dados["fluxo_fixo"]["Tipo"] == "Despesa"]
+    receitas = dados["fluxo_fixo"][dados["fluxo_fixo"]["tipo"] == "Receita"]
+    despesas = dados["fluxo_fixo"][dados["fluxo_fixo"]["tipo"] == "Despesa"]
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Receitas Fixas", f"R$ {receitas['Valor'].sum():,.2f}")
