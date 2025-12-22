@@ -39,88 +39,65 @@ def tela_login():
     col_esq, col_centro, col_dir = st.columns([1, 1.5, 1])
     
     with col_centro:
-        st.markdown("<div class='login-card'>", unsafe_allow_html=True)
+        # CARD COM FUNDO ESCURO E TEXTO BRANCO
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+                    border-radius: 20px;
+                    padding: 40px 30px;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                    border: 1px solid #334155;">
+        """, unsafe_allow_html=True)
         
-        # 🔥 LOGO - URL CORRETA do GitHub Raw
+        # 🔥 LOGO
         github_logo_url = "https://raw.githubusercontent.com/r313v1l-web/PlanejadorFinanceiroApp/main/assets/images/logo.png"
         
-        # Container especial para a logo
-        st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="text-align: center; margin: 0 auto 20px auto;">
+            <img src="{github_logo_url}" 
+                 style="width: 180px; height: 180px; 
+                        object-fit: contain; 
+                        border-radius: 50%;
+                        padding: 10px;
+                        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+                        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);">
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Verificar se a URL funciona
-        try:
-            response = requests.head(github_logo_url, timeout=3)
-            if response.status_code == 200:
-                # URL funciona - mostrar logo
-                st.markdown(f"""
-                <div style="text-align: center; margin: 0 auto 20px auto;">
-                    <img src="{github_logo_url}" 
-                         style="width: 180px; height: 180px; 
-                                object-fit: contain; 
-                                border-radius: 50%;
-                                padding: 10px;
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                # URL não funciona - usar placeholder
-                st.markdown("""
-                <div style="text-align: center; margin: 0 auto 20px auto;">
-                    <div style="width: 180px; height: 180px; 
-                                border-radius: 50%;
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                margin: 0 auto;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
-                        <span style="color: white; font-size: 48px; font-weight: bold;">💎</span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                st.info("Logo carregando...")
-        except:
-            # Erro na conexão
-            st.markdown("""
-            <div style="text-align: center; margin: 0 auto 20px auto;">
-                <div style="width: 180px; height: 180px; 
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-                            margin: 0 auto;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);">
-                    <span style="color: white; font-size: 48px; font-weight: bold;">💰</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-        # TÍTULO
+        # TÍTULO EM BRANCO COM DESTAQUE
         st.markdown("""
-        <h2 style="text-align: center; color: #1e293b; margin-bottom: 5px;">
-            Gestão Financeira
+        <h2 style="text-align: center; 
+                   color: #ffffff !important; 
+                   margin-bottom: 5px;
+                   font-size: 28px;
+                   font-weight: 700;">
+            💎 Gestão Financeira
         </h2>
-        <p style="text-align: center; color: #64748b; margin-bottom: 25px;">
-            Sistema de Controle Patrimonial
+        <p style="text-align: center; 
+                  color: #cbd5e1 !important; 
+                  margin-bottom: 30px;
+                  font-size: 16px;">
+            Sistema Premium de Controle Patrimonial
         </p>
         """, unsafe_allow_html=True)
         
-        # CAMPOS DO FORMULÁRIO
-        with st.container():
-            usuario = st.text_input("👤 Usuário", key="login_user")
-            senha = st.text_input("🔒 Senha", type="password", key="login_pass")
+        # FORMULÁRIO COM FUNDO CLARO PARA CONTRASTE
+        st.markdown("""
+        <div style="background: rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    padding: 25px;
+                    margin: 20px 0;">
+        """, unsafe_allow_html=True)
         
-        # Espaçamento
-        st.markdown("<br>", unsafe_allow_html=True)
+        # CAMPOS DO FORMULÁRIO
+        usuario = st.text_input("👤 **Usuário**", key="login_user")
+        senha = st.text_input("🔒 **Senha**", type="password", key="login_pass")
+        
+        st.markdown("</div>", unsafe_allow_html=True)  # Fecha div do formulário
         
         # BOTÃO DE LOGIN
         df_users = DatabaseManager.load_users()
         
-        if st.button("🚀 Entrar no Sistema", type="primary", use_container_width=True):
+        if st.button("🚀 **Entrar no Sistema**", type="primary", use_container_width=True):
             usuario_input = usuario.strip().lower()
             senha_input = senha.strip()
             
@@ -152,12 +129,12 @@ def tela_login():
             st.success("✅ Login realizado com sucesso!")
             st.rerun()
         
-        # Rodapé do card
+        # RODAPÉ
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("""
         <div style='text-align: center; color: #94a3b8; font-size: 14px; margin-top: 20px;'>
-            <hr style='margin: 20px 0; opacity: 0.3;'>
-            <p>🔐 Sistema seguro • v2.0</p>
+            <hr style='margin: 20px 0; opacity: 0.3; border-color: #475569;'>
+            <p>🔐 Sistema 100% seguro • v2.0</p>
         </div>
         """, unsafe_allow_html=True)
         
