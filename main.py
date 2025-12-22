@@ -112,22 +112,8 @@ def tela_login():
         
         # CAMPOS DO FORMULÁRIO
         with st.container():
-            # Usuário
-            usuario = st.text_input(
-                "👤 Usuário", 
-                key="login_user",
-                autocomplete="username",
-                placeholder="Digite seu usuário"
-            )
-            
-            # Senha - CRÍTICO para autofill
-            senha = st.text_input(
-                "🔒 Senha", 
-                type="password", 
-                key="login_pass",
-                autocomplete="current-password",
-                placeholder="Digite sua senha"
-            )
+            usuario = st.text_input("👤 Usuário", key="login_user")
+            senha = st.text_input("🔒 Senha", type="password", key="login_pass")
         
         # Espaçamento
         st.markdown("<br>", unsafe_allow_html=True)
