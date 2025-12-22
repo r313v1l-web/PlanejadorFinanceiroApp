@@ -912,6 +912,13 @@ elif menu == "💰 INVESTIMENTOS":
             hole=0.4,
             title="Distribuição por Perfil"
         )
+        fig.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="#0e1117",
+            plot_bgcolor="#0e1117",
+            font=dict(color="#e5e7eb"),
+            hovermode="x unified"
+        )
         st.plotly_chart(fig, use_container_width=True)
 
     st.divider()
@@ -1487,9 +1494,10 @@ elif menu == "📊 DASHBOARD":
             )
 
         fig.update_layout(
-            height=450,
-            yaxis_title="Patrimônio (R$)",
-            xaxis_title="data",
+            template="plotly_dark",
+            paper_bgcolor="#0e1117",
+            plot_bgcolor="#0e1117",
+            font=dict(color="#e5e7eb"),
             hovermode="x unified"
         )
 
@@ -2165,6 +2173,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
         xaxis_title="data",
         hovermode="x unified"
     )
+    
 
     st.plotly_chart(fig_comp, use_container_width=True)
 
