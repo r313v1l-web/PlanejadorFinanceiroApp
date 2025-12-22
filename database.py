@@ -259,6 +259,48 @@ class DatabaseManager:
                 .execute()
             return True
 
+
+        # 🔥 INVESTIMENTOS → DELETE + INSERT (com tratamento de datas)
+        if table_name == "investimentos":
+            # Converter datas para string em todos os registros
+            for record in records:
+                # Remover coluna id se existir
+                if "id" in record:
+                    del record["id"]
+                
+                # Converter datas para string ISO
+                date_fields = ["data_entrada", "data_atualizacao", "data_criacao"]
+                for field in date_fields:
+                    if field in record and record[field] is not None:
+                        # Se for objeto date ou datetime
+                        if hasattr(record[field], 'isoformat'):
+                            record[field] = record[field].isoformat()
+                        # Se for string de data no formato pandas
+                        elif isinstance(record[field], pd.Timestamp):
+                            record[field] = record[field].strftime('%Y-%m-%d')
+                        # Se já for string, manter
+                        elif isinstance(record[field], str):
+                            # Tentar converter para formato consistente
+                            try:
+                                from datetime import datetime
+                                dt = datetime.fromisoformat(record[field].replace('Z', '+00:00'))
+                                record[field] = dt.date().isoformat()
+                            except:
+                                pass
+            
+            # Primeiro deletar todos os investimentos do usuário
+            supabase.table("investimentos") \
+                .delete() \
+                .eq("usuario", usuario) \
+                .execute()
+            
+            # Depois inserir os novos
+            supabase.table("investimentos") \
+                .insert(records) \
+                .execute()
+            return True
+        
+        
         # 🔥 OUTRAS TABELAS → DELETE DO USUÁRIO + INSERT
         supabase.table(table_name) \
             .delete() \
