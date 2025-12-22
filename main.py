@@ -1150,16 +1150,16 @@ elif menu == "📊 DASHBOARD":
     st.subheader("📊 Composição Financeira do Mês")
 
     df_comp = pd.DataFrame({
-        "Tipo": ["Receitas Fixas", "Despesas Fixas", "Saldo Variável"],
-        "Valor": [receitas_fixas, despesas_fixas, saldo_variavel]
+        "tipo": ["Receitas Fixas", "Despesas Fixas", "Saldo Variável"],
+        "valor": [receitas_fixas, despesas_fixas, saldo_variavel]
     })
 
     fig_comp = px.bar(
         df_comp,
-        x="Tipo",
-        y="Valor",
-        text="Valor",
-        color="Tipo"
+        x="tipo",
+        y="valor",
+        text="valor",
+        color="tipo"
     )
 
     fig_comp.update_traces(
