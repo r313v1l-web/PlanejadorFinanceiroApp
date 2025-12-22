@@ -1487,8 +1487,19 @@ elif menu == "🏷️ CATEGORIAS":
     st.subheader("🔁 Ativar / Desativar Categoria")
 
     if not df_cat.empty:
-        # Criar lista de categorias únicas
-        categorias_lista = df_cat["nome"].dropna().unique().tolist()
+        # 🔥 SOLUÇÃO: Primeiro remover colunas duplicadas para acessar 'nome' como Series
+        df_cat_unique = df_cat.loc[:, ~df_cat.columns.duplicated()]
+        
+        # Garantir que temos a coluna 'nome'
+        if "nome" not in df_cat_unique.columns:
+            st.error("Coluna 'nome' não encontrada.")
+            st.stop()
+        
+        # Agora podemos acessar como Series
+        categorias_lista = df_cat_unique["nome"].dropna().tolist()
+        
+        # Remover duplicados da lista (caso ainda existam)
+        categorias_lista = list(dict.fromkeys(categorias_lista))  # Mantém ordem
         
         if categorias_lista:
             categoria_sel = st.selectbox(
@@ -1497,10 +1508,18 @@ elif menu == "🏷️ CATEGORIAS":
                 key="select_categoria"
             )
 
-            # Encontrar status atual
-            status_atual = df_cat.loc[df_cat["nome"] == categoria_sel, "ativa"].values
-            if len(status_atual) > 0:
-                status_atual = status_atual[0]
+            # 🔥 Encontrar status atual CORRETAMENTE
+            # Primeiro garantir que estamos usando o df sem colunas duplicadas
+            mask = df_cat_unique["nome"] == categoria_sel
+            
+            if mask.any():  # Se encontrou a categoria
+                status_atual = df_cat_unique.loc[mask, "ativa"].iloc[0]
+                
+                # Converter para booleano se necessário
+                if isinstance(status_atual, str):
+                    status_atual = status_atual.lower() in ['true', '1', 'yes', 'sim', 'ativo']
+                elif pd.isna(status_atual):
+                    status_atual = True
             else:
                 status_atual = True
 
@@ -1508,6 +1527,7 @@ elif menu == "🏷️ CATEGORIAS":
             
             with col_btn1:
                 if st.button("✅ Ativar Categoria", use_container_width=True):
+                    # Atualizar no df original (com duplicatas)
                     df_cat.loc[df_cat["nome"] == categoria_sel, "ativa"] = True
                     dados["categorias"] = df_cat
                     st.session_state["dados"] = dados
@@ -1517,14 +1537,21 @@ elif menu == "🏷️ CATEGORIAS":
             
             with col_btn2:
                 if st.button("❌ Desativar Categoria", use_container_width=True):
+                    # Atualizar no df original (com duplicatas)
                     df_cat.loc[df_cat["nome"] == categoria_sel, "ativa"] = False
                     dados["categorias"] = df_cat
                     st.session_state["dados"] = dados
                     DatabaseManager.save("categorias", df_cat, usuario)
                     st.warning(f"Categoria '{categoria_sel}' desativada.")
                     st.rerun()
+            
+            # Mostrar status atual
+            status_text = "✅ Ativa" if status_atual else "❌ Inativa"
+            st.caption(f"Status atual: {status_text}")
         else:
             st.caption("Nenhuma categoria disponível para alteração.")
+    else:
+        st.caption("Nenhuma categoria cadastrada.")
 
 # =========================================================
 # ⚙️ CONFIGURAÇÕES
