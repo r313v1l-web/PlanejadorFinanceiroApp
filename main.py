@@ -319,12 +319,18 @@ patrimonio = dados["investimentos"]["valor_atual"].sum() if not dados["investime
 # ---------------- HISTÓRICO (VARIÁVEL) ----------------
 if not dados["historico"].empty:
     hist = dados["historico"].copy()
+    
+    # 🔥 NORMALIZAR COLUNAS PRIMEIRO
+    hist.columns = hist.columns.str.lower()
+    
+    # Converter data
     hist["data"] = pd.to_datetime(hist["data"])
     hist["mes"] = hist["data"].dt.strftime("%Y-%m")
     hist_mes = hist[hist["mes"] == mes_atual]
 
-    receitas_variaveis = hist_mes[hist_mes["tipo"] == "receita"]["valor"].sum()
-    despesas_variaveis = hist_mes[hist_mes["tipo"] == "despesa"]["valor"].sum()
+    # 🔥 BUSCAR COM VALORES EM MINÚSCULO
+    receitas_variaveis = hist_mes[hist_mes["tipo"].str.lower() == "receita"]["valor"].sum()
+    despesas_variaveis = hist_mes[hist_mes["tipo"].str.lower() == "despesa"]["valor"].sum()
 else:
     receitas_variaveis = despesas_variaveis = 0
 
@@ -564,6 +570,68 @@ def gerar_relatorio_html(
     return html
 
 # =========================================================
+# FUNÇÃO: FORMATAR TEMPO EM ANOS/MESES
+# =========================================================
+def formatar_tempo_meses(meses):
+    """Converte meses para formato 'X anos e Y meses'"""
+    if meses < 12:
+        return f"{meses} meses"
+    
+    anos = meses // 12
+    meses_restantes = meses % 12
+    
+    if meses_restantes == 0:
+        return f"{anos} anos"
+    elif anos == 0:
+        return f"{meses_restantes} meses"
+    else:
+        return f"{anos} anos e {meses_restantes} meses"
+    
+
+# =========================================================
+# FUNÇÃO: CALCULAR APORTE IDEAL PARA META
+# =========================================================
+def calcular_aporte_ideal_para_meta(
+    patrimonio_atual,
+    meta_patrimonio,
+    rendimento_mensal,
+    inflacao_mensal,
+    tempo_desejado_anos
+):
+    """
+    Calcula quanto precisa guardar por mês para atingir a meta no tempo desejado
+    Retorna: aporte_mensal_sugerido, é_viável
+    """
+    if meta_patrimonio <= patrimonio_atual:
+        return 0, True  # Meta já atingida
+    
+    taxa_real = rendimento_mensal - inflacao_mensal
+    taxa_real = max(taxa_real, 0.001)  # Mínimo 0.1% para evitar divisão por zero
+    
+    meses_totais = tempo_desejado_anos * 12
+    
+    # Fórmula: PMT = (FV * i) / ((1 + i)^n - 1)
+    # Onde: FV = meta - patrimônio atual (valor futuro necessário)
+    fv_necessario = meta_patrimonio - patrimonio_atual
+    
+    if taxa_real <= 0 or meses_totais <= 0:
+        # Se não há rendimento, divide igualmente
+        aporte_mensal = fv_necessario / max(meses_totais, 1)
+    else:
+        # Cálculo com juros compostos
+        fator = (1 + taxa_real) ** meses_totais
+        aporte_mensal = (fv_necessario * taxa_real) / (fator - 1)
+    
+    # Verificar viabilidade (se aporte não é absurdamente alto)
+    limite_razoavel = 0.5  # 50% da meta como aporte máximo mensal
+    aporte_maximo_razoavel = meta_patrimonio * limite_razoavel / meses_totais
+    
+    é_viável = aporte_mensal <= aporte_maximo_razoavel
+    
+    return round(aporte_mensal, 2), é_viável
+
+
+# =========================================================
 # EXECUTA PROJEÇÃO (CRIAR df_projecao)
 # =========================================================
 
@@ -700,22 +768,7 @@ if menu == "📝 LANÇAMENTOS":
 
     st.divider()
 
-    # ---------------- HISTÓRICO ----------------
-    st.subheader("📋 Histórico")
 
-    if not dados["historico"].empty:
-        df_hist = dados["historico"].copy()
-        df_hist["data"] = pd.to_datetime(df_hist["data"])
-
-        st.dataframe(
-            df_hist.sort_values("data", ascending=False).style.format({
-                "valor": "R$ {:,.2f}"
-            }),
-            use_container_width=True,
-            height=450
-        )
-    else:
-        st.caption("Nenhuma transação registrada.")
 
 # =========================================================
 # 💰 INVESTIMENTOS
@@ -1349,7 +1402,8 @@ elif menu == "📊 DASHBOARD":
 
         colp1, colp2, colp3 = st.columns(3)
 
-        colp1.metric("📅 Horizonte da Projeção", f"{meses_proj} meses")
+        tempo_formatado = formatar_tempo_meses(meses_proj)
+        colp1.metric("📅 Horizonte da Projeção", tempo_formatado)
         colp2.metric("📈 Patrimônio Projetado", f"R$ {ultimo['patrimonio']:,.2f}")
 
         if ultimo["meta_atingida"]:
@@ -1363,7 +1417,59 @@ elif menu == "📊 DASHBOARD":
     else:
         st.caption("Dados insuficientes para projeção.")
 
+            
+    
+    # ================= SUGESTÃO DE APORTE =================
+    st.subheader("🎯 Sugestão para Acelerar a Meta")
+    
+    col_s1, col_s2, col_s3 = st.columns(3)
+    
+    with col_s1:
+        tempo_desejado = st.number_input(
+            "Em quantos anos quer atingir a meta?",
+            min_value=1,
+            max_value=50,
+            value=10,
+            step=1
+        )
+    
+    if meta_patrimonio > patrimonio and tempo_desejado > 0:
+        aporte_sugerido, é_viável = calcular_aporte_ideal_para_meta(
+            patrimonio_atual=patrimonio,
+            meta_patrimonio=meta_patrimonio,
+            rendimento_mensal=rendimento_mensal,
+            inflacao_mensal=inflacao_mensal,
+            tempo_desejado_anos=tempo_desejado
+        )
+        
+        with col_s2:
+            st.metric(
+                "💰 Aporte Mensal Sugerido",
+                f"R$ {aporte_sugerido:,.2f}",
+                delta_color="normal" if é_viável else "inverse"
+            )
+        
+        with col_s3:
+            if é_viável:
+                st.success("✅ Meta viável com este aporte")
+            else:
+                st.warning("⚠️ Aporte muito alto - ajuste o prazo")
+        
+        # Comparação com saldo atual
+        diferenca = aporte_sugerido - saldo_fixo
+        if diferenca > 0:
+            st.info(
+                f"📊 Para atingir em **{tempo_desejado} anos**, você precisa guardar "
+                f"**R$ {diferenca:,.2f} a mais por mês** "
+                f"(atualmente guarda R$ {saldo_fixo:,.2f})"
+            )
+        else:
+            st.success(
+                f"🎉 Você já guarda o suficiente! Pode atingir a meta em "
+                f"menos de {tempo_desejado} anos."
+            )
 
+            st.divider()
 # =========================================================
 # 🏷️ CATEGORIAS
 # =========================================================
@@ -1790,6 +1896,43 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
     )
 
     st.write(texto_exec)
+
+    # ================= Recomendação Estratégica =================
+
+    st.subheader("💡 Recomendação Estratégica")
+    
+    # Calcular sugestão para 5, 10 e 15 anos
+    prazos = [5, 10, 15]
+    
+    for prazo in prazos:
+        aporte, viavel = calcular_aporte_ideal_para_meta(
+            patrimonio_atual=patrimonio,
+            meta_patrimonio=meta_patrimonio,
+            rendimento_mensal=rendimento_mensal,
+            inflacao_mensal=inflacao_mensal,
+            tempo_desejado_anos=prazo
+        )
+        
+        col_r1, col_r2, col_r3 = st.columns([1, 2, 1])
+        
+        with col_r1:
+            st.metric(f"Prazo", f"{prazo} anos")
+        
+        with col_r2:
+            if viavel:
+                st.success(f"💰 Aporte mensal: R$ {aporte:,.2f}")
+            else:
+                st.error(f"💰 Aporte mensal: R$ {aporte:,.2f} (inviável)")
+        
+        with col_r3:
+            diferenca = aporte - saldo_fixo
+            if diferenca > 0:
+                st.caption(f"+R$ {diferenca:,.2f}/mês")
+            else:
+                st.caption("✓ Dentro do atual")
+
+
+
     # ================= ALERTAS =================
 
     alertas = []
@@ -1844,6 +1987,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
     if ajuste_despesas > 0:
         reducao = despesas_fixas * (ajuste_despesas / 100)
         saldo_fixo_simulado += reducao
+
 
     # 🔹 A PROJEÇÃO SIMULADA SEMPRE EXISTE
     df_projecao_simulada = projetar_patrimonio(
