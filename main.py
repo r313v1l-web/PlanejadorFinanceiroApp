@@ -32,7 +32,7 @@ def tela_login():
     st.title("🔐 Login")
 
     usuario = st.text_input("Usuário")
-    senha = st.text_input("Senha")
+    senha = st.text_input("Senha", type="password")  # ✅ AGORA COM TYPE
 
     
     df_users = DatabaseManager.load_users()
