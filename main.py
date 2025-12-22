@@ -190,22 +190,42 @@ def salvar_relatorio_mensal(
 ):
     mes_ref = date.today().strftime("%Y-%m")
 
-    df_hist = dados.get("relatorios_historicos", pd.DataFrame())
+    df_hist = dados.get("relatorios_historicos", pd.DataFrame()).copy()
+
+    # 🔒 Blindagem de colunas
+    if "Mes" not in df_hist.columns:
+        df_hist["Mes"] = ""
+
+    if "Status" not in df_hist.columns:
+        df_hist["Status"] = ""
 
     # Se já existe FINALIZADO, não permite sobrescrever
-    if not df_hist.empty:
-        existente = df_hist[df_hist["Mes"] == mes_ref]
-        if not existente.empty and "Finalizado" in existente["Status"].values:
-            return False, "Relatório já finalizado para este mês."
+    existente = df_hist[
+        (df_hist["Mes"] == mes_ref) &
+        (df_hist["Status"] == "Finalizado")
+    ]
 
-
+    if not existente.empty:
+        return False, "Relatório já finalizado para este mês."
 
     # Remove rascunho anterior do mesmo mês
     df_hist = df_hist[df_hist["Mes"] != mes_ref]
 
+    novo = pd.DataFrame([{
+        "Mes": mes_ref,
+        "Patrimonio": patrimonio,
+        "Saldo_Fixo": saldo_fixo,
+        "Saldo_Variavel": saldo_variavel,
+        "Perc_Meta": perc_meta,
+        "Status": status,
+        "Texto_Executivo": texto_exec
+    }])
+
     df_final = pd.concat([df_hist, novo], ignore_index=True)
+
     dados["relatorios_historicos"] = df_final
     st.session_state["dados"] = dados
+
     usuario = st.session_state["usuario"]
     DatabaseManager.save("relatorios_historicos", df_final, usuario)
 
