@@ -206,9 +206,12 @@ def salvar_relatorio_mensal(
     # 🔒 Blindagem de colunas
     if "mes" not in df_hist.columns:
         df_hist["mes"] = ""
-
     if "status" not in df_hist.columns:
         df_hist["status"] = ""
+
+    # Remover coluna 'id' se existir
+    if "id" in df_hist.columns:
+        df_hist = df_hist.drop(columns=["id"])
 
     # Se já existe FINALIZADO, não permite sobrescrever
     existente = df_hist[
@@ -935,29 +938,59 @@ elif menu == "🏢 FLUXOS FIXOS":
 
         st.session_state["msg"] = None
 
-    receitas = dados["fluxo_fixo"][dados["fluxo_fixo"]["tipo"] == "Receita"]
-    despesas = dados["fluxo_fixo"][dados["fluxo_fixo"]["tipo"] == "Despesa"]
+    # 🔥 PRIMEIRO: NORMALIZAR O DATAFRAME E AS COLUNAS
+    if not dados["fluxo_fixo"].empty:
+        df_fluxo = dados["fluxo_fixo"].copy()
+        
+        # Garantir que todas as colunas estão em minúsculo
+        df_fluxo.columns = df_fluxo.columns.str.lower()
+        
+        # Verificar se a coluna 'tipo' existe
+        if "tipo" not in df_fluxo.columns:
+            st.error("Erro: Coluna 'tipo' não encontrada na tabela fluxo_fixo")
+            st.stop()
+        
+        # Normalizar os valores da coluna 'tipo' (Remover espaços, padronizar)
+        df_fluxo["tipo"] = df_fluxo["tipo"].astype(str).str.strip().str.title()
+        
+    else:
+        df_fluxo = pd.DataFrame(columns=["tipo", "valor", "nome", "categoria"])
+    
+    # AGORA pode filtrar com segurança
+    receitas = df_fluxo[df_fluxo["tipo"] == "Receita"]
+    despesas = df_fluxo[df_fluxo["tipo"] == "Despesa"]
+
+    # Calcular totais com tratamento de valores ausentes
+    total_receitas = receitas["valor"].sum() if not receitas.empty and "valor" in receitas.columns else 0
+    total_despesas = despesas["valor"].sum() if not despesas.empty and "valor" in despesas.columns else 0
+    saldo_fixo = total_receitas - total_despesas
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("Receitas Fixas", f"R$ {receitas['valor'].sum():,.2f}")
-    col2.metric("Despesas Fixas", f"R$ {despesas['valor'].sum():,.2f}")
-    col3.metric("Saldo Fixo", f"R$ {(receitas['valor'].sum() - despesas['valor'].sum()):,.2f}")
+    col1.metric("Receitas Fixas", f"R$ {total_receitas:,.2f}")
+    col2.metric("Despesas Fixas", f"R$ {total_despesas:,.2f}")
+    col3.metric("Saldo Fixo", f"R$ {saldo_fixo:,.2f}")
 
     st.divider()
 
     tab1, tab2 = st.tabs(["📈 Receitas", "📉 Despesas"])
 
     with tab1:
-        st.dataframe(
-            receitas.style.format({"valor": "R$ {:,.2f}"}),
-            use_container_width=True
-        )
+        if not receitas.empty:
+            st.dataframe(
+                receitas.style.format({"valor": "R$ {:,.2f}"}),
+                use_container_width=True
+            )
+        else:
+            st.caption("Nenhuma receita fixa cadastrada.")
 
     with tab2:
-        st.dataframe(
-            despesas.style.format({"valor": "R$ {:,.2f}"}),
-            use_container_width=True
-        )
+        if not despesas.empty:
+            st.dataframe(
+                despesas.style.format({"valor": "R$ {:,.2f}"}),
+                use_container_width=True
+            )
+        else:
+            st.caption("Nenhuma despesa fixa cadastrada.")
 
     # ---------------- NOVO FLUXO ----------------
     with st.expander("➕ Adicionar Fluxo Fixo"):
@@ -970,9 +1003,18 @@ elif menu == "🏢 FLUXOS FIXOS":
                 tipo = st.selectbox("tipo", ["Receita", "Despesa"])
 
             with col2:
+                # Carregar categorias disponíveis
+                categorias_disponiveis = []
+                if not dados["categorias"].empty:
+                    # Normalizar colunas das categorias também
+                    df_categorias = dados["categorias"].copy()
+                    df_categorias.columns = df_categorias.columns.str.lower()
+                    if "nome" in df_categorias.columns:
+                        categorias_disponiveis = df_categorias["nome"].tolist()
+                
                 categoria = st.selectbox(
                     "categoria",
-                    dados["categorias"]["nome"].tolist() if not dados["categorias"].empty else []
+                    categorias_disponiveis if categorias_disponiveis else ["Outros"]
                 )
                 recorrencia = st.selectbox(
                     "Recorrência",
@@ -983,65 +1025,93 @@ elif menu == "🏢 FLUXOS FIXOS":
             data_fim = st.date_input("Data de Fim (opcional)", value=None)
             observacao = st.text_area("Observações")
 
-            if st.form_submit_button("💾 Salvar Fluxo"):
+            submitted = st.form_submit_button("💾 Salvar Fluxo")
+
+            if submitted:
                 novo = pd.DataFrame([{
-                    "Nome": nome,
+                    "nome": nome.strip(),
                     "valor": valor,
-                    "tipo": tipo,
+                    "tipo": tipo.strip().title(),  # 🔥 Garantir formatação consistente
                     "categoria": categoria,
-                    "Data_Inicio": data_inicio,
-                    "Data_Fim": data_fim,
-                    "Recorrencia": recorrencia,
-                    "Observacao": observacao
+                    "data_inicio": data_inicio,
+                    "data_fim": data_fim,
+                    "recorrencia": recorrencia,
+                    "observacao": observacao
                 }])
 
-                df_fluxo = dados["fluxo_fixo"].copy() if not dados["fluxo_fixo"].empty else pd.DataFrame()
+                # 🔥 CORREÇÃO: Começar com o df_fluxo já normalizado
+                df_novo_fluxo = df_fluxo.copy() if not df_fluxo.empty else pd.DataFrame()
+                
+                # Concatenar mantendo todas as colunas necessárias
+                colunas_base = ["nome", "valor", "tipo", "categoria", "data_inicio", 
+                               "data_fim", "recorrencia", "observacao"]
+                
+                # Garantir que todas as colunas existem no DataFrame original
+                for col in colunas_base:
+                    if col not in df_novo_fluxo.columns:
+                        df_novo_fluxo[col] = None if df_novo_fluxo.empty else ""
+                
+                df_novo_fluxo = pd.concat([df_novo_fluxo, novo], ignore_index=True)
+                
+                # 🔥 NORMALIZAR COLUNAS NOVAMENTE ANTES DE SALVAR
+                df_novo_fluxo.columns = df_novo_fluxo.columns.str.lower()
 
-                # 🔒 blindagem de schema
-                for col in ["nome", "tipo", "valor", "categoria"]:
-                    if col not in df_fluxo.columns:
-                        df_fluxo[col] = ""
-                df_fluxo = pd.concat([df_fluxo, novo], ignore_index=True)
-                df_fluxo.columns = df_fluxo.columns.str.lower()   # 🔥 ESSENCIAL
-
-                dados["fluxo_fixo"] = df_fluxo
+                # Salvar no session_state e no banco
+                dados["fluxo_fixo"] = df_novo_fluxo
                 st.session_state["dados"] = dados
-                DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+                DatabaseManager.save("fluxo_fixo", df_novo_fluxo, usuario)
 
                 st.session_state["msg"] = "Fluxo fixo adicionado com sucesso."
+                st.session_state["msg_tipo"] = "success"
                 st.rerun()
+
     st.divider()
     st.subheader("🗑️ Excluir Fluxo Fixo")
 
-    if not dados["fluxo_fixo"].empty:
-
-        df_fluxo = dados["fluxo_fixo"].copy() if not dados["fluxo_fixo"].empty else pd.DataFrame()
-
-        # 🔒 blindagem de schema
-        for col in ["nome", "tipo", "valor", "categoria"]:
-            if col not in df_fluxo.columns:
-                df_fluxo[col] = ""
-        df_fluxo["Label"] = (
-            df_fluxo["nome"] + " | " +
-            df_fluxo["tipo"] + " | R$ " +
-            df_fluxo["valor"].astype(str)
+    if not df_fluxo.empty:
+        # 🔥 Usar o df_fluxo já normalizado
+        df_fluxo_excluir = df_fluxo.copy()
+        
+        # Garantir que as colunas necessárias existem
+        if "nome" not in df_fluxo_excluir.columns:
+            df_fluxo_excluir["nome"] = ""
+        if "tipo" not in df_fluxo_excluir.columns:
+            df_fluxo_excluir["tipo"] = ""
+        if "valor" not in df_fluxo_excluir.columns:
+            df_fluxo_excluir["valor"] = 0
+        
+        # Criar labels para seleção
+        df_fluxo_excluir["Label"] = (
+            df_fluxo_excluir["nome"].fillna("Sem nome") + " | " +
+            df_fluxo_excluir["tipo"].fillna("Sem tipo") + " | R$ " +
+            df_fluxo_excluir["valor"].astype(str)
         )
 
         fluxo_sel = st.selectbox(
             "Selecione o fluxo para excluir",
-            df_fluxo["Label"].tolist()
+            df_fluxo_excluir["Label"].tolist()
         )
 
         if st.button("❌ Excluir Fluxo Selecionado"):
-            idx = df_fluxo[df_fluxo["Label"] == fluxo_sel].index[0]
-            df_fluxo = df_fluxo.drop(idx)
-
-            DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+            # Encontrar o índice correto
+            idx = df_fluxo_excluir[df_fluxo_excluir["Label"] == fluxo_sel].index[0]
+            
+            # Remover do DataFrame
+            df_fluxo_excluir = df_fluxo_excluir.drop(idx).reset_index(drop=True)
+            
+            # Remover coluna Label antes de salvar
+            if "Label" in df_fluxo_excluir.columns:
+                df_fluxo_excluir = df_fluxo_excluir.drop(columns=["Label"])
+            
+            # Salvar no banco e session_state
+            dados["fluxo_fixo"] = df_fluxo_excluir
+            st.session_state["dados"] = dados
+            DatabaseManager.save("fluxo_fixo", df_fluxo_excluir, usuario)
 
             st.success("Fluxo fixo excluído com sucesso.")
             st.rerun()
     else:
-        st.caption("Nenhum fluxo fixo cadastrado.")              
+        st.caption("Nenhum fluxo fixo cadastrado.")            
 
 
 
@@ -1311,19 +1381,32 @@ elif menu == "🏷️ CATEGORIAS":
                 df_cat[col] = True if col == "ativa" else ""
 
     # ---------------- LISTA ----------------
-    st.subheader("📋 Categorias Cadastradas")
+        st.subheader("📋 Categorias Cadastradas")
 
-    if not df_cat.empty:
-        st.dataframe(
-            df_cat.style.applymap(
-                lambda x: "color: gray;" if x is False else "",
+        if not df_cat.empty:
+            # Resetar índice para evitar erros de índice duplicado
+            df_display = df_cat.reset_index(drop=True).copy()
+            
+            # Criar um estilo customizado sem applymap
+            def highlight_inactive(val):
+                if isinstance(val, bool) and not val:
+                    return 'color: gray;'
+                return ''
+            
+            # Aplicar estilo manualmente
+            styled_df = df_display.style
+            styled_df = styled_df.applymap(
+                highlight_inactive, 
                 subset=["ativa"]
-            ),
-            use_container_width=True,
-            height=350
-        )
-    else:
-        st.caption("Nenhuma categoria cadastrada.")
+            )
+            
+            st.dataframe(
+                styled_df,
+                use_container_width=True,
+                height=350
+            )
+        else:
+            st.caption("Nenhuma categoria cadastrada.")
 
     st.divider()
 

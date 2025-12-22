@@ -110,6 +110,10 @@ class DatabaseManager:
             # 🔒 NORMALIZA SEMPRE
             if not df.empty:
                 df.columns = df.columns.str.lower()
+                
+                # Normalização específica para fluxo_fixo
+                if table == "fluxo_fixo" and "tipo" in df.columns:
+                    df["tipo"] = df["tipo"].astype(str).str.strip().str.title()
 
             dados[table] = df
 
@@ -140,6 +144,18 @@ class DatabaseManager:
         if table_name == "config":
             supabase.table("config") \
                 .upsert(records, on_conflict="usuario,chave") \
+                .execute()
+            return True
+
+        # 🔥 RELATORIOS_HISTORICOS → UPSERT (usuario + mes)
+        if table_name == "relatorios_historicos":
+            # Remover coluna id se existir (o Supabase gera automaticamente)
+            for record in records:
+                if "id" in record:
+                    del record["id"]
+            
+            supabase.table("relatorios_historicos") \
+                .upsert(records, on_conflict="usuario,mes") \
                 .execute()
             return True
 
