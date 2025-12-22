@@ -249,205 +249,12 @@ def salvar_relatorio_mensal(
 # CONFIG
 # =========================================================
 st.set_page_config(
-    page_title="Family Wealth Manager Pro",
+    page_title="Gestão Financeira2",
     page_icon="💎",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# =========================================================
-# CSS CUSTOMIZADO - APENAS PARA MELHORAR VISUAL
-# =========================================================
-st.markdown("""
-<style>
-    /* TEMA PRINCIPAL */
-    :root {
-        --primary: #1e3a8a;
-        --primary-light: #3b82f6;
-        --secondary: #10b981;
-        --danger: #ef4444;
-        --warning: #f59e0b;
-        --dark: #1e293b;
-        --light: #f8fafc;
-        --gray: #64748b;
-    }
-    
-    /* FUNDO E FONTES */
-    .stApp {
-        background-color: #f8fafc;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    
-    /* HEADER BONITO */
-    h1, h2, h3 {
-        color: var(--dark);
-        font-weight: 600;
-    }
-    
-    /* SIDEBAR MELHORADA */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, var(--dark) 0%, #2d3748 100%);
-    }
-    
-    [data-testid="stSidebar"] .stRadio label {
-        color: white !important;
-        font-weight: 500;
-        padding: 10px 15px;
-        border-radius: 8px;
-        margin: 5px 0;
-        transition: all 0.3s ease;
-    }
-    
-    [data-testid="stSidebar"] .stRadio label:hover {
-        background: rgba(255, 255, 255, 0.1);
-    }
-    
-    [data-testid="stSidebar"] .stRadio div[data-baseweb="radio"] {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 10px;
-        padding: 5px;
-    }
-    
-    /* BOTÕES MAIS BONITOS */
-    .stButton > button {
-        border-radius: 8px;
-        font-weight: 600;
-        border: none;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    
-    /* INPUTS ESTILIZADOS */
-    .stTextInput > div > div > input,
-    .stSelectbox > div > div > select,
-    .stNumberInput > div > div > input {
-        border-radius: 8px;
-        border: 2px solid #e2e8f0;
-        padding: 10px 14px;
-        font-size: 14px;
-    }
-    
-    .stTextInput > div > div > input:focus,
-    .stSelectbox > div > div > select:focus,
-    .stNumberInput > div > div > input:focus {
-        border-color: var(--primary-light);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    /* CARDS PARA MÉTRICAS */
-    .metric-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-left: 4px solid var(--primary);
-        transition: transform 0.3s ease;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-    }
-    
-    /* TABS MELHORADAS */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2px;
-        background-color: #f1f5f9;
-        padding: 4px;
-        border-radius: 10px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        padding: 10px 20px;
-        font-weight: 500;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background-color: white;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    
-    /* TABELAS ESTILIZADAS */
-    .dataframe {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .dataframe thead th {
-        background-color: #f8fafc;
-        font-weight: 600;
-        color: var(--dark);
-    }
-    
-    /* BADGES COLORIDOS */
-    .badge-success {
-        background: #d1fae5;
-        color: #065f46;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    
-    .badge-warning {
-        background: #fef3c7;
-        color: #92400e;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    
-    .badge-danger {
-        background: #fee2e2;
-        color: #991b1b;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    
-    /* DIVIDER ESTILIZADO */
-    .stDivider {
-        border-color: #e2e8f0;
-    }
-    
-    /* EXPANDER MELHORADO */
-    .streamlit-expanderHeader {
-        background-color: #f8fafc;
-        border-radius: 8px;
-        font-weight: 600;
-    }
-    
-    /* ALERTS COLORIDOS */
-    .stAlert {
-        border-radius: 10px;
-        border-left: 4px solid;
-    }
-    
-    /* PROGRESS BAR COLORIDO */
-    .stProgress > div > div > div {
-        background: linear-gradient(90deg, var(--primary-light), var(--secondary));
-    }
-    
-    /* RESPONSIVIDADE */
-    @media (max-width: 768px) {
-        .metric-card {
-            padding: 15px;
-        }
-        
-        [data-testid="stSidebar"] {
-            min-width: 250px;
-        }
-    }
-</style>
-""", unsafe_allow_html=True)
 
 # ===============================
 # CONTROLE DE LOGIN
@@ -841,15 +648,15 @@ df_projecao = projetar_patrimonio(
 # SIDEBAR (MENU ÚNICO DO SISTEMA)
 # =========================================================
 with st.sidebar:
-    # Header da sidebar mais bonito
-    st.markdown("""
-    <div style="text-align: center; margin-bottom: 20px;">
-        <div style="font-size: 48px; margin-bottom: 10px;">💎</div>
-        <h2 style="color: white; margin: 0;">Family Wealth</h2>
-        <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">Manager Pro</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
+
+    st.markdown(
+        """
+        <h1 style="text-align:center; font-size:80px;">💸</h1>
+        <h2 style="text-align:center">Gestão Financeira</h2>
+        """,
+        unsafe_allow_html=True
+    )
+
     st.divider()
 
     # ===============================
@@ -1480,34 +1287,9 @@ elif menu == "📊 DASHBOARD":
 
         st.session_state["msg"] = None
 
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); 
-                padding: 25px; 
-                border-radius: 15px; 
-                color: white;
-                margin-bottom: 30px;">
-        <h2 style="margin: 0; color: white;">📈 Visão Geral do Patrimônio</h2>
-        <p style="margin: 5px 0 0 0; opacity: 0.9;">Análise completa da sua saúde financeira</p>
-    </div>
-    """, unsafe_allow_html=True)
-
     col1, col2, col3, col4 = st.columns(4)
 
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <div style="font-size: 24px; margin-right: 10px;">💰</div>
-                <div style="font-size: 14px; color: #64748b;">PATRIMÔNIO</div>
-            </div>
-            <div style="font-size: 28px; font-weight: 700; color: #1e293b;">
-                R$ {patrimonio:,.2f}
-            </div>
-            <div style="font-size: 12px; color: #10b981; margin-top: 5px;">
-                ▲ 12.5% vs mês anterior
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    col1.metric("💰 Patrimônio", f"R$ {patrimonio:,.2f}")
 
     col2.metric(
         "📈 Saldo Variável (Mês)",
@@ -1524,9 +1306,6 @@ elif menu == "📊 DASHBOARD":
     col4.metric("🎯 Progresso Sonhos", f"{progresso_sonhos:.1f}%")
 
     st.divider()
-
-
-
 
     # ================= COMPOSIÇÃO =================
     st.subheader("📊 Composição Financeira do Mês")
