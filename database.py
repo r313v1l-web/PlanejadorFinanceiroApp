@@ -110,7 +110,11 @@ class DatabaseManager:
         ]
 
         for table in tables:
-            res = supabase.table(table).select("*").execute()
+            res = supabase.table("config") \
+                .select("*") \
+                .eq("usuario", usuario) \
+                .execute()
+
             dados[table] = pd.DataFrame(res.data) if res.data else pd.DataFrame()
 
         return dados
@@ -134,7 +138,7 @@ class DatabaseManager:
         # 🔥 CONFIG usa UPSERT
         if table_name == "config":
             supabase.table("config") \
-                .upsert(records, on_conflict="Chave") \
+                .upsert(records, on_conflict="chave") \
                 .execute()
             return True
 
