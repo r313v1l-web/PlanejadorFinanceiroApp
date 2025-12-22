@@ -353,10 +353,12 @@ st.set_page_config(
 # INJEÇÃO DE CSS PERSONALIZADO
 # =========================================================
 try:
-    with open("style.css") as f:
+    with open("assets/css/style.css") as f:  # ✅ Caminho correto
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 except FileNotFoundError:
-    st.error("Arquivo de estilo (style.css) não encontrado.")
+    st.warning("Arquivo de estilo não encontrado. Usando estilos padrão.")
+except Exception as e:
+    st.error(f"Erro ao carregar CSS: {e}")
 # =========================================================_allow_html=True)
 
 
