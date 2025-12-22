@@ -330,7 +330,7 @@ config_dict = {}
 
 if not dados["config"].empty:
     for _, row in dados["config"].iterrows():
-        config_dict[row["Chave"]] = row["Valor"]
+        config_dict[row["chave"]] = row["Valor"]
 
 # Valores com fallback seguro
 meta_patrimonio = float(config_dict.get("meta_patrimonio", 0))
@@ -1409,12 +1409,12 @@ elif menu == "⚙️ CONFIGURAÇÕES":
 
         if submitted:
             df_config = pd.DataFrame([
-                {"Chave": "meta_patrimonio", "Valor": meta, "Descricao": "Meta total de patrimônio"},
-                {"Chave": "orcamento_mensal", "Valor": orcamento, "Descricao": "Orçamento mensal"},
-                {"Chave": "nome_familia", "Valor": nome, "Descricao": "Nome da família"},
-                {"Chave": "rendimento_mensal", "Valor": rendimento, "Descricao": "Rendimento mensal"},
-                {"Chave": "inflacao_mensal", "Valor": inflacao, "Descricao": "Inflação mensal"},
-                {"Chave": "reserva_gastos", "Valor": reserva, "Descricao": "Reserva mensal de gastos rápidos"}
+                {"chave": "meta_patrimonio", "Valor": meta, "Descricao": "Meta total de patrimônio"},
+                {"chave": "orcamento_mensal", "Valor": orcamento, "Descricao": "Orçamento mensal"},
+                {"chave": "nome_familia", "Valor": nome, "Descricao": "Nome da família"},
+                {"chave": "rendimento_mensal", "Valor": rendimento, "Descricao": "Rendimento mensal"},
+                {"chave": "inflacao_mensal", "Valor": inflacao, "Descricao": "Inflação mensal"},
+                {"chave": "reserva_gastos", "Valor": reserva, "Descricao": "Reserva mensal de gastos rápidos"}
 
             ])
 
