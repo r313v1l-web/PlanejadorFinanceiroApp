@@ -45,23 +45,36 @@ def tela_login():
     </style>
     """, unsafe_allow_html=True)
 
-    # CENTRALIZAÇÃO REAL (layout nativo)
+    # CENTRALIZAÇÃO REAL (layout nativo Streamlit)
     col_esq, col_centro, col_dir = st.columns([1, 1.2, 1])
 
     with col_centro:
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
 
+        # LOGO (se existir no projeto)
         st.markdown(
-            "<h2 style='text-align:center'>💎 Gestão Financeira</h2>"
-            "<p style='text-align:center; color:#9ca3af'>Acesso ao sistema</p>",
+            "<div style='text-align:center; margin-bottom:15px'>"
+            "<img src='assets/images/logo.png' width='90'>"
+            "</div>",
             unsafe_allow_html=True
         )
 
+        # TÍTULO
+        st.markdown(
+            "<h2 style='text-align:center; margin-bottom:4px;'>Gestão Financeira</h2>"
+            "<p style='text-align:center; color:#9ca3af; margin-bottom:25px;'>"
+            "Acesso ao sistema</p>",
+            unsafe_allow_html=True
+        )
+
+        # CAMPOS
         usuario = st.text_input("Usuário")
         senha = st.text_input("Senha", type="password")
 
+        # CARREGA USUÁRIOS
         df_users = DatabaseManager.load_users()
 
+        # BOTÃO
         if st.button("Entrar", use_container_width=True):
             usuario_input = usuario.strip().lower()
             senha_input = senha.strip()
@@ -70,6 +83,7 @@ def tela_login():
 
             if user.empty:
                 st.error("Usuário não encontrado.")
+                st.markdown("</div>", unsafe_allow_html=True)
                 return
 
             senha_hash = user.iloc[0]["senha"]
@@ -79,10 +93,12 @@ def tela_login():
                 senha_hash.encode("utf-8")
             ):
                 st.error("Senha incorreta.")
+                st.markdown("</div>", unsafe_allow_html=True)
                 return
 
             if user.iloc[0]["ativo"] != "ativo":
                 st.error("Usuário inativo. Contate o administrador.")
+                st.markdown("</div>", unsafe_allow_html=True)
                 return
 
             # LOGIN OK
@@ -276,7 +292,8 @@ def salvar_relatorio_mensal(
 # CONFIG
 # =========================================================
 st.set_page_config(
-    page_title="Gestão Financeira2",
+    page_title="Gestão Financeira",
+    page_icon="assets/images/logo.png",
     page_icon="💎",
     layout="wide",
     initial_sidebar_state="expanded"
