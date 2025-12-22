@@ -128,10 +128,20 @@ class DatabaseManager:
 
         records = df.to_dict(orient="records")
 
-        # 🔥 delete controlado (ok para dados operacionais)
-        supabase.table(table_name).delete().neq("id", "").execute()
+        if not records:
+            return True
 
-        if records:
-            supabase.table(table_name).insert(records).execute()
+        # 🔥 CONFIG usa UPSERT
+        if table_name == "config":
+            supabase.table("config") \
+                .upsert(records, on_conflict="Chave") \
+                .execute()
+            return True
+
+        # 🔥 DEMAIS TABELAS (operacionais)
+        supabase.table(table_name).delete().execute()
+
+        supabase.table(table_name).insert(records).execute()
 
         return True
+
