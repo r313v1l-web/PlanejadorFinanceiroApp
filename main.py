@@ -249,7 +249,7 @@ def salvar_relatorio_mensal(
 # CONFIG
 # =========================================================
 st.set_page_config(
-    page_title="Family Wealth Manager Pro",
+    page_title="Gestão Financeira2",
     page_icon="💎",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -257,92 +257,8 @@ st.set_page_config(
 
 
 # ===============================
-# INJEÇÃO DE CSS MODERNO
-# ===============================
-st.markdown("""
-<style>
-/* Import Google Font for a modern look */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-
-html, body, [class*="st-"] {
-    font-family: 'Inter', sans-serif;
-}
-
-/* Main App Container Styling */
-.main .block-container {
-    padding-top: 2rem;
-    padding-right: 2rem;
-    padding-left: 2rem;
-    padding-bottom: 2rem;
-}
-
-/* Titles and Headers */
-h1, h2, h3, h4, h5, h6 {
-    color: #1a237e; /* Deep Indigo for a professional touch */
-    font-weight: 600;
-}
-
-/* Buttons Styling */
-.stButton>button {
-    background-color: #42a5f5; /* Light Blue accent */
-    color: white;
-    border-radius: 8px;
-    border: none;
-    padding: 10px 20px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.stButton>button:hover {
-    background-color: #1e88e5; /* Darker Blue on hover */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    transform: translateY(-1px);
-}
-
-/* Input Fields (Text, Password, Selectbox) */
-.stTextInput>div>div>input,
-.stSelectbox>div>div>div>div,
-.stTextArea>div>div>textarea {
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    padding: 10px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
-    transition: border-color 0.3s;
-}
-
-.stTextInput>div>div>input:focus,
-.stSelectbox>div>div>div>div:focus,
-.stTextArea>div>div>textarea:focus {
-    border-color: #42a5f5;
-    box-shadow: 0 0 0 0.2rem rgba(66, 165, 245, 0.25);
-}
-
-/* Sidebar Styling */
-.css-1d391kg { /* Target the sidebar container */
-    background-color: #f5f5f5; /* Light gray background */
-    border-right: 1px solid #e0e0e0;
-}
-
-/* Dataframe Styling (for a cleaner look) */
-.stDataFrame {
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* Success, Warning, Error messages */
-.stAlert {
-    border-radius: 8px;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-# ===============================
 # CONTROLE DE LOGIN
 # ===============================
-
 
 if "logado" not in st.session_state:
     st.session_state["logado"] = False
@@ -2299,3 +2215,6 @@ else:
 
         st.session_state["msg"] = None
     st.caption("🚧 Esta aba será finalizada nos próximos blocos.")
+
+
+
