@@ -260,6 +260,7 @@ if not st.session_state["logado"]:
 # ===============================
 
 st.write(f"Bem-vindo, {st.session_state.get('nome', '')}")
+usuario = st.session_state["usuario"]
 
 
 
