@@ -32,13 +32,13 @@ class DatabaseManager:
         df = pd.DataFrame(res.data)
 
         df["usuario"] = df["usuario"].astype(str).str.strip().str.lower()
-        df["perfil"] = df["perfil"].fillna("user")
+        df["perfil"] = df["perfil"].fillna("user").astype(str).str.lower()
         df["ativo"] = df["ativo"].astype(str).str.strip().str.lower()
 
         return df
 
     # ===============================
-    # CREATE USER (🔥 ÚNICA FORMA CORRETA)
+    # CREATE USER  ✅ (INSERÇÃO PONTUAL)
     # ===============================
     @staticmethod
     def create_user(usuario, nome, senha_hash, perfil):
@@ -56,24 +56,42 @@ class DatabaseManager:
         return True
 
     # ===============================
-    # UPDATE USER
+    # UPDATE USER (perfil / ativo)
     # ===============================
     @staticmethod
-    def update_user(usuario, data: dict):
+    def update_user(usuario, perfil=None, ativo=None):
         supabase = DatabaseManager._get_client()
 
-        # remove campos nulos
-        clean_data = {k: v for k, v in data.items() if v is not None}
+        data = {}
+        if perfil is not None:
+            data["perfil"] = perfil
+        if ativo is not None:
+            data["ativo"] = ativo
+
+        if data:
+            supabase.table("usuarios") \
+                .update(data) \
+                .eq("usuario", usuario) \
+                .execute()
+
+        return True
+
+    # ===============================
+    # UPDATE PASSWORD
+    # ===============================
+    @staticmethod
+    def update_password(usuario, senha_hash):
+        supabase = DatabaseManager._get_client()
 
         supabase.table("usuarios") \
-            .update(clean_data) \
+            .update({"senha": senha_hash}) \
             .eq("usuario", usuario) \
             .execute()
 
         return True
 
     # ===============================
-    # DADOS GERAIS
+    # LOAD DADOS DO SISTEMA
     # ===============================
     @staticmethod
     def load_all(usuario):
@@ -96,3 +114,24 @@ class DatabaseManager:
             dados[table] = pd.DataFrame(res.data) if res.data else pd.DataFrame()
 
         return dados
+
+    # ===============================
+    # SAVE GENÉRICO (NÃO USAR PARA USUÁRIOS)
+    # ===============================
+    @staticmethod
+    def save(table_name, df, usuario):
+        supabase = DatabaseManager._get_client()
+
+        # limpeza JSON-safe
+        df = df.replace([float("inf"), float("-inf")], None)
+        df = df.where(pd.notna(df), None)
+
+        records = df.to_dict(orient="records")
+
+        # 🔥 delete controlado (ok para dados operacionais)
+        supabase.table(table_name).delete().neq("id", "").execute()
+
+        if records:
+            supabase.table(table_name).insert(records).execute()
+
+        return True
