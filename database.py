@@ -99,36 +99,21 @@ class DatabaseManager:
             "controle_gastos"
         ]
 
-        @staticmethod
-        def load_all(usuario):
-            supabase = DatabaseManager._get_client()
-            dados = {}
+        for table in tables:
+            res = supabase.table(table) \
+                .select("*") \
+                .eq("usuario", usuario) \
+                .execute()
 
-            tables = [
-                "historico",
-                "investimentos",
-                "sonhos_projetos",
-                "config",
-                "categorias",
-                "fluxo_fixo",
-                "relatorios_historicos",
-                "controle_gastos"
-            ]
+            df = pd.DataFrame(res.data) if res.data else pd.DataFrame()
 
-            for table in tables:
-                res = supabase.table(table) \
-                    .select("*") \
-                    .eq("usuario", usuario) \
-                    .execute()
+            # 🔒 NORMALIZA SEMPRE
+            if not df.empty:
+                df.columns = df.columns.str.lower()
 
-                if res.data:
-                    df = pd.DataFrame(res.data)
-                    df.columns = df.columns.str.lower()   # 🔥 ESSENCIAL
-                    dados[table] = df
-                else:
-                    dados[table] = pd.DataFrame()
+            dados[table] = df
 
-            return dados
+        return dados
 
     # ===============================
     # SAVE GENÉRICO (POR USUÁRIO)

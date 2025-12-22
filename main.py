@@ -193,7 +193,7 @@ def salvar_relatorio_mensal(
     df_hist = dados.get("relatorios_historicos", pd.DataFrame()).copy()
 
     # 🔒 Blindagem de colunas
-    if "Mes" not in df_hist.columns:
+    if "mes" not in df_hist.columns:
         df_hist["mes"] = ""
 
     if "status" not in df_hist.columns:
@@ -212,13 +212,13 @@ def salvar_relatorio_mensal(
     df_hist = df_hist[df_hist["mes"] != mes_ref]
 
     novo = pd.DataFrame([{
-        "Mes": mes_ref,
-        "Patrimonio": patrimonio,
-        "Saldo_Fixo": saldo_fixo,
-        "Saldo_Variavel": saldo_variavel,
-        "Perc_Meta": perc_meta,
+        "mes": mes_ref,
+        "patrimonio": patrimonio,
+        "saldo_fixo": saldo_fixo,
+        "saldo_variavel": saldo_variavel,
+        "perc_meta": perc_meta,
         "status": status,
-        "Texto_Executivo": texto_exec
+        "texto_executivo": texto_exec
     }])
 
     df_final = pd.concat([df_hist, novo], ignore_index=True)
@@ -790,6 +790,7 @@ elif menu == "💰 INVESTIMENTOS":
                     "categoria": categoria,
                     "Observacao": observacao
                 }])
+                
 
                 df = dados["investimentos"].copy()
                 df = pd.concat([df, novo], ignore_index=True)
@@ -979,7 +980,12 @@ elif menu == "🏢 FLUXOS FIXOS":
                     "Observacao": observacao
                 }])
 
-                df_fluxo = dados["fluxo_fixo"].copy()
+                df_fluxo = dados["fluxo_fixo"].copy() if not dados["fluxo_fixo"].empty else pd.DataFrame()
+
+                # 🔒 blindagem de schema
+                for col in ["nome", "tipo", "valor", "categoria"]:
+                    if col not in df_fluxo.columns:
+                        df_fluxo[col] = ""
                 df_fluxo = pd.concat([df_fluxo, novo], ignore_index=True)
                 df_fluxo.columns = df_fluxo.columns.str.lower()   # 🔥 ESSENCIAL
 
@@ -994,7 +1000,12 @@ elif menu == "🏢 FLUXOS FIXOS":
 
     if not dados["fluxo_fixo"].empty:
 
-        df_fluxo = dados["fluxo_fixo"].copy()
+        df_fluxo = dados["fluxo_fixo"].copy() if not dados["fluxo_fixo"].empty else pd.DataFrame()
+
+        # 🔒 blindagem de schema
+        for col in ["nome", "tipo", "valor", "categoria"]:
+            if col not in df_fluxo.columns:
+                df_fluxo[col] = ""
         df_fluxo["Label"] = (
             df_fluxo["nome"] + " | " +
             df_fluxo["tipo"] + " | R$ " +
@@ -1277,7 +1288,12 @@ elif menu == "🏷️ CATEGORIAS":
     if "categorias" not in dados or dados["categorias"].empty:
         df_cat = pd.DataFrame(columns=["nome", "tipo", "ativa"])
     else:
-        df_cat = dados["categorias"].copy()
+        df_cat = dados["categorias"].copy() if not dados["categorias"].empty else pd.DataFrame()
+
+        # 🔒 blindagem obrigatória
+        for col in ["nome", "tipo", "ativa"]:
+            if col not in df_cat.columns:
+                df_cat[col] = True if col == "ativa" else ""
 
     # ---------------- LISTA ----------------
     st.subheader("📋 Categorias Cadastradas")
@@ -1823,11 +1839,19 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
         st.divider()
         st.subheader("📜 Relatórios Anteriores")
 
-        df_hist = dados["relatorios_historicos"].sort_values("Mes", ascending=False)
+
+        df_hist = dados.get("relatorios_historicos", pd.DataFrame()).copy()
+
+        # 🔒 blindagem de schema
+        for col in ["mes", "status", "patrimonio", "saldo_fixo", "saldo_variavel", "perc_meta"]:
+            if col not in df_hist.columns:
+                df_hist[col] = None
+
+        df_hist = dados["relatorios_historicos"].sort_values("mes", ascending=False)
 
         st.dataframe(
             df_hist[[
-                "Mes",
+                "mes",
                 "Patrimonio",
                 "Saldo_Fixo",
                 "Saldo_Variavel",
