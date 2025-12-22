@@ -256,6 +256,136 @@ st.set_page_config(
 )
 
 
+# =========================================================
+# CSS CUSTOMIZADO - VERSÃO SEGURA
+# =========================================================
+st.markdown("""
+<style>
+    /* APENAS ESTILOS SEGUROS - NÃO AFETA FUNCIONALIDADE */
+    
+    /* 1. FUNDO GERAL SUAVE */
+    .stApp {
+        background-color: #f8fafc;
+    }
+    
+    /* 2. SIDEBAR - SOMENTE FUNDO */
+    section[data-testid="stSidebar"] > div {
+        background-color: #1e293b;
+    }
+    
+    /* 3. BOTÕES ARREDONDADOS */
+    .stButton > button {
+        border-radius: 8px;
+        border: none;
+        font-weight: 500;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        transition: transform 0.2s ease;
+    }
+    
+    /* 4. INPUTS ARREDONDADOS */
+    .stTextInput input,
+    .stSelectbox select,
+    .stNumberInput input {
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+    
+    /* 5. HEADERS COLORIDOS */
+    h1 {
+        color: #1e3a8a;
+        border-bottom: 3px solid #3b82f6;
+        padding-bottom: 10px;
+    }
+    
+    h2 {
+        color: #334155;
+        border-left: 4px solid #10b981;
+        padding-left: 10px;
+    }
+    
+    h3 {
+        color: #475569;
+    }
+    
+    /* 6. MÉTRICAS COM CARDS LEVES */
+    [data-testid="stMetricValue"] {
+        font-size: 28px !important;
+        font-weight: 700 !important;
+        color: #1e293b !important;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-size: 14px !important;
+        color: #64748b !important;
+        font-weight: 600 !important;
+    }
+    
+    /* 7. DIVIDERS MAIS VISÍVEIS */
+    hr {
+        border-color: #e2e8f0;
+        margin: 2rem 0;
+    }
+    
+    /* 8. DATA FRAMES MAIS BONITOS */
+    .dataframe {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .dataframe thead th {
+        background-color: #f1f5f9;
+        font-weight: 600;
+        color: #334155;
+    }
+    
+    /* 9. TABS MAIS BONITAS */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #f1f5f9;
+        border-radius: 10px;
+        padding: 4px;
+        gap: 2px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        padding: 10px 20px;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* 10. EXPANDERS */
+    .streamlit-expanderHeader {
+        background-color: #f8fafc;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    /* 11. ALERTS COLORIDOS */
+    .stAlert {
+        border-radius: 10px;
+        border-left: 4px solid;
+    }
+    
+    /* 12. PROGRESS BAR */
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, #3b82f6, #10b981);
+    }
+    
+    /* 13. LOGIN PAGE - APENAS PARA A TELA DE LOGIN */
+    .stApp > div:first-child {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
 # ===============================
 # CONTROLE DE LOGIN
 # ===============================
