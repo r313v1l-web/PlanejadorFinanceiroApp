@@ -96,16 +96,14 @@ def tela_admin_usuarios():
                 bcrypt.gensalt()
             ).decode("utf-8")
 
-            novo = pd.DataFrame([{
-                "usuario": novo_usuario,
-                "senha": senha_hash,
-                "nome": novo_nome,
-                "perfil": novo_perfil,
-                "ativo": "ativo"   # 🔥 PADRÃO DO SEU SISTEMA
-            }])
+            # ✅ AQUI É O LUGAR CORRETO
+            DatabaseManager.create_user(
+                novo_usuario,
+                novo_nome,
+                senha_hash,
+                novo_perfil
+            )
 
-            df = pd.concat([df, novo], ignore_index=True)
-            DatabaseManager.save_users(df)
             st.success("Usuário criado com sucesso.")
             st.rerun()
 
@@ -151,16 +149,31 @@ def tela_admin_usuarios():
             )
 
     if st.button("💾 Salvar Alterações"):
-        for usuario, nova_senha in senhas_para_reset.items():
-            idx = df_edit[df_edit["usuario"] == usuario].index[0]
-            df_edit.at[idx, "senha"] = bcrypt.hashpw(
-                nova_senha.encode("utf-8"),
-                bcrypt.gensalt()
-            ).decode("utf-8")
 
-        DatabaseManager.save_users(df_edit)
+        for _, row in df_edit.iterrows():
+
+            # Atualizar perfil e status
+            DatabaseManager.update_user(
+                usuario=row["usuario"],
+                perfil=row["perfil"],
+                ativo=row["ativo"]
+            )
+
+            # Atualizar senha (se houve reset)
+            if row["usuario"] in senhas_para_reset:
+                senha_hash = bcrypt.hashpw(
+                    senhas_para_reset[row["usuario"]].encode("utf-8"),
+                    bcrypt.gensalt()
+                ).decode("utf-8")
+
+                DatabaseManager.update_password(
+                    usuario=row["usuario"],
+                    senha_hash=senha_hash
+                )
+
         st.success("Usuários atualizados.")
         st.rerun()
+
 
 # =========================================================
 # FUNÇÃO: SALVAR RELATÓRIO MENSAL
@@ -185,15 +198,7 @@ def salvar_relatorio_mensal(
         if not existente.empty and "Finalizado" in existente["Status"].values:
             return False, "Relatório já finalizado para este mês."
 
-    novo = pd.DataFrame([{
-        "Mes": mes_ref,
-        "Patrimonio": patrimonio,
-        "Saldo_Fixo": saldo_fixo,
-        "Saldo_Variavel": saldo_variavel,
-        "Perc_Meta": perc_meta,
-        "Texto_Executivo": texto_exec,
-        "Status": status
-    }])
+
 
     # Remove rascunho anterior do mesmo mês
     df_hist = df_hist[df_hist["Mes"] != mes_ref]

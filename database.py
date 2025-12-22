@@ -5,18 +5,6 @@ from supabase import create_client
 
 class DatabaseManager:
 
-    TABLE_MAP = {
-        "usuarios": "usuarios",
-        "historico": "historico",
-        "investimentos": "investimentos",
-        "sonhos_projetos": "sonhos_projetos",
-        "config": "config",
-        "categorias": "categorias",
-        "fluxo_fixo": "fluxo_fixo",
-        "relatorios_historicos": "relatorios_historicos",
-        "controle_gastos": "controle_gastos"
-    }
-
     # ===============================
     # CONEXÃO SUPABASE
     # ===============================
@@ -35,6 +23,7 @@ class DatabaseManager:
         supabase = DatabaseManager._get_client()
 
         res = supabase.table("usuarios").select("*").execute()
+
         if not res.data:
             return pd.DataFrame(
                 columns=["usuario", "senha", "nome", "perfil", "ativo"]
@@ -42,37 +31,46 @@ class DatabaseManager:
 
         df = pd.DataFrame(res.data)
 
-        df["usuario"] = df["usuario"].str.strip().str.lower()
+        df["usuario"] = df["usuario"].astype(str).str.strip().str.lower()
         df["perfil"] = df["perfil"].fillna("user")
-        df["ativo"] = df["ativo"].str.strip().str.lower()
+        df["ativo"] = df["ativo"].astype(str).str.strip().str.lower()
 
         return df
 
+    # ===============================
+    # CREATE USER (🔥 ÚNICA FORMA CORRETA)
+    # ===============================
     @staticmethod
-    def save_users(df):
-        try:
-            # ===============================
-            # 1️⃣ LIMPEZA OBRIGATÓRIA (JSON SAFE)
-            # ===============================
-            df = df.replace([float("inf"), float("-inf")], None)
-            df = df.where(pd.notna(df), None)
+    def create_user(usuario, nome, senha_hash, perfil):
+        supabase = DatabaseManager._get_client()
 
-            # ===============================
-            # 2️⃣ CONVERTE PARA LISTA DE DICTS
-            # ===============================
-            records = df.to_dict(orient="records")
+        payload = {
+            "usuario": usuario.strip().lower(),
+            "nome": nome.strip(),
+            "senha": senha_hash,
+            "perfil": perfil or "user",
+            "ativo": "ativo"
+        }
 
-            # ===============================
-            # 3️⃣ SALVA NO SUPABASE
-            # ===============================
-            supabase.table("usuarios").insert(records).execute()
+        supabase.table("usuarios").insert(payload).execute()
+        return True
 
-            return True
+    # ===============================
+    # UPDATE USER
+    # ===============================
+    @staticmethod
+    def update_user(usuario, data: dict):
+        supabase = DatabaseManager._get_client()
 
-        except Exception as e:
-            st.error(f"❌ Erro ao salvar usuários: {e}")
-            return False
+        # remove campos nulos
+        clean_data = {k: v for k, v in data.items() if v is not None}
 
+        supabase.table("usuarios") \
+            .update(clean_data) \
+            .eq("usuario", usuario) \
+            .execute()
+
+        return True
 
     # ===============================
     # DADOS GERAIS
@@ -82,27 +80,19 @@ class DatabaseManager:
         supabase = DatabaseManager._get_client()
         dados = {}
 
-        for key, table in DatabaseManager.TABLE_MAP.items():
-            if key == "usuarios":
-                continue
+        tables = [
+            "historico",
+            "investimentos",
+            "sonhos_projetos",
+            "config",
+            "categorias",
+            "fluxo_fixo",
+            "relatorios_historicos",
+            "controle_gastos"
+        ]
 
+        for table in tables:
             res = supabase.table(table).select("*").execute()
-            dados[key] = pd.DataFrame(res.data) if res.data else pd.DataFrame()
+            dados[table] = pd.DataFrame(res.data) if res.data else pd.DataFrame()
 
         return dados
-
-    @staticmethod
-    def save(table_name, df, usuario):
-        table = DatabaseManager.TABLE_MAP.get(table_name)
-        if not table:
-            raise ValueError("Tabela inválida")
-
-        supabase = DatabaseManager._get_client()
-
-        supabase.table(table).delete().neq("id", "").execute()
-
-        records = df.to_dict(orient="records")
-        if records:
-            supabase.table(table).insert(records).execute()
-
-        return True
