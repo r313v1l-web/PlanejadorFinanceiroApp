@@ -12,6 +12,17 @@ import bcrypt
 
 
 
+# =========================================================
+# NORMALIZADOR
+# =========================================================
+
+
+def normalizar_df(df):
+    if df is None or df.empty:
+        return df
+    df.columns = df.columns.str.lower()
+    return df
+
 
 # =========================================================
 # AUTENTICAÇÃO
@@ -278,6 +289,8 @@ if "dados" not in st.session_state:
     st.session_state["dados"] = DatabaseManager.load_all(usuario)
 
 dados = st.session_state["dados"]
+for chave in dados:
+    dados[chave] = normalizar_df(dados[chave])
 
 
 # =========================================================
@@ -399,7 +412,7 @@ def projetar_patrimonio(
 
         resultados.append({
             "data": data_ref,
-            "Patrimonio": patrimonio,
+            "patrimonio": patrimonio,
             "Rendimento": rendimento,
             "Aporte_Fixo": saldo_fixo_mensal if i > 0 else 0,
             "Meta_Atingida": patrimonio >= meta_patrimonio
@@ -1188,7 +1201,7 @@ elif menu == "📊 DASHBOARD":
         fig = px.line(
             df_projecao,
             x="data",
-            y="Patrimonio",
+            y="patrimonio",
             title="Evolução do Patrimônio",
             markers=True
         )
@@ -1712,7 +1725,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
     fig_comp = px.line(
         df_plot,
         x="data",
-        y="Patrimonio",
+        y="patrimonio",
         color="Cenário",
         markers=True,
         title="Comparação de Crescimento Patrimonial"
@@ -1852,16 +1865,16 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
         st.dataframe(
             df_hist[[
                 "mes",
-                "Patrimonio",
-                "Saldo_Fixo",
-                "Saldo_Variavel",
-                "Perc_Meta",
+                "patrimonio",
+                "saldo_fixo",
+                "saldo_variavel",
+                "perc_meta",
                 "status"
             ]].style.format({
-                "Patrimonio": "R$ {:,.2f}",
-                "Saldo_Fixo": "R$ {:,.2f}",
-                "Saldo_Variavel": "R$ {:,.2f}",
-                "Perc_Meta": "{:.1f}%"
+                "patrimonio": "R$ {:,.2f}",
+                "saldo_fixo": "R$ {:,.2f}",
+                "saldo_variavel": "R$ {:,.2f}",
+                "perc_meta": "{:.1f}%"
             }),
             use_container_width=True
         )
