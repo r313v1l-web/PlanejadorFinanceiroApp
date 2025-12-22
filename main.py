@@ -29,7 +29,7 @@ def normalizar_df(df):
 # =========================================================
 
 def tela_login():
-    st.title("🔐 Login")
+    st.markdown("🔐 Login")
 
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")  # ✅ AGORA COM TYPE
@@ -72,7 +72,7 @@ def tela_login():
 
 
 def tela_admin_usuarios():
-    st.title("👥 Gestão de Usuários")
+    st.markdown("👥 Gestão de Usuários")
 
     df = DatabaseManager.load_users()
 
@@ -255,7 +255,103 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+st.markdown("""
+<style>
 
+/* ====== RESET BÁSICO ====== */
+html, body, [class*="css"]  {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* ====== FUNDO GERAL ====== */
+.stApp {
+    background-color: #0e1117;
+    color: #e6e6e6;
+}
+
+/* ====== SIDEBAR ====== */
+section[data-testid="stSidebar"] {
+    background-color: #111827;
+    border-right: 1px solid #1f2933;
+}
+
+/* Título sidebar */
+section[data-testid="stSidebar"] h2 {
+    color: #f9fafb;
+}
+
+/* ====== CARDS (metric) ====== */
+div[data-testid="metric-container"] {
+    background: linear-gradient(145deg, #111827, #0b1220);
+    border: 1px solid #1f2933;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+/* Valor do metric */
+div[data-testid="metric-container"] > div:nth-child(2) {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* ====== BOTÕES ====== */
+button[kind="primary"] {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    border-radius: 8px;
+    border: none;
+}
+
+button[kind="secondary"] {
+    border-radius: 8px;
+}
+
+/* ====== INPUTS ====== */
+input, textarea, select {
+    background-color: #020617 !important;
+    color: #e5e7eb !important;
+    border-radius: 8px !important;
+    border: 1px solid #1f2933 !important;
+}
+
+/* ====== DATAFRAME ====== */
+div[data-testid="stDataFrame"] {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #1f2933;
+}
+
+/* ====== EXPANDERS ====== */
+details {
+    border-radius: 10px;
+    border: 1px solid #1f2933;
+    padding: 8px;
+}
+
+/* ====== DIVISOR ====== */
+hr {
+    border: none;
+    border-top: 1px solid #1f2933;
+}
+
+/* ====== TOAST / ALERTAS ====== */
+.stAlert {
+    border-radius: 10px;
+}
+
+/* ====== SCROLLBAR ====== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: #1f2933;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-track {
+    background: #020617;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 
 # ===============================
@@ -710,7 +806,7 @@ with st.sidebar:
 # =========================================================
 if menu == "📝 LANÇAMENTOS":
 
-    st.title("📝 Registro de Transações")
+    st.markdown("📝 Registro de Transações")
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -777,7 +873,7 @@ if menu == "📝 LANÇAMENTOS":
 # =========================================================
 elif menu == "💰 INVESTIMENTOS":
 
-    st.title("💰 Carteira de Investimentos")
+    st.markdown("💰 Carteira de Investimentos")
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -881,7 +977,7 @@ elif menu == "💰 INVESTIMENTOS":
 # =========================================================
 elif menu == "🎯 SONHOS & METAS":
 
-    st.title("🎯 Sonhos & Metas")
+    st.markdown("🎯 Sonhos & Metas")
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -982,7 +1078,7 @@ elif menu == "🎯 SONHOS & METAS":
 # =========================================================
 elif menu == "🏢 FLUXOS FIXOS":
 
-    st.title("🏢 Fluxos Fixos Mensais")
+    st.markdown("🏢 Fluxos Fixos Mensais")
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -1189,7 +1285,7 @@ elif menu == "🏢 FLUXOS FIXOS":
 
 elif menu == "💸 CONTROLE DE GASTOS":
 
-    st.title("💸 Controle de Gastos Mensais")
+    st.markdown("💸 Controle de Gastos Mensais")
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -1278,7 +1374,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
 
 elif menu == "📊 DASHBOARD":
 
-    st.title("📊 Dashboard Financeiro")
+    st.markdown("📊 Dashboard Financeiro")
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -1478,7 +1574,7 @@ elif menu == "📊 DASHBOARD":
 
 elif menu == "🏷️ CATEGORIAS":
 
-    st.title("🏷️ Gestão de Categorias")
+    st.markdown("🏷️ Gestão de Categorias")
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -1681,7 +1777,7 @@ elif menu == "🏷️ CATEGORIAS":
 
 elif menu == "⚙️ CONFIGURAÇÕES":
 
-    st.title("⚙️ Configurações do Sistema")
+    st.markdown("⚙️ Configurações do Sistema")
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -1781,7 +1877,7 @@ elif menu == "👥 USUÁRIOS":
 
 elif menu == "📄 RELATÓRIO EXECUTIVO":
 
-    st.title("📄 Relatório Financeiro Executivo")
+    st.markdown("📄 Relatório Financeiro Executivo")
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -2206,7 +2302,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
 # PLACEHOLDERS (não quebram)
 # =========================================================
 else:
-    st.title(menu)
+    st.markdown(menu)
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
