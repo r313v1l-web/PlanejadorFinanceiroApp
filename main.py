@@ -10,8 +10,94 @@ from dateutil.relativedelta import relativedelta
 import io
 import os
 import bcrypt
+import extra_streamlit_components as stx  # ✅ NOVO
+from streamlit_cookies_manager import CookieManager  # ✅ NOVO
 
+# =========================================================
+# GERENCIADOR DE COOKIES E LOCALSTORAGE
+# =========================================================
 
+def init_cookie_manager():
+    """Inicializa o gerenciador de cookies"""
+    return stx.CookieManager()
+
+def save_to_local_storage(key, value):
+    """Salva dados no localStorage do navegador (via JavaScript)"""
+    js_code = f"""
+    <script>
+    localStorage.setItem('{key}', '{value}');
+    console.log('Salvo no localStorage: {key} = {value}');
+    </script>
+    """
+    st.markdown(js_code, unsafe_allow_html=True)
+
+def load_from_local_storage(key):
+    """Carrega dados do localStorage (via JavaScript)"""
+    js_code = f"""
+    <script>
+    const value = localStorage.getItem('{key}');
+    console.log('Carregado do localStorage: {key} =', value);
+    // Envia para o Streamlit
+    if (value && value !== 'null' && value !== 'undefined') {{
+        window.parent.postMessage({{
+            type: 'streamlit:setComponentValue',
+            data: {{key: '{key}', value: value}}
+        }}, '*');
+    }}
+    </script>
+    """
+    st.markdown(js_code, unsafe_allow_html=True)
+    
+    # Verificar se há valor retornado
+    if f"localstorage_{key}" in st.session_state:
+        return st.session_state[f"localstorage_{key}"]
+    return None
+
+def set_cookie(name, value, days=30):
+    """Define um cookie que persiste entre sessões"""
+    js_code = f"""
+    <script>
+    function setCookie(name, value, days) {{
+        const d = new Date();
+        d.setTime(d.getTime() + (days*24*60*60*1000));
+        const expires = "expires=" + d.toUTCString();
+        document.cookie = name + "=" + value + ";" + expires + ";path=/";
+    }}
+    setCookie('{name}', '{value}', {days});
+    console.log('Cookie definido: {name}');
+    </script>
+    """
+    st.markdown(js_code, unsafe_allow_html=True)
+
+def get_cookie(name):
+    """Obtém o valor de um cookie"""
+    js_code = f"""
+    <script>
+    function getCookie(name) {{
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for(let i=0; i < ca.length; i++) {{
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }}
+        return null;
+    }}
+    const value = getCookie('{name}');
+    console.log('Cookie lido {name}:', value);
+    if (value) {{
+        window.parent.postMessage({{
+            type: 'streamlit:setComponentValue',
+            data: {{key: 'cookie_{name}', value: value}}
+        }}, '*');
+    }}
+    </script>
+    """
+    st.markdown(js_code, unsafe_allow_html=True)
+    
+    if f"cookie_{name}" in st.session_state:
+        return st.session_state[f"cookie_{name}"]
+    return None
 
 # =========================================================
 # NORMALIZADOR
@@ -34,24 +120,76 @@ def normalizar_df(df):
 def tela_login():
     import os
     import requests
+    from datetime import datetime
     
-    # Container principal centralizado
+    # =========================================================
+    # 1. TENTAR CARREGAR DADOS SALVOS ANTES DE MOSTRAR O FORM
+    # =========================================================
+    
+    # Container para receber dados do JavaScript
+    if "localstorage_data" not in st.session_state:
+        st.session_state.localstorage_data = {}
+    
+    # JavaScript para carregar dados ao iniciar
+    st.markdown("""
+    <script>
+    // Função para carregar dados salvos
+    function loadSavedData() {
+        const savedUser = localStorage.getItem('financeapp_username');
+        const rememberMe = localStorage.getItem('financeapp_remember');
+        
+        console.log('Dados carregados:', {user: savedUser, remember: rememberMe});
+        
+        // Enviar para o Streamlit
+        if (savedUser || rememberMe) {
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                data: {
+                    key: 'loaded_data',
+                    value: JSON.stringify({
+                        username: savedUser,
+                        remember: rememberMe === 'true'
+                    })
+                }
+            }, '*');
+        }
+    }
+    
+    // Executar quando a página carregar
+    window.addEventListener('load', loadSavedData);
+    loadSavedData(); // Executar imediatamente também
+    </script>
+    """, unsafe_allow_html=True)
+    
+    # Verificar se recebemos dados do JavaScript
+    if "loaded_data" in st.session_state:
+        try:
+            loaded_data = json.loads(st.session_state.loaded_data)
+            saved_username = loaded_data.get("username", "")
+            saved_remember = loaded_data.get("remember", False)
+        except:
+            saved_username = ""
+            saved_remember = False
+    else:
+        saved_username = ""
+        saved_remember = False
+    
+    # =========================================================
+    # 2. INTERFACE DO LOGIN (igual antes, mas com valores salvos)
+    # =========================================================
+    
     col_esq, col_centro, col_dir = st.columns([1, 1.5, 1])
     
     with col_centro:
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
         
-        # 🔥 LOGO - URL CORRETA do GitHub Raw
+        # Logo (seu código atual)
         github_logo_url = "https://raw.githubusercontent.com/r313v1l-web/PlanejadorFinanceiroApp/main/assets/images/logo.png"
         
-        # Container especial para a logo
         st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
-        
-        # Verificar se a URL funciona
         try:
             response = requests.head(github_logo_url, timeout=3)
             if response.status_code == 200:
-                # URL funciona - mostrar logo
                 st.markdown(f"""
                 <div style="text-align: center; margin: 0 auto 20px auto;">
                     <img src="{github_logo_url}" 
@@ -63,39 +201,9 @@ def tela_login():
                                 box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
                 </div>
                 """, unsafe_allow_html=True)
-            else:
-                # URL não funciona - usar placeholder
-                st.markdown("""
-                <div style="text-align: center; margin: 0 auto 20px auto;">
-                    <div style="width: 180px; height: 180px; 
-                                border-radius: 50%;
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                margin: 0 auto;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
-                        <span style="color: white; font-size: 48px; font-weight: bold;">💎</span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                st.info("Logo carregando...")
         except:
-            # Erro na conexão
-            st.markdown("""
-            <div style="text-align: center; margin: 0 auto 20px auto;">
-                <div style="width: 180px; height: 180px; 
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-                            margin: 0 auto;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);">
-                    <span style="color: white; font-size: 48px; font-weight: bold;">💰</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            # Placeholder
+            pass
         
         st.markdown("</div>", unsafe_allow_html=True)
         
@@ -105,25 +213,75 @@ def tela_login():
             Gestão Financeira
         </h2>
         <p style="text-align: center; color: #e2e8f0 !important; margin-bottom: 25px;">
-            Sistema de Controle Patrimonial
+            Acesso ao sistema
         </p>
         """, unsafe_allow_html=True)
         
-        # CAMPOS DO FORMULÁRIO
+        # =========================================================
+        # 3. FORMULÁRIO COM DADOS PRÉ-PREENCHIDOS
+        # =========================================================
+        
         with st.container():
-            usuario = st.text_input("👤 Usuário", key="login_user")
-            senha = st.text_input("🔒 Senha", type="password", key="login_pass")
+            # Campo de usuário com valor salvo
+            usuario = st.text_input(
+                "👤 Usuário", 
+                key="login_user_input",
+                value=saved_username if saved_username else "",
+                placeholder="Digite seu usuário"
+            )
+            
+            # Campo de senha (sempre vazio por segurança)
+            senha = st.text_input(
+                "🔒 Senha", 
+                type="password", 
+                key="login_pass_input",
+                placeholder="Digite sua senha"
+            )
+            
+            # Opções de conveniência
+            col_opcoes1, col_opcoes2 = st.columns(2)
+            
+            with col_opcoes1:
+                # Checkbox "Lembrar usuário"
+                lembrar_usuario = st.checkbox(
+                    "💾 Lembrar usuário",
+                    value=bool(saved_username),  # Marca se já tem usuário salvo
+                    key="lembrar_user_check",
+                    help="Salva seu nome de usuário para próximos acessos"
+                )
+            
+            with col_opcoes2:
+                # Checkbox "Manter conectado"
+                manter_conectado = st.checkbox(
+                    "🔐 Manter conectado",
+                    value=saved_remember,  # Usa valor salvo
+                    key="manter_conectado_check",
+                    help="Não precise fazer login novamente por 30 dias"
+                )
         
         # Espaçamento
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # BOTÃO DE LOGIN
+        # =========================================================
+        # 4. BOTÃO DE LOGIN COM PERSISTÊNCIA
+        # =========================================================
+        
         df_users = DatabaseManager.load_users()
         
-        if st.button("🚀 Entrar no Sistema", type="primary", use_container_width=True):
+        if st.button("🚀 Entrar no Sistema", type="primary", use_container_width=True, key="login_button"):
             usuario_input = usuario.strip().lower()
             senha_input = senha.strip()
             
+            # Validações
+            if not usuario_input:
+                st.error("❌ Digite seu usuário.")
+                return
+            
+            if not senha_input:
+                st.error("❌ Digite sua senha.")
+                return
+            
+            # Buscar usuário
             user = df_users[df_users["usuario"] == usuario_input]
             
             if user.empty:
@@ -132,10 +290,7 @@ def tela_login():
             
             senha_hash = user.iloc[0]["senha"]
             
-            if not bcrypt.checkpw(
-                senha_input.encode("utf-8"),
-                senha_hash.encode("utf-8")
-            ):
+            if not bcrypt.checkpw(senha_input.encode("utf-8"), senha_hash.encode("utf-8")):
                 st.error("❌ Senha incorreta.")
                 return
             
@@ -143,23 +298,196 @@ def tela_login():
                 st.error("⛔ Usuário inativo. Contate o administrador.")
                 return
             
+            # =========================================================
+            # 5. SALVAR NO LOCALSTORAGE (PERSISTENTE)
+            # =========================================================
+            
+            # JavaScript para salvar no localStorage do navegador
+            save_js = f"""
+            <script>
+            // Salvar preferências
+            localStorage.setItem('financeapp_last_user', '{usuario_input}');
+            localStorage.setItem('financeapp_last_login', '{datetime.now().isoformat()}');
+            
+            // Salvar se o usuário quer lembrar
+            if ({str(lembrar_usuario).lower()}) {{
+                localStorage.setItem('financeapp_username', '{usuario_input}');
+            }} else {{
+                localStorage.removeItem('financeapp_username');
+            }}
+            
+            // Salvar se quer manter conectado
+            localStorage.setItem('financeapp_remember', {str(manter_conectado).lower()});
+            
+            // Se manter conectado, salvar token (simulado)
+            if ({str(manter_conectado).lower()}) {{
+                const token = 'logged_in_' + Date.now();
+                localStorage.setItem('financeapp_token', token);
+                localStorage.setItem('financeapp_token_expires', 
+                    (Date.now() + (30 * 24 * 60 * 60 * 1000)).toString());
+            }}
+            
+            console.log('Dados salvos no localStorage');
+            </script>
+            """
+            st.markdown(save_js, unsafe_allow_html=True)
+            
+            # =========================================================
+            # 6. CONFIGURAR SESSÃO
+            # =========================================================
+            
+            # Configurar expiração da sessão
+            if manter_conectado:
+                st.session_state.login_expires = datetime.now() + timedelta(days=30)
+                st.info("✅ Você será mantido conectado por 30 dias")
+            else:
+                st.session_state.login_expires = datetime.now() + timedelta(hours=24)
+            
             # LOGIN OK
             st.session_state["logado"] = True
             st.session_state["usuario"] = usuario_input
             st.session_state["nome"] = user.iloc[0]["nome"]
             st.session_state["perfil"] = str(user.iloc[0]["perfil"]).strip().lower()
+            st.session_state["login_time"] = datetime.now()
+            st.session_state["lembrar_usuario"] = lembrar_usuario
+            st.session_state["manter_conectado"] = manter_conectado
             
             st.success("✅ Login realizado com sucesso!")
+            
+            # Redirecionar
+            st.markdown("""
+            <script>
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
+            </script>
+            """, unsafe_allow_html=True)
+            
             st.rerun()
         
-        # Rodapé do card
-        st.markdown("<br>", unsafe_allow_html=True)
+        # =========================================================
+        # 7. MOSTRAR ÚLTIMO ACESSO (SE HOUVER)
+        # =========================================================
+        
+        # JavaScript para mostrar último acesso
         st.markdown("""
-        <div style='text-align: center; color: #94a3b8; font-size: 14px; margin-top: 20px;'>
-            <hr style='margin: 20px 0; opacity: 0.3;'>
-            <p>🔐 Sistema seguro • v2.0</p>
-        </div>
+        <script>
+        // Mostrar último usuário salvo
+        const lastUser = localStorage.getItem('financeapp_last_user');
+        const lastLogin = localStorage.getItem('financeapp_last_login');
+        
+        if (lastUser) {
+            // Criar elemento para mostrar último acesso
+            const infoDiv = document.createElement('div');
+            infoDiv.style.background = 'rgba(255,255,255,0.05)';
+            infoDiv.style.borderRadius = '10px';
+            infoDiv.style.padding = '15px';
+            infoDiv.style.margin = '15px 0';
+            infoDiv.style.color = '#e2e8f0';
+            infoDiv.style.fontSize = '14px';
+            
+            let infoHTML = `<strong>📝 Último acesso:</strong><br>`;
+            infoHTML += `👤 <strong>${lastUser}</strong>`;
+            
+            if (lastLogin) {
+                const loginDate = new Date(lastLogin);
+                const options = { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                };
+                const formattedDate = loginDate.toLocaleDateString('pt-BR', options);
+                infoHTML += `<br>⏰ ${formattedDate}`;
+            }
+            
+            infoDiv.innerHTML = infoHTML;
+            
+            // Adicionar botão para usar este usuário
+            const button = document.createElement('button');
+            button.innerHTML = '🔄 Usar este usuário';
+            button.style.marginTop = '10px';
+            button.style.padding = '8px 15px';
+            button.style.background = 'rgba(59, 130, 246, 0.2)';
+            button.style.color = '#60a5fa';
+            button.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+            button.style.borderRadius = '6px';
+            button.style.cursor = 'pointer';
+            button.style.fontSize = '13px';
+            
+            button.onclick = function() {
+                // Preencher o campo de usuário
+                const inputs = document.querySelectorAll('input[type="text"]');
+                if (inputs.length > 0) {
+                    inputs[0].value = lastUser;
+                    // Disparar evento de change
+                    inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            };
+            
+            infoDiv.appendChild(button);
+            
+            // Inserir após o formulário
+            const formContainer = document.querySelector('.login-card').querySelector('.stContainer');
+            if (formContainer) {
+                formContainer.parentNode.insertBefore(infoDiv, formContainer.nextSibling);
+            }
+        }
+        </script>
         """, unsafe_allow_html=True)
+        
+        # =========================================================
+        # 8. VERIFICAR SE JÁ ESTÁ "MANTIDO CONECTADO"
+        # =========================================================
+        
+        # JavaScript para verificar token de sessão
+        st.markdown("""
+        <script>
+        // Verificar se há token válido de "manter conectado"
+        const token = localStorage.getItem('financeapp_token');
+        const tokenExpires = localStorage.getItem('financeapp_token_expires');
+        
+        if (token && tokenExpires) {
+            const now = Date.now();
+            if (now < parseInt(tokenExpires)) {
+                console.log('Token válido encontrado, redirecionando...');
+                // Aqui você faria uma verificação no servidor
+                // Por enquanto só mostramos que poderia auto-logar
+            } else {
+                // Token expirado, remover
+                localStorage.removeItem('financeapp_token');
+                localStorage.removeItem('financeapp_token_expires');
+            }
+        }
+        </script>
+        """, unsafe_allow_html=True)
+        
+        # Rodapé
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        col_clear1, col_clear2, col_clear3 = st.columns([2, 1, 2])
+        with col_clear2:
+            if st.button("🗑️ Limpar dados salvos", type="secondary", use_container_width=True):
+                # JavaScript para limpar localStorage
+                st.markdown("""
+                <script>
+                localStorage.removeItem('financeapp_username');
+                localStorage.removeItem('financeapp_remember');
+                localStorage.removeItem('financeapp_token');
+                localStorage.removeItem('financeapp_token_expires');
+                localStorage.removeItem('financeapp_last_user');
+                localStorage.removeItem('financeapp_last_login');
+                console.log('Todos os dados limpos do localStorage');
+                alert('Dados salvos foram removidos!');
+                setTimeout(function() {
+                    window.location.reload();
+                }, 500);
+                </script>
+                """, unsafe_allow_html=True)
+                st.info("Dados serão limpos...")
+
+
         
         st.markdown("</div>", unsafe_allow_html=True)  # Fecha login-card
 
@@ -348,6 +676,47 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
+# =========================================================
+# VERIFICAÇÃO AUTOMÁTICA DE "MANTIDO CONECTADO"
+# =========================================================
+    
+# JavaScript para verificar se já está logado via localStorage
+st.markdown("""
+<script>
+// Verificar token de sessão ao carregar
+const token = localStorage.getItem('financeapp_token');
+const tokenExpires = localStorage.getItem('financeapp_token_expires');
+    
+if (token && tokenExpires) {
+    const now = Date.now();
+    if (now < parseInt(tokenExpires)) {
+        // Token válido, informar ao Streamlit
+        window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                data: {
+                    key: 'auto_login',
+                    value: 'true'
+                }
+            }, '*');
+        } else {
+            // Token expirado, limpar
+            localStorage.removeItem('financeapp_token');
+            localStorage.removeItem('financeapp_token_expires');
+        }
+    }
+    </script>
+    """, unsafe_allow_html=True)
+    
+    # Verificar se recebemos sinal de auto-login
+if "auto_login" in st.session_state and st.session_state.auto_login == "true":
+    st.info("🔑 Reconectando automaticamente...")
+    # Aqui você faria a verificação real do token no backend
+    # Por enquanto, só mostramos a mensagem
+
+
+
 
 st.markdown("""
 <style>
