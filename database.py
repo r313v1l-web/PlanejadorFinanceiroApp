@@ -149,13 +149,30 @@ class DatabaseManager:
 
         # 🔥 RELATORIOS_HISTORICOS → UPSERT (usuario + mes)
         if table_name == "relatorios_historicos":
-            # Remover coluna id se existir (o Supabase gera automaticamente)
+            # Remover coluna id se existir
             for record in records:
                 if "id" in record:
                     del record["id"]
             
             supabase.table("relatorios_historicos") \
                 .upsert(records, on_conflict="usuario,mes") \
+                .execute()
+            return True
+
+        # 🔥 CATEGORIAS → UPSERT (usuario + nome)
+        if table_name == "categorias":
+            # Remover coluna id se existir
+            for record in records:
+                if "id" in record:
+                    del record["id"]
+            
+            # Garantir que temos as colunas necessárias para o upsert
+            for record in records:
+                if "nome" not in record:
+                    record["nome"] = ""
+            
+            supabase.table("categorias") \
+                .upsert(records, on_conflict="usuario,nome") \
                 .execute()
             return True
 
