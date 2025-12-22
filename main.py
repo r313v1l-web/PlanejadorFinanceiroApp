@@ -667,7 +667,7 @@ if menu == "📝 LANÇAMENTOS":
             )
 
         with col3:
-            responsavel = st.radio("Responsável", ["Reinaldo", "Raquel", "Compartilhado"], horizontal=True)
+            responsavel = st.radio("Responsável", ["🧔 Ele", "👩‍🦰 Ela", "Compartilhado"], horizontal=True)
             fixo = st.checkbox("Recorrente")
 
         descricao = st.text_input("descrição")
