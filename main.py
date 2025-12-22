@@ -35,106 +35,81 @@ def tela_login():
 
     import os
 
+    # CSS específico do login
     st.markdown("""
     <style>
-    .login-wrapper {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-    }
-
     .login-card {
         background: #0e1117;
-        padding: 48px 42px;
-        border-radius: 18px;
-        width: 420px;
-        box-shadow: 0 25px 50px rgba(0,0,0,0.65);
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         border: 1px solid #1f2933;
-        text-align: center;
-    }
-
-    .login-logo img {
-        display: block;
-        margin: 0 auto 20px auto;
-        max-width: 160px;
-    }
-
-    .login-title {
-        font-size: 26px;
-        font-weight: 600;
-        margin-bottom: 6px;
-    }
-
-    .login-subtitle {
-        color: #9ca3af;
-        margin-bottom: 28px;
-        font-size: 14px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='login-wrapper'>", unsafe_allow_html=True)
-    st.markdown("<div class='login-card'>", unsafe_allow_html=True)
+    # Centralização real
+    col_esq, col_centro, col_dir = st.columns([1, 1.2, 1])
 
-    # 🔹 LOGO (HTML PURO – sem espaço fantasma)
-    logo_path = "assets/images/logo.png"
-    if os.path.exists(logo_path):
+    with col_centro:
+        st.markdown("<div class='login-card'>", unsafe_allow_html=True)
+
+        # 🔥 LOGO — só renderiza se existir
+        logo_path = "assets/images/logo.png"
+        if os.path.exists(logo_path):
+            col1, col_logo, col3 = st.columns([1, 2, 1])
+            with col_logo:
+                st.image(logo_path, width=90)
+
+        # TÍTULO
         st.markdown(
-            f"""
-            <div class="login-logo">
-                <img src="{logo_path}">
-            </div>
-            """,
+            "<h2 style='text-align:center; margin-bottom:4px;'>Gestão Financeira</h2>"
+            "<p style='text-align:center; color:#9ca3af; margin-bottom:25px;'>Acesso ao sistema</p>",
             unsafe_allow_html=True
         )
 
-    # 🔹 TÍTULO
-    st.markdown("<div class='login-title'>Gestão Financeira</div>", unsafe_allow_html=True)
-    st.markdown("<div class='login-subtitle'>Acesso ao sistema</div>", unsafe_allow_html=True)
+        # CAMPOS
+        usuario = st.text_input("Usuário")
+        senha = st.text_input("Senha", type="password")
 
-    # 🔹 FORMULÁRIO
-    usuario = st.text_input("Usuário")
-    senha = st.text_input("Senha", type="password")
+        df_users = DatabaseManager.load_users()
 
-    df_users = DatabaseManager.load_users()
+        if st.button("Entrar", use_container_width=True):
+            usuario_input = usuario.strip().lower()
+            senha_input = senha.strip()
 
-    if st.button("Entrar", use_container_width=True):
-        usuario_input = usuario.strip().lower()
-        senha_input = senha.strip()
+            user = df_users[df_users["usuario"] == usuario_input]
 
-        user = df_users[df_users["usuario"] == usuario_input]
+            if user.empty:
+                st.error("Usuário não encontrado.")
+                st.markdown("</div>", unsafe_allow_html=True)
+                return
 
-        if user.empty:
-            st.error("Usuário não encontrado.")
-            st.markdown("</div></div>", unsafe_allow_html=True)
-            return
+            senha_hash = user.iloc[0]["senha"]
 
-        senha_hash = user.iloc[0]["senha"]
+            if not bcrypt.checkpw(
+                senha_input.encode("utf-8"),
+                senha_hash.encode("utf-8")
+            ):
+                st.error("Senha incorreta.")
+                st.markdown("</div>", unsafe_allow_html=True)
+                return
 
-        if not bcrypt.checkpw(
-            senha_input.encode("utf-8"),
-            senha_hash.encode("utf-8")
-        ):
-            st.error("Senha incorreta.")
-            st.markdown("</div></div>", unsafe_allow_html=True)
-            return
+            if user.iloc[0]["ativo"] != "ativo":
+                st.error("Usuário inativo. Contate o administrador.")
+                st.markdown("</div>", unsafe_allow_html=True)
+                return
 
-        if user.iloc[0]["ativo"] != "ativo":
-            st.error("Usuário inativo. Contate o administrador.")
-            st.markdown("</div></div>", unsafe_allow_html=True)
-            return
+            # LOGIN OK
+            st.session_state["logado"] = True
+            st.session_state["usuario"] = usuario_input
+            st.session_state["nome"] = user.iloc[0]["nome"]
+            st.session_state["perfil"] = str(user.iloc[0]["perfil"]).strip().lower()
 
-        # LOGIN OK
-        st.session_state["logado"] = True
-        st.session_state["usuario"] = usuario_input
-        st.session_state["nome"] = user.iloc[0]["nome"]
-        st.session_state["perfil"] = str(user.iloc[0]["perfil"]).strip().lower()
+            st.success("Login realizado com sucesso.")
+            st.rerun()
 
-        st.success("Login realizado com sucesso.")
-        st.rerun()
-
-    st.markdown("</div></div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
 
