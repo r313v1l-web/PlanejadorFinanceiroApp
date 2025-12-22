@@ -32,73 +32,105 @@ def normalizar_df(df):
 
 
 def tela_login():
-
     import os
-
-
-
-    # Centralização real
-    col_esq, col_centro, col_dir = st.columns([1, 1.2, 1])
-
+    
+    # Container principal centralizado
+    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+    
+    # Colunas para centralização real
+    col_esq, col_centro, col_dir = st.columns([1, 1.5, 1])
+    
     with col_centro:
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
-
-        # 🔥 LOGO — só renderiza se existir
+        
+        # 🔥 LOGO CENTRALIZADA E MAIOR
         logo_path = "assets/images/logo.png"
         if os.path.exists(logo_path):
-            col1, col_logo, col3 = st.columns([1, 2, 1])
-            with col_logo:
-                st.image(logo_path, width=90)
-
+            # Container especial para a logo
+            st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
+            # Forçar tamanho maior e centralização
+            st.markdown(f"""
+            <div style="text-align: center; margin: 0 auto 20px auto;">
+                <img src="{logo_path}" 
+                     style="width: 180px; height: 180px; 
+                            object-fit: contain; 
+                            border-radius: 50%;
+                            padding: 10px;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            # Placeholder se não tiver logo
+            st.markdown("""
+            <div class='logo-container'>
+                <div class='logo-placeholder'>💎</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
         # TÍTULO
-        st.markdown(
-            "<h2 style='text-align:center; margin-bottom:4px;'>Gestão Financeira</h2>"
-            "<p style='text-align:center; color:#9ca3af; margin-bottom:25px;'>Acesso ao sistema</p>",
-            unsafe_allow_html=True
-        )
-
-        # CAMPOS
-        usuario = st.text_input("Usuário")
-        senha = st.text_input("Senha", type="password")
-
+        st.markdown("""
+        <h1 class='login-title'>Gestão Financeira</h1>
+        <p class='login-subtitle'>Acesso ao sistema</p>
+        """, unsafe_allow_html=True)
+        
+        # CAMPOS DO FORMULÁRIO
+        with st.container():
+            usuario = st.text_input("👤 Usuário", key="login_user")
+            senha = st.text_input("🔒 Senha", type="password", key="login_pass")
+        
+        # Espaçamento
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # BOTÃO DE LOGIN
         df_users = DatabaseManager.load_users()
-
-        if st.button("Entrar", use_container_width=True):
+        
+        if st.button("🚀 Entrar no Sistema", type="primary", use_container_width=True):
             usuario_input = usuario.strip().lower()
             senha_input = senha.strip()
-
+            
             user = df_users[df_users["usuario"] == usuario_input]
-
+            
             if user.empty:
-                st.error("Usuário não encontrado.")
-                st.markdown("</div>", unsafe_allow_html=True)
+                st.error("❌ Usuário não encontrado.")
                 return
-
+            
             senha_hash = user.iloc[0]["senha"]
-
+            
             if not bcrypt.checkpw(
                 senha_input.encode("utf-8"),
                 senha_hash.encode("utf-8")
             ):
-                st.error("Senha incorreta.")
-                st.markdown("</div>", unsafe_allow_html=True)
+                st.error("❌ Senha incorreta.")
                 return
-
+            
             if user.iloc[0]["ativo"] != "ativo":
-                st.error("Usuário inativo. Contate o administrador.")
-                st.markdown("</div>", unsafe_allow_html=True)
+                st.error("⛔ Usuário inativo. Contate o administrador.")
                 return
-
+            
             # LOGIN OK
             st.session_state["logado"] = True
             st.session_state["usuario"] = usuario_input
             st.session_state["nome"] = user.iloc[0]["nome"]
             st.session_state["perfil"] = str(user.iloc[0]["perfil"]).strip().lower()
-
-            st.success("Login realizado com sucesso.")
+            
+            st.success("✅ Login realizado com sucesso!")
+            st.balloons()
             st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Rodapé do card
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style='text-align: center; color: #94a3b8; font-size: 14px; margin-top: 20px;'>
+            <hr style='margin: 20px 0; opacity: 0.3;'>
+            <p>🔐 Sistema seguro • v2.0</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)  # Fecha login-card
+    
+    st.markdown("</div>", unsafe_allow_html=True)  # Fecha login-container
 
 
 
