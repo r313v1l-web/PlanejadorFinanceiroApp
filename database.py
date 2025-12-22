@@ -50,15 +50,29 @@ class DatabaseManager:
 
     @staticmethod
     def save_users(df):
-        supabase = DatabaseManager._get_client()
+        try:
+            # ===============================
+            # 1️⃣ LIMPEZA OBRIGATÓRIA (JSON SAFE)
+            # ===============================
+            df = df.replace([float("inf"), float("-inf")], None)
+            df = df.where(pd.notna(df), None)
 
-        supabase.table("usuarios").delete().neq("usuario", "").execute()
+            # ===============================
+            # 2️⃣ CONVERTE PARA LISTA DE DICTS
+            # ===============================
+            records = df.to_dict(orient="records")
 
-        records = df.to_dict(orient="records")
-        if records:
+            # ===============================
+            # 3️⃣ SALVA NO SUPABASE
+            # ===============================
             supabase.table("usuarios").insert(records).execute()
 
-        return True
+            return True
+
+        except Exception as e:
+            st.error(f"❌ Erro ao salvar usuários: {e}")
+            return False
+
 
     # ===============================
     # DADOS GERAIS
