@@ -32,101 +32,69 @@ def normalizar_df(df):
 
 def tela_login():
 
-
+    # CSS específico do login
     st.markdown("""
     <style>
-
-    /* Fundo da tela */
-    .stApp {
-        background: linear-gradient(135deg, #020617, #0f172a);
-    }
-
-    /* Centralização total */
-    .login-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
-
-    /* Card de login */
     .login-card {
         background: #0e1117;
         padding: 40px;
         border-radius: 16px;
-        width: 380px;
         box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         border: 1px solid #1f2933;
     }
-
-    /* Título */
-    .login-title {
-        text-align: center;
-        font-size: 26px;
-        font-weight: 600;
-        margin-bottom: 4px;
-    }
-
-    /* Subtítulo */
-    .login-subtitle {
-        text-align: center;
-        color: #9ca3af;
-        margin-bottom: 30px;
-    }
-
-    /* Inputs */
-    .login-card input {
-        border-radius: 8px !important;
-    }
-
-    /* Botão */
-    .login-card button {
-        width: 100%;
-        border-radius: 10px;
-        font-weight: 600;
-    }
-
     </style>
     """, unsafe_allow_html=True)
-    st.markdown("🔐 Login")
 
-    usuario = st.text_input("Usuário")
-    senha = st.text_input("Senha", type="password")  # ✅ AGORA COM TYPE
+    # CENTRALIZAÇÃO REAL (layout nativo)
+    col_esq, col_centro, col_dir = st.columns([1, 1.2, 1])
 
-    
-    df_users = DatabaseManager.load_users()
+    with col_centro:
+        st.markdown("<div class='login-card'>", unsafe_allow_html=True)
 
-    if st.button("Entrar"):
-        usuario_input = usuario.strip().lower()
-        senha_input = senha.strip()
+        st.markdown(
+            "<h2 style='text-align:center'>💎 Gestão Financeira</h2>"
+            "<p style='text-align:center; color:#9ca3af'>Acesso ao sistema</p>",
+            unsafe_allow_html=True
+        )
 
-        user = df_users[df_users["usuario"] == usuario_input]
+        usuario = st.text_input("Usuário")
+        senha = st.text_input("Senha", type="password")
 
-        if user.empty:
-            st.error("Usuário não encontrado.")
-            return
+        df_users = DatabaseManager.load_users()
 
-        senha_hash = user.iloc[0]["senha"]
+        if st.button("Entrar", use_container_width=True):
+            usuario_input = usuario.strip().lower()
+            senha_input = senha.strip()
 
-        if not bcrypt.checkpw(
-            senha_input.encode("utf-8"),
-            senha_hash.encode("utf-8")
-        ):
-            st.error("Senha incorreta.")
-            return
+            user = df_users[df_users["usuario"] == usuario_input]
 
-        if user.iloc[0]["ativo"] != "ativo":
-            st.error("Usuário inativo. Contate o administrador.")
-            return
+            if user.empty:
+                st.error("Usuário não encontrado.")
+                return
 
-        # LOGIN OK
-        st.session_state["logado"] = True
-        st.session_state["usuario"] = usuario_input
-        st.session_state["nome"] = user.iloc[0]["nome"]
-        st.session_state["perfil"] = str(user.iloc[0]["perfil"]).strip().lower()
+            senha_hash = user.iloc[0]["senha"]
 
-        st.success("Login realizado com sucesso.")
-        st.rerun()
+            if not bcrypt.checkpw(
+                senha_input.encode("utf-8"),
+                senha_hash.encode("utf-8")
+            ):
+                st.error("Senha incorreta.")
+                return
+
+            if user.iloc[0]["ativo"] != "ativo":
+                st.error("Usuário inativo. Contate o administrador.")
+                return
+
+            # LOGIN OK
+            st.session_state["logado"] = True
+            st.session_state["usuario"] = usuario_input
+            st.session_state["nome"] = user.iloc[0]["nome"]
+            st.session_state["perfil"] = str(user.iloc[0]["perfil"]).strip().lower()
+
+            st.success("Login realizado com sucesso.")
+            st.rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
 
