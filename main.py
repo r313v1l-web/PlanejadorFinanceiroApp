@@ -14,26 +14,6 @@ import bcrypt
 
 
 # =========================================================
-# save_login_preferences
-# =========================================================
-# Adicione estas funções auxiliares no início do arquivo
-def save_login_preferences(username, remember_me):
-    """Salva preferências do usuário (simulado)"""
-    import json
-    preferences = {
-        "username": username if remember_me else "",
-        "remember_me": remember_me,
-        "timestamp": datetime.now().isoformat()
-    }
-    # Em produção, salvaria em cookies/localStorage
-    st.session_state.user_preferences = preferences
-
-def load_login_preferences():
-    """Carrega preferências salvas"""
-    return st.session_state.get("user_preferences", {})
-
-
-# =========================================================
 # NORMALIZADOR
 # =========================================================
 
@@ -54,8 +34,6 @@ def normalizar_df(df):
 def tela_login():
     import os
     import requests
-    import json
-    from datetime import datetime, timedelta
     
     # Container principal centralizado
     col_esq, col_centro, col_dir = st.columns([1, 1.5, 1])
@@ -101,6 +79,7 @@ def tela_login():
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+                st.info("Logo carregando...")
         except:
             # Erro na conexão
             st.markdown("""
@@ -126,94 +105,25 @@ def tela_login():
             Gestão Financeira
         </h2>
         <p style="text-align: center; color: #e2e8f0 !important; margin-bottom: 25px;">
-            Acesso ao sistema
+            Sistema de Controle Patrimonial
         </p>
         """, unsafe_allow_html=True)
         
-        # =========================================================
-        # NOVO: CARREGAR DADOS SALVOS (SE EXISTIREM)
-        # =========================================================
-        
-        # Inicializar session state para lembrar dados
-        if "login_remember" not in st.session_state:
-            st.session_state.login_remember = False
-        if "saved_username" not in st.session_state:
-            st.session_state.saved_username = ""
-        
-        # Tentar carregar dados salvos do cookie/local storage (simulado)
-        try:
-            # Em produção, você usaria cookies ou local storage
-            # Aqui simulamos com session state
-            saved_data = st.session_state.get("login_saved_data", {})
-            default_user = saved_data.get("username", "")
-            default_remember = saved_data.get("remember", False)
-        except:
-            default_user = ""
-            default_remember = False
-        
-        # =========================================================
-        # FORMULÁRIO COM OPÇÕES DE LEMBRAR
-        # =========================================================
-        
+        # CAMPOS DO FORMULÁRIO
         with st.container():
-            # Campo de usuário com valor salvo
-            usuario = st.text_input(
-                "👤 Usuário", 
-                key="login_user",
-                value=default_user,
-                placeholder="Digite seu usuário"
-            )
-            
-            # Campo de senha (não preenchemos por segurança)
-            senha = st.text_input(
-                "🔒 Senha", 
-                type="password", 
-                key="login_pass",
-                placeholder="Digite sua senha"
-            )
-            
-            # Opções de conveniência
-            col_opcoes1, col_opcoes2 = st.columns(2)
-            
-            with col_opcoes1:
-                # Checkbox "Manter conectado"
-                manter_conectado = st.checkbox(
-                    "🔐 Manter conectado",
-                    value=default_remember,
-                    help="Mantém sua sessão ativa por 7 dias"
-                )
-            
-            with col_opcoes2:
-                # Checkbox "Lembrar usuário"
-                lembrar_usuario = st.checkbox(
-                    "💾 Lembrar usuário",
-                    value=bool(default_user),
-                    help="Salva seu nome de usuário para próximos acessos"
-                )
+            usuario = st.text_input("👤 Usuário", key="login_user")
+            senha = st.text_input("🔒 Senha", type="password", key="login_pass")
         
         # Espaçamento
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # =========================================================
         # BOTÃO DE LOGIN
-        # =========================================================
-        
         df_users = DatabaseManager.load_users()
         
         if st.button("🚀 Entrar no Sistema", type="primary", use_container_width=True):
             usuario_input = usuario.strip().lower()
             senha_input = senha.strip()
             
-            # Validações básicas
-            if not usuario_input:
-                st.error("❌ Digite seu usuário.")
-                return
-            
-            if not senha_input:
-                st.error("❌ Digite sua senha.")
-                return
-            
-            # Buscar usuário
             user = df_users[df_users["usuario"] == usuario_input]
             
             if user.empty:
@@ -233,95 +143,22 @@ def tela_login():
                 st.error("⛔ Usuário inativo. Contate o administrador.")
                 return
             
-            # =========================================================
-            # NOVO: SALVAR PREFERÊNCIAS DO USUÁRIO
-            # =========================================================
-            
-            # Salvar dados se o usuário quiser
-            if lembrar_usuario or manter_conectado:
-                saved_data = {
-                    "username": usuario_input if lembrar_usuario else "",
-                    "remember": manter_conectado,
-                    "last_login": datetime.now().isoformat()
-                }
-                st.session_state.login_saved_data = saved_data
-                
-                # Em produção, você salvaria em cookies/local storage
-                # st.experimental_set_query_params(saved_data=saved_data)
-            
-            # Configurar sessão baseado em "Manter conectado"
-            if manter_conectado:
-                # Sessão mais longa (simulado)
-                st.session_state.login_expires = datetime.now() + timedelta(days=7)
-                st.info("✅ Sua sessão será mantida por 7 dias")
-            else:
-                # Sessão normal
-                st.session_state.login_expires = datetime.now() + timedelta(hours=24)
-            
             # LOGIN OK
             st.session_state["logado"] = True
             st.session_state["usuario"] = usuario_input
             st.session_state["nome"] = user.iloc[0]["nome"]
             st.session_state["perfil"] = str(user.iloc[0]["perfil"]).strip().lower()
-            st.session_state["login_time"] = datetime.now()
             
             st.success("✅ Login realizado com sucesso!")
-            
-            # Redirecionar após breve delay
-            st.markdown("""
-            <script>
-            setTimeout(function() {
-                window.location.reload();
-            }, 1500);
-            </script>
-            """, unsafe_allow_html=True)
-            
             st.rerun()
         
-        # =========================================================
-        # OPÇÕES ADICIONAIS
-        # =========================================================
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Mostrar última sessão (se existir)
-        if st.session_state.get("last_user"):
-            with st.expander("📝 Último acesso", expanded=False):
-                col_last1, col_last2 = st.columns(2)
-                with col_last1:
-                    st.write(f"**Usuário:** {st.session_state.last_user}")
-                with col_last2:
-                    if st.button("🔄 Usar este usuário"):
-                        st.session_state.login_user = st.session_state.last_user
-                        st.rerun()
-        
-        # Link para recuperar senha (futuro)
-        st.markdown("""
-        <div style="text-align: center; margin: 15px 0;">
-            <a href="#" style="color: #60a5fa; text-decoration: none; font-size: 14px;">
-                🔓 Esqueci minha senha
-            </a>
-        </div>
-        """, unsafe_allow_html=True)
-        
         # Rodapé do card
+        st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("""
         <div style='text-align: center; color: #94a3b8; font-size: 14px; margin-top: 20px;'>
             <hr style='margin: 20px 0; opacity: 0.3;'>
-            <p>
-                🔐 Sistema seguro • 
-                <span id="last-login-info"></span>
-            </p>
+            <p>🔐 Sistema seguro • v2.0</p>
         </div>
-        
-        <script>
-        // Mostrar quando foi o último login (se houver)
-        const lastLogin = localStorage.getItem('lastLoginTime');
-        if (lastLogin) {
-            const timeAgo = moment(lastLogin).fromNow();
-            document.getElementById('last-login-info').innerText = `Último acesso: ${timeAgo}`;
-        }
-        </script>
         """, unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)  # Fecha login-card
