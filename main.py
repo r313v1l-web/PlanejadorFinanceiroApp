@@ -997,9 +997,9 @@ elif menu == "🏢 FLUXOS FIXOS":
 
         df_fluxo = dados["fluxo_fixo"].copy()
         df_fluxo["Label"] = (
-            df_fluxo["Nome"] + " | " +
-            df_fluxo["Tipo"] + " | R$ " +
-            df_fluxo["Valor"].astype(str)
+            df_fluxo["nome"] + " | " +
+            df_fluxo["tipo"] + " | R$ " +
+            df_fluxo["valor"].astype(str)
         )
 
         fluxo_sel = st.selectbox(
