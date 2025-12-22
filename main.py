@@ -1265,7 +1265,7 @@ elif menu == "📊 DASHBOARD":
         colp1, colp2, colp3 = st.columns(3)
 
         colp1.metric("📅 Horizonte da Projeção", f"{meses_proj} meses")
-        colp2.metric("📈 Patrimônio Projetado", f"R$ {ultimo['Patrimonio']:,.2f}")
+        colp2.metric("📈 Patrimônio Projetado", f"R$ {ultimo['patrimonio']:,.2f}")
 
         if ultimo["Meta_Atingida"]:
             colp3.metric(
@@ -1341,7 +1341,7 @@ elif menu == "🏷️ CATEGORIAS":
             )
 
         with col3:
-            ativa = st.checkbox("Ativa", value=True)
+            ativa = st.checkbox("ativa", value=True)
 
         submitted = st.form_submit_button("💾 Criar Categoria")
 
@@ -1354,7 +1354,7 @@ elif menu == "🏷️ CATEGORIAS":
                 nova = pd.DataFrame([{
                     "Nome": nome,
                     "tipo": tipo,
-                    "Ativa": ativa
+                    "ativa": ativa
                 }])
 
                 df_cat = pd.concat([df_cat, nova], ignore_index=True)
@@ -1376,10 +1376,10 @@ elif menu == "🏷️ CATEGORIAS":
             df_cat["nome"].tolist()
         )
 
-        status_atual = df_cat.loc[df_cat["nome"] == categoria_sel, "Ativa"].values[0]
+        status_atual = df_cat.loc[df_cat["nome"] == categoria_sel, "ativa"].values[0]
 
         if st.button("🔄 Alternar Status"):
-            df_cat.loc[df_cat["nome"] == categoria_sel, "Ativa"] = not status_atual
+            df_cat.loc[df_cat["nome"] == categoria_sel, "ativa"] = not status_atual
             dados["categorias"] = df_cat
             st.session_state["dados"] = dados
             DatabaseManager.save("categorias", df_cat, usuario)
@@ -1583,7 +1583,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
 
         texto_proj = (
             f"📈 Mantido o cenário atual, o patrimônio projetado é de "
-            f"R$ {ultimo['Patrimonio']:,.2f} em aproximadamente "
+            f"R$ {ultimo['patrimonio']:,.2f} em aproximadamente "
             f"{meses_ate_meta} meses."
         )
 
