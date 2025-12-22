@@ -938,29 +938,23 @@ elif menu == "🏢 FLUXOS FIXOS":
 
         st.session_state["msg"] = None
 
-    # 🔥 PRIMEIRO: NORMALIZAR O DATAFRAME E AS COLUNAS
+    # 🔥 NORMALIZAR O DATAFRAME
     if not dados["fluxo_fixo"].empty:
         df_fluxo = dados["fluxo_fixo"].copy()
-        
-        # Garantir que todas as colunas estão em minúsculo
         df_fluxo.columns = df_fluxo.columns.str.lower()
         
-        # Verificar se a coluna 'tipo' existe
         if "tipo" not in df_fluxo.columns:
-            st.error("Erro: Coluna 'tipo' não encontrada na tabela fluxo_fixo")
+            st.error("Erro: Coluna 'tipo' não encontrada")
             st.stop()
         
-        # Normalizar os valores da coluna 'tipo' (Remover espaços, padronizar)
         df_fluxo["tipo"] = df_fluxo["tipo"].astype(str).str.strip().str.title()
-        
     else:
         df_fluxo = pd.DataFrame(columns=["tipo", "valor", "nome", "categoria"])
     
-    # AGORA pode filtrar com segurança
+    # FILTRAR
     receitas = df_fluxo[df_fluxo["tipo"] == "Receita"]
     despesas = df_fluxo[df_fluxo["tipo"] == "Despesa"]
 
-    # Calcular totais com tratamento de valores ausentes
     total_receitas = receitas["valor"].sum() if not receitas.empty and "valor" in receitas.columns else 0
     total_despesas = despesas["valor"].sum() if not despesas.empty and "valor" in despesas.columns else 0
     saldo_fixo = total_receitas - total_despesas
@@ -1003,19 +997,32 @@ elif menu == "🏢 FLUXOS FIXOS":
                 tipo = st.selectbox("tipo", ["Receita", "Despesa"])
 
             with col2:
-                # Carregar categorias disponíveis
+                # 🔥 FILTRAR: Mostrar apenas categorias ATIVAS
                 categorias_disponiveis = []
                 if not dados["categorias"].empty:
-                    # Normalizar colunas das categorias também
                     df_categorias = dados["categorias"].copy()
                     df_categorias.columns = df_categorias.columns.str.lower()
-                    if "nome" in df_categorias.columns:
-                        categorias_disponiveis = df_categorias["nome"].tolist()
+                    
+                    # Filtrar apenas categorias ativas
+                    if "ativa" in df_categorias.columns:
+                        # Converter para booleano se necessário
+                        df_categorias["ativa"] = pd.to_numeric(df_categorias["ativa"], errors='coerce').fillna(1).astype(bool)
+                        categorias_ativas = df_categorias[df_categorias["ativa"] == True]
+                    else:
+                        categorias_ativas = df_categorias
+                    
+                    if "nome" in categorias_ativas.columns:
+                        categorias_disponiveis = categorias_ativas["nome"].dropna().unique().tolist()
+                
+                # Adicionar opção padrão se não houver categorias
+                if not categorias_disponiveis:
+                    categorias_disponiveis = ["Outros"]
                 
                 categoria = st.selectbox(
                     "categoria",
-                    categorias_disponiveis if categorias_disponiveis else ["Outros"]
+                    categorias_disponiveis
                 )
+                
                 recorrencia = st.selectbox(
                     "Recorrência",
                     ["Mensal", "Anual", "Trimestral", "Semestral"]
@@ -1028,35 +1035,42 @@ elif menu == "🏢 FLUXOS FIXOS":
             submitted = st.form_submit_button("💾 Salvar Fluxo")
 
             if submitted:
+                # 🔥 CONVERTER DATAS PARA STRING (resolver TypeError)
+                data_inicio_str = data_inicio.isoformat() if data_inicio else None
+                data_fim_str = data_fim.isoformat() if data_fim else None
+                
                 novo = pd.DataFrame([{
                     "nome": nome.strip(),
-                    "valor": valor,
-                    "tipo": tipo.strip().title(),  # 🔥 Garantir formatação consistente
+                    "valor": float(valor),  # Garantir que é float
+                    "tipo": tipo.strip().title(),
                     "categoria": categoria,
-                    "data_inicio": data_inicio,
-                    "data_fim": data_fim,
+                    "data_inicio": data_inicio_str,  # 🔥 STRING, não date
+                    "data_fim": data_fim_str,        # 🔥 STRING, não date
                     "recorrencia": recorrencia,
-                    "observacao": observacao
+                    "observacao": observacao.strip()
                 }])
 
-                # 🔥 CORREÇÃO: Começar com o df_fluxo já normalizado
+                # Preparar DataFrame para salvar
                 df_novo_fluxo = df_fluxo.copy() if not df_fluxo.empty else pd.DataFrame()
                 
-                # Concatenar mantendo todas as colunas necessárias
+                # Garantir colunas
                 colunas_base = ["nome", "valor", "tipo", "categoria", "data_inicio", 
                                "data_fim", "recorrencia", "observacao"]
-                
-                # Garantir que todas as colunas existem no DataFrame original
                 for col in colunas_base:
                     if col not in df_novo_fluxo.columns:
                         df_novo_fluxo[col] = None if df_novo_fluxo.empty else ""
                 
                 df_novo_fluxo = pd.concat([df_novo_fluxo, novo], ignore_index=True)
-                
-                # 🔥 NORMALIZAR COLUNAS NOVAMENTE ANTES DE SALVAR
                 df_novo_fluxo.columns = df_novo_fluxo.columns.str.lower()
 
-                # Salvar no session_state e no banco
+                # 🔥 Converter quaisquer datas restantes para string
+                for date_col in ["data_inicio", "data_fim"]:
+                    if date_col in df_novo_fluxo.columns:
+                        df_novo_fluxo[date_col] = df_novo_fluxo[date_col].apply(
+                            lambda x: x.isoformat() if hasattr(x, 'isoformat') else x
+                        )
+
+                # Salvar
                 dados["fluxo_fixo"] = df_novo_fluxo
                 st.session_state["dados"] = dados
                 DatabaseManager.save("fluxo_fixo", df_novo_fluxo, usuario)
@@ -1069,10 +1083,8 @@ elif menu == "🏢 FLUXOS FIXOS":
     st.subheader("🗑️ Excluir Fluxo Fixo")
 
     if not df_fluxo.empty:
-        # 🔥 Usar o df_fluxo já normalizado
         df_fluxo_excluir = df_fluxo.copy()
         
-        # Garantir que as colunas necessárias existem
         if "nome" not in df_fluxo_excluir.columns:
             df_fluxo_excluir["nome"] = ""
         if "tipo" not in df_fluxo_excluir.columns:
@@ -1080,7 +1092,6 @@ elif menu == "🏢 FLUXOS FIXOS":
         if "valor" not in df_fluxo_excluir.columns:
             df_fluxo_excluir["valor"] = 0
         
-        # Criar labels para seleção
         df_fluxo_excluir["Label"] = (
             df_fluxo_excluir["nome"].fillna("Sem nome") + " | " +
             df_fluxo_excluir["tipo"].fillna("Sem tipo") + " | R$ " +
@@ -1093,17 +1104,19 @@ elif menu == "🏢 FLUXOS FIXOS":
         )
 
         if st.button("❌ Excluir Fluxo Selecionado"):
-            # Encontrar o índice correto
             idx = df_fluxo_excluir[df_fluxo_excluir["Label"] == fluxo_sel].index[0]
-            
-            # Remover do DataFrame
             df_fluxo_excluir = df_fluxo_excluir.drop(idx).reset_index(drop=True)
             
-            # Remover coluna Label antes de salvar
             if "Label" in df_fluxo_excluir.columns:
                 df_fluxo_excluir = df_fluxo_excluir.drop(columns=["Label"])
             
-            # Salvar no banco e session_state
+            # 🔥 Converter datas para string antes de salvar
+            for date_col in ["data_inicio", "data_fim"]:
+                if date_col in df_fluxo_excluir.columns:
+                    df_fluxo_excluir[date_col] = df_fluxo_excluir[date_col].apply(
+                        lambda x: x.isoformat() if hasattr(x, 'isoformat') else x
+                    )
+            
             dados["fluxo_fixo"] = df_fluxo_excluir
             st.session_state["dados"] = dados
             DatabaseManager.save("fluxo_fixo", df_fluxo_excluir, usuario)
