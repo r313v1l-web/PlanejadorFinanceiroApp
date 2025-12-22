@@ -260,35 +260,191 @@ st.set_page_config(
 # =========================================================
 st.markdown("""
 <style>
+    /* TEMA PRINCIPAL */
+    :root {
+        --primary: #1e3a8a;
+        --primary-light: #3b82f6;
+        --secondary: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --dark: #1e293b;
+        --light: #f8fafc;
+        --gray: #64748b;
+    }
+    
     /* FUNDO E FONTES */
     .stApp {
         background-color: #f8fafc;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     
-    /* SIDEBAR MAIS ESCURA */
+    /* HEADER BONITO */
+    h1, h2, h3 {
+        color: var(--dark);
+        font-weight: 600;
+    }
+    
+    /* SIDEBAR MELHORADA */
     [data-testid="stSidebar"] {
-        background-color: #1e293b;
+        background: linear-gradient(180deg, var(--dark) 0%, #2d3748 100%);
     }
     
-    /* TEXTO BRANCO NA SIDEBAR */
-    [data-testid="stSidebar"] * {
+    [data-testid="stSidebar"] .stRadio label {
         color: white !important;
+        font-weight: 500;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin: 5px 0;
+        transition: all 0.3s ease;
     }
     
-    /* BOTÕES ARREDONDADOS */
+    [data-testid="stSidebar"] .stRadio label:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    [data-testid="stSidebar"] .stRadio div[data-baseweb="radio"] {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 5px;
+    }
+    
+    /* BOTÕES MAIS BONITOS */
     .stButton > button {
         border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        transition: all 0.3s ease;
     }
     
-    /* INPUTS ARREDONDADOS */
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* INPUTS ESTILIZADOS */
     .stTextInput > div > div > input,
-    .stSelectbox > div > div > select {
+    .stSelectbox > div > div > select,
+    .stNumberInput > div > div > input {
         border-radius: 8px;
+        border: 2px solid #e2e8f0;
+        padding: 10px 14px;
+        font-size: 14px;
     }
     
-    /* CARDS COM SOMBRA */
-    .element-container {
+    .stTextInput > div > div > input:focus,
+    .stSelectbox > div > div > select:focus,
+    .stNumberInput > div > div > input:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* CARDS PARA MÉTRICAS */
+    .metric-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid var(--primary);
+        transition: transform 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    
+    /* TABS MELHORADAS */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+        background-color: #f1f5f9;
+        padding: 4px;
         border-radius: 10px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    
+    /* TABELAS ESTILIZADAS */
+    .dataframe {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .dataframe thead th {
+        background-color: #f8fafc;
+        font-weight: 600;
+        color: var(--dark);
+    }
+    
+    /* BADGES COLORIDOS */
+    .badge-success {
+        background: #d1fae5;
+        color: #065f46;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    /* DIVIDER ESTILIZADO */
+    .stDivider {
+        border-color: #e2e8f0;
+    }
+    
+    /* EXPANDER MELHORADO */
+    .streamlit-expanderHeader {
+        background-color: #f8fafc;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    /* ALERTS COLORIDOS */
+    .stAlert {
+        border-radius: 10px;
+        border-left: 4px solid;
+    }
+    
+    /* PROGRESS BAR COLORIDO */
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, var(--primary-light), var(--secondary));
+    }
+    
+    /* RESPONSIVIDADE */
+    @media (max-width: 768px) {
+        .metric-card {
+            padding: 15px;
+        }
+        
+        [data-testid="stSidebar"] {
+            min-width: 250px;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
