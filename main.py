@@ -142,7 +142,7 @@ def tela_admin_usuarios():
 
         with col4:
             df_edit.at[i, "ativo"] = st.selectbox(
-                "Status",
+                "status",
                 ["ativo", "inativo"],
                 index=0 if row["ativo"] == "ativo" else 1,
                 key=f"ativo_{row['usuario']}"
@@ -196,13 +196,13 @@ def salvar_relatorio_mensal(
     if "Mes" not in df_hist.columns:
         df_hist["mes"] = ""
 
-    if "Status" not in df_hist.columns:
-        df_hist["Status"] = ""
+    if "status" not in df_hist.columns:
+        df_hist["status"] = ""
 
     # Se já existe FINALIZADO, não permite sobrescrever
     existente = df_hist[
         (df_hist["mes"] == mes_ref) &
-        (df_hist["Status"] == "Finalizado")
+        (df_hist["status"] == "Finalizado")
     ]
 
     if not existente.empty:
@@ -217,7 +217,7 @@ def salvar_relatorio_mensal(
         "Saldo_Fixo": saldo_fixo,
         "Saldo_Variavel": saldo_variavel,
         "Perc_Meta": perc_meta,
-        "Status": status,
+        "status": status,
         "Texto_Executivo": texto_exec
     }])
 
@@ -398,7 +398,7 @@ def projetar_patrimonio(
             rendimento = 0
 
         resultados.append({
-            "Data": data_ref,
+            "data": data_ref,
             "Patrimonio": patrimonio,
             "Rendimento": rendimento,
             "Aporte_Fixo": saldo_fixo_mensal if i > 0 else 0,
@@ -640,13 +640,13 @@ if menu == "📝 LANÇAMENTOS":
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            data = st.date_input("Data", date.today())
-            tipo = st.selectbox("Tipo", ["Despesa", "Receita", "Investimento"])
+            data = st.date_input("data", date.today())
+            tipo = st.selectbox("tipo", ["Despesa", "Receita", "Investimento"])
 
         with col2:
             valor = st.number_input("Valor (R$)", min_value=0.0, step=10.0, format="%.2f")
             categoria = st.selectbox(
-                "Categoria",
+                "categoria",
                 dados["categorias"]["nome"].tolist() if not dados["categorias"].empty else []
             )
 
@@ -654,18 +654,18 @@ if menu == "📝 LANÇAMENTOS":
             responsavel = st.radio("Responsável", ["Reinaldo", "Raquel", "Compartilhado"], horizontal=True)
             fixo = st.checkbox("Recorrente")
 
-        descricao = st.text_input("Descrição")
+        descricao = st.text_input("descrição")
 
         submitted = st.form_submit_button("💾 SALVAR")
 
         if submitted:
             nova = pd.DataFrame([{
-                "Data": data,
-                "Tipo": tipo,
-                "Valor": valor,
-                "Categoria": categoria,
+                "data": data,
+                "tipo": tipo,
+                "valor": valor,
+                "categoria": categoria,
                 "Subcategoria": "",
-                "Descricao": descricao,
+                "descricao": descricao,
                 "Responsavel": responsavel,
                 "Fixo": "Sim" if fixo else "Não"
             }])
@@ -690,8 +690,8 @@ if menu == "📝 LANÇAMENTOS":
         df_hist["data"] = pd.to_datetime(df_hist["data"])
 
         st.dataframe(
-            df_hist.sort_values("Data", ascending=False).style.format({
-                "Valor": "R$ {:,.2f}"
+            df_hist.sort_values("data", ascending=False).style.format({
+                "valor": "R$ {:,.2f}"
             }),
             use_container_width=True,
             height=450
@@ -725,7 +725,7 @@ elif menu == "💰 INVESTIMENTOS":
     if not dados["investimentos"].empty:
         st.dataframe(
             dados["investimentos"].style.format({
-                "Valor_Atual": "R$ {:,.2f}",
+                "valor_atual": "R$ {:,.2f}",
                 "Rendimento_Mensal": "{:.2%}"
             }),
             use_container_width=True,
@@ -738,8 +738,8 @@ elif menu == "💰 INVESTIMENTOS":
     if not dados["investimentos"].empty:
         fig = px.pie(
             dados["investimentos"],
-            values="Valor_Atual",
-            names="Categoria",
+            values="valor_atual",
+            names="categoria",
             hole=0.4,
             title="Distribuição por Perfil"
         )
@@ -756,7 +756,7 @@ elif menu == "💰 INVESTIMENTOS":
                 instituicao = st.text_input("Instituição")
                 ativo = st.text_input("Ativo")
                 tipo = st.selectbox(
-                    "Tipo",
+                    "tipo",
                     ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"]
                 )
 
@@ -783,11 +783,11 @@ elif menu == "💰 INVESTIMENTOS":
                 novo = pd.DataFrame([{
                     "Instituicao": instituicao,
                     "Ativo": ativo,
-                    "Tipo": tipo,
-                    "Valor_Atual": valor_atual,
+                    "tipo": tipo,
+                    "valor_atual": valor_atual,
                     "Data_Entrada": data_entrada,
                     "Rendimento_Mensal": rendimento,
-                    "Categoria": categoria,
+                    "categoria": categoria,
                     "Observacao": observacao
                 }])
 
@@ -838,7 +838,7 @@ elif menu == "🎯 SONHOS & METAS":
         for i, sonho in dados["sonhos_projetos"].iterrows():
 
             st.subheader(sonho["nome"])
-            st.caption(sonho.get("Descricao", ""))
+            st.caption(sonho.get("descricao", ""))
 
             progresso = sonho["valor_atual"] / sonho["valor_alvo"] if sonho["valor_alvo"] > 0 else 0
             st.progress(progresso, text=f"R$ {sonho['Valor_Atual']:,.0f} / R$ {sonho['Valor_Alvo']:,.0f}")
@@ -852,7 +852,7 @@ elif menu == "🎯 SONHOS & METAS":
             with st.form(f"form_add_{i}", clear_on_submit=True):
                 valor_add = st.number_input("Adicionar valor", min_value=0.0, step=100.0)
                 if st.form_submit_button("💸 Adicionar"):
-                    dados["sonhos_projetos"].loc[i, "Valor_Atual"] += valor_add
+                    dados["sonhos_projetos"].loc[i, "valor_atual"] += valor_add
                     st.session_state["dados"] = dados
                     DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
                     st.session_state["msg"] = "Salvo"
@@ -872,27 +872,27 @@ elif menu == "🎯 SONHOS & METAS":
                 nome = st.text_input("Nome")
                 valor_alvo = st.number_input("Valor Alvo (R$)", min_value=0.0, step=1000.0)
                 categoria = st.selectbox(
-                    "Categoria",
+                    "categoria",
                     ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"]
                 )
 
             with col2:
                 data_alvo = st.date_input("Data Alvo", date.today() + timedelta(days=365))
-                prioridade = st.selectbox("Prioridade", ["Baixa", "Média", "Alta"])
+                prioridade = st.selectbox("prioridade", ["Baixa", "Média", "Alta"])
                 valor_inicial = st.number_input("Valor Inicial (R$)", min_value=0.0, step=500.0)
 
-            descricao = st.text_area("Descrição")
+            descricao = st.text_area("descrição")
 
             if st.form_submit_button("🎯 Criar Sonho"):
                 novo = pd.DataFrame([{
-                    "Nome": nome,
-                    "Descricao": descricao,
-                    "Valor_Alvo": valor_alvo,
-                    "Valor_Atual": valor_inicial,
-                    "Data_Alvo": data_alvo,
-                    "Prioridade": prioridade,
-                    "Status": "Em Andamento",
-                    "Categoria": categoria
+                    "nome": nome,
+                    "descricao": descricao,
+                    "valor_alvo": valor_alvo,
+                    "valor_atual": valor_inicial,
+                    "data_alvo": data_alvo,
+                    "prioridade": prioridade,
+                    "status": "Em Andamento",
+                    "categoria": categoria
                 }])
 
                 df = pd.concat([dados["sonhos_projetos"], novo], ignore_index=True)
@@ -933,13 +933,13 @@ elif menu == "🏢 FLUXOS FIXOS":
 
     with tab1:
         st.dataframe(
-            receitas.style.format({"Valor": "R$ {:,.2f}"}),
+            receitas.style.format({"valor": "R$ {:,.2f}"}),
             use_container_width=True
         )
 
     with tab2:
         st.dataframe(
-            despesas.style.format({"Valor": "R$ {:,.2f}"}),
+            despesas.style.format({"valor": "R$ {:,.2f}"}),
             use_container_width=True
         )
 
@@ -951,11 +951,11 @@ elif menu == "🏢 FLUXOS FIXOS":
             with col1:
                 nome = st.text_input("Nome")
                 valor = st.number_input("Valor Mensal (R$)", min_value=0.0, step=10.0)
-                tipo = st.selectbox("Tipo", ["Receita", "Despesa"])
+                tipo = st.selectbox("tipo", ["Receita", "Despesa"])
 
             with col2:
                 categoria = st.selectbox(
-                    "Categoria",
+                    "categoria",
                     dados["categorias"]["nome"].tolist() if not dados["categorias"].empty else []
                 )
                 recorrencia = st.selectbox(
@@ -970,9 +970,9 @@ elif menu == "🏢 FLUXOS FIXOS":
             if st.form_submit_button("💾 Salvar Fluxo"):
                 novo = pd.DataFrame([{
                     "Nome": nome,
-                    "Valor": valor,
-                    "Tipo": tipo,
-                    "Categoria": categoria,
+                    "valor": valor,
+                    "tipo": tipo,
+                    "categoria": categoria,
                     "Data_Inicio": data_inicio,
                     "Data_Fim": data_fim,
                     "Recorrencia": recorrencia,
@@ -1046,7 +1046,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
 
     # ---------- CARREGAR GASTOS ----------
     if "controle_gastos" not in dados or dados["controle_gastos"].empty:
-        df_gastos = pd.DataFrame(columns=["Data", "Descricao", "Valor"])
+        df_gastos = pd.DataFrame(columns=["data", "descricao", "valor"])
     else:
         df_gastos = dados["controle_gastos"].copy()
 
@@ -1070,15 +1070,15 @@ elif menu == "💸 CONTROLE DE GASTOS":
         col1, col2 = st.columns(2)
 
         with col1:
-            descricao = st.text_input("Descrição", placeholder="Padaria, café, lanche...")
+            descricao = st.text_input("descrição", placeholder="Padaria, café, lanche...")
         with col2:
             valor = st.number_input("Valor (R$)", min_value=0.01, step=1.0)
 
         if st.form_submit_button("💸 Registrar Gasto"):
             novo = pd.DataFrame([{
-                "Data": date.today(),
-                "Descricao": descricao,
-                "Valor": valor
+                "data": date.today(),
+                "descricao": descricao,
+                "valor": valor
             }])
 
             df_gastos = pd.concat([df_gastos, novo], ignore_index=True)
@@ -1096,8 +1096,8 @@ elif menu == "💸 CONTROLE DE GASTOS":
 
     if not df_gastos.empty:
         st.dataframe(
-            df_gastos.sort_values("Data", ascending=False).style.format({
-                "Valor": "R$ {:,.2f}"
+            df_gastos.sort_values("data", ascending=False).style.format({
+                "valor": "R$ {:,.2f}"
             }),
             use_container_width=True,
             height=350
@@ -1176,7 +1176,7 @@ elif menu == "📊 DASHBOARD":
     if not df_projecao.empty:
         fig = px.line(
             df_projecao,
-            x="Data",
+            x="data",
             y="Patrimonio",
             title="Evolução do Patrimônio",
             markers=True
@@ -1193,7 +1193,7 @@ elif menu == "📊 DASHBOARD":
         meta_df = df_projecao[df_projecao["Meta_Atingida"]]
 
         if not meta_df.empty:
-            data_meta = meta_df.iloc[0]["Data"]
+            data_meta = meta_df.iloc[0]["data"]
 
             # Garantir datetime puro
             data_meta = pd.to_datetime(data_meta)
@@ -1229,7 +1229,7 @@ elif menu == "📊 DASHBOARD":
         fig.update_layout(
             height=450,
             yaxis_title="Patrimônio (R$)",
-            xaxis_title="Data",
+            xaxis_title="data",
             hovermode="x unified"
         )
 
@@ -1246,7 +1246,7 @@ elif menu == "📊 DASHBOARD":
         if ultimo["Meta_Atingida"]:
             colp3.metric(
                 "🎯 Meta Atingida em",
-                meta_df.iloc[0]["Data"].strftime("%m/%Y")
+                meta_df.iloc[0]["data"].strftime("%m/%Y")
             )
         else:
             colp3.metric("🎯 Meta", "Ainda não atingida")
@@ -1307,7 +1307,7 @@ elif menu == "🏷️ CATEGORIAS":
 
         with col2:
             tipo = st.selectbox(
-                "Tipo",
+                "tipo",
                 ["Despesa Variável", "Despesa Fixa", "Receita"]
             )
 
@@ -1324,7 +1324,7 @@ elif menu == "🏷️ CATEGORIAS":
             else:
                 nova = pd.DataFrame([{
                     "Nome": nome,
-                    "Tipo": tipo,
+                    "tipo": tipo,
                     "Ativa": ativa
                 }])
 
@@ -1695,7 +1695,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
 
     fig_comp = px.line(
         df_plot,
-        x="Data",
+        x="data",
         y="Patrimonio",
         color="Cenário",
         markers=True,
@@ -1714,7 +1714,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
     fig_comp.update_layout(
         height=450,
         yaxis_title="Patrimônio (R$)",
-        xaxis_title="Data",
+        xaxis_title="data",
         hovermode="x unified"
     )
 
@@ -1832,7 +1832,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
                 "Saldo_Fixo",
                 "Saldo_Variavel",
                 "Perc_Meta",
-                "Status"
+                "status"
             ]].style.format({
                 "Patrimonio": "R$ {:,.2f}",
                 "Saldo_Fixo": "R$ {:,.2f}",
