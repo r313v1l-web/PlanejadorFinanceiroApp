@@ -120,7 +120,7 @@ class DatabaseManager:
         return dados
 
     # ===============================
-    # SAVE GENÉRICO (POR USUÁRIO)
+    # SAVE GENÉRICO (POR USUÁRIO) - VERSÃO DEFINITIVA
     # ===============================
     @staticmethod
     def save(table_name, df, usuario):
@@ -139,6 +139,28 @@ class DatabaseManager:
         df = df.where(pd.notna(df), None)
 
         records = df.to_dict(orient="records")
+
+        # 🔥 FUNÇÃO AUXILIAR: Converte TODAS as datas para string
+        def convert_dates_in_records(records_list):
+            converted = []
+            for record in records_list:
+                new_record = {}
+                for key, value in record.items():
+                    if value is not None:
+                        # Converter datas para string ISO
+                        if hasattr(value, 'isoformat'):
+                            new_record[key] = value.isoformat()
+                        elif isinstance(value, pd.Timestamp):
+                            new_record[key] = value.strftime('%Y-%m-%d')
+                        else:
+                            new_record[key] = value
+                    else:
+                        new_record[key] = value
+                converted.append(new_record)
+            return converted
+        
+        # 🔥 Converter TODAS as datas em TODOS os records
+        records = convert_dates_in_records(records)
 
         # 🔥 CONFIG → UPSERT (usuario + chave)
         if table_name == "config":
@@ -176,33 +198,12 @@ class DatabaseManager:
                 .execute()
             return True
 
-        # 🔥 FLUXO_FIXO → DELETE + INSERT (com tratamento de datas)
+        # 🔥 FLUXO_FIXO → DELETE + INSERT
         if table_name == "fluxo_fixo":
-            # Converter datas para string em todos os registros
+            # Remover coluna id se existir
             for record in records:
-                # Remover coluna id se existir
                 if "id" in record:
                     del record["id"]
-                
-                # Converter datas para string ISO
-                date_fields = ["data_inicio", "data_fim"]
-                for field in date_fields:
-                    if field in record and record[field] is not None:
-                        # Se for objeto date ou datetime
-                        if hasattr(record[field], 'isoformat'):
-                            record[field] = record[field].isoformat()
-                        # Se for string de data no formato pandas
-                        elif isinstance(record[field], pd.Timestamp):
-                            record[field] = record[field].strftime('%Y-%m-%d')
-                        # Se já for string, manter
-                        elif isinstance(record[field], str):
-                            # Tentar converter para formato consistente
-                            try:
-                                from datetime import datetime
-                                dt = datetime.fromisoformat(record[field].replace('Z', '+00:00'))
-                                record[field] = dt.date().isoformat()
-                            except:
-                                pass
             
             # Primeiro deletar todos os fluxos do usuário
             supabase.table("fluxo_fixo") \
@@ -215,37 +216,13 @@ class DatabaseManager:
                 .insert(records) \
                 .execute()
             return True
-        
 
-
-
-        # 🔥 SONHOS_PROJETOS → DELETE + INSERT (com tratamento de datas)
+        # 🔥 SONHOS_PROJETOS → DELETE + INSERT
         if table_name == "sonhos_projetos":
-            # Converter datas para string em todos os registros
+            # Remover coluna id se existir
             for record in records:
-                # Remover coluna id se existir
                 if "id" in record:
                     del record["id"]
-                
-                # Converter datas para string ISO
-                date_fields = ["data_alvo", "data_criacao", "data_atualizacao"]
-                for field in date_fields:
-                    if field in record and record[field] is not None:
-                        # Se for objeto date ou datetime
-                        if hasattr(record[field], 'isoformat'):
-                            record[field] = record[field].isoformat()
-                        # Se for string de data no formato pandas
-                        elif isinstance(record[field], pd.Timestamp):
-                            record[field] = record[field].strftime('%Y-%m-%d')
-                        # Se já for string, manter
-                        elif isinstance(record[field], str):
-                            # Tentar converter para formato consistente
-                            try:
-                                from datetime import datetime
-                                dt = datetime.fromisoformat(record[field].replace('Z', '+00:00'))
-                                record[field] = dt.date().isoformat()
-                            except:
-                                pass
             
             # Primeiro deletar todos os sonhos do usuário
             supabase.table("sonhos_projetos") \
@@ -259,34 +236,12 @@ class DatabaseManager:
                 .execute()
             return True
 
-
-        # 🔥 INVESTIMENTOS → DELETE + INSERT (com tratamento de datas)
+        # 🔥 INVESTIMENTOS → DELETE + INSERT
         if table_name == "investimentos":
-            # Converter datas para string em todos os registros
+            # Remover coluna id se existir
             for record in records:
-                # Remover coluna id se existir
                 if "id" in record:
                     del record["id"]
-                
-                # Converter datas para string ISO
-                date_fields = ["data_entrada", "data_atualizacao", "data_criacao"]
-                for field in date_fields:
-                    if field in record and record[field] is not None:
-                        # Se for objeto date ou datetime
-                        if hasattr(record[field], 'isoformat'):
-                            record[field] = record[field].isoformat()
-                        # Se for string de data no formato pandas
-                        elif isinstance(record[field], pd.Timestamp):
-                            record[field] = record[field].strftime('%Y-%m-%d')
-                        # Se já for string, manter
-                        elif isinstance(record[field], str):
-                            # Tentar converter para formato consistente
-                            try:
-                                from datetime import datetime
-                                dt = datetime.fromisoformat(record[field].replace('Z', '+00:00'))
-                                record[field] = dt.date().isoformat()
-                            except:
-                                pass
             
             # Primeiro deletar todos os investimentos do usuário
             supabase.table("investimentos") \
@@ -299,8 +254,45 @@ class DatabaseManager:
                 .insert(records) \
                 .execute()
             return True
-        
-        
+
+        # 🔥 HISTORICO → DELETE + INSERT
+        if table_name == "historico":
+            # Remover coluna id se existir
+            for record in records:
+                if "id" in record:
+                    del record["id"]
+            
+            # Primeiro deletar todo o histórico do usuário
+            supabase.table("historico") \
+                .delete() \
+                .eq("usuario", usuario) \
+                .execute()
+            
+            # Depois inserir os novos
+            supabase.table("historico") \
+                .insert(records) \
+                .execute()
+            return True
+
+        # 🔥 CONTROLE_GASTOS → DELETE + INSERT
+        if table_name == "controle_gastos":
+            # Remover coluna id se existir
+            for record in records:
+                if "id" in record:
+                    del record["id"]
+            
+            # Primeiro deletar todos os gastos do usuário
+            supabase.table("controle_gastos") \
+                .delete() \
+                .eq("usuario", usuario) \
+                .execute()
+            
+            # Depois inserir os novos
+            supabase.table("controle_gastos") \
+                .insert(records) \
+                .execute()
+            return True
+
         # 🔥 OUTRAS TABELAS → DELETE DO USUÁRIO + INSERT
         supabase.table(table_name) \
             .delete() \
