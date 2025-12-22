@@ -750,7 +750,12 @@ with st.sidebar:
     st.markdown(
         """
         <h1 style="text-align:center; font-size:80px;">💸</h1>
-        <h2 style="text-align:center">Gestão Financeira</h2>
+        <h2 style="text-align:center; letter-spacing:1px;">
+        GESTÃO FINANCEIRA
+        </h2>
+        <p style="text-align:center; color:#9ca3af;">
+        Visão • Controle • Estratégia
+        </p>
         """,
         unsafe_allow_html=True
     )
