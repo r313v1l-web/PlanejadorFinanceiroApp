@@ -288,15 +288,15 @@ if not dados["historico"].empty:
     hist["Mes"] = hist["Data"].dt.strftime("%Y-%m")
     hist_mes = hist[hist["Mes"] == mes_atual]
 
-    receitas_variaveis = hist_mes[hist_mes["Tipo"] == "Receita"]["Valor"].sum()
-    despesas_variaveis = hist_mes[hist_mes["Tipo"] == "Despesa"]["Valor"].sum()
+    receitas_variaveis = hist_mes[hist_mes["Tipo"] == "Receita"]["valor"].sum()
+    despesas_variaveis = hist_mes[hist_mes["Tipo"] == "Despesa"]["valor"].sum()
 else:
     receitas_variaveis = despesas_variaveis = 0
 
 
 # ---------------- CONTROLE DE GASTOS (DESPESA VARIÁVEL) ----------------
 if not dados.get("controle_gastos", pd.DataFrame()).empty:
-    gastos_rapidos_mes = dados["controle_gastos"]["Valor"].sum()
+    gastos_rapidos_mes = dados["controle_gastos"]["valor"].sum()
 else:
     gastos_rapidos_mes = 0
 
@@ -306,8 +306,8 @@ saldo_variavel = receitas_variaveis - despesas_variaveis - gastos_rapidos_mes
 
 # ---------------- FLUXO FIXO ----------------
 if not dados["fluxo_fixo"].empty:
-    receitas_fixas = dados["fluxo_fixo"][dados["fluxo_fixo"]["Tipo"] == "Receita"]["Valor"].sum()
-    despesas_fixas = dados["fluxo_fixo"][dados["fluxo_fixo"]["Tipo"] == "Despesa"]["Valor"].sum()
+    receitas_fixas = dados["fluxo_fixo"][dados["fluxo_fixo"]["Tipo"] == "Receita"]["valor"].sum()
+    despesas_fixas = dados["fluxo_fixo"][dados["fluxo_fixo"]["Tipo"] == "Despesa"]["valor"].sum()
     saldo_fixo = receitas_fixas - despesas_fixas
 else:
     receitas_fixas = despesas_fixas = saldo_fixo = 0
@@ -330,7 +330,7 @@ config_dict = {}
 
 if not dados["config"].empty:
     for _, row in dados["config"].iterrows():
-        config_dict[row["chave"]] = row["Valor"]
+        config_dict[row["chave"]] = row["valor"]
 
 # Valores com fallback seguro
 meta_patrimonio = float(config_dict.get("meta_patrimonio", 0))
@@ -625,7 +625,7 @@ if menu == "📝 LANÇAMENTOS":
             tipo = st.selectbox("Tipo", ["Despesa", "Receita", "Investimento"])
 
         with col2:
-            valor = st.number_input("Valor (R$)", min_value=0.0, step=10.0, format="%.2f")
+            valor = st.number_input("valor (R$)", min_value=0.0, step=10.0, format="%.2f")
             categoria = st.selectbox(
                 "Categoria",
                 dados["categorias"]["Nome"].tolist() if not dados["categorias"].empty else []
@@ -643,7 +643,7 @@ if menu == "📝 LANÇAMENTOS":
             nova = pd.DataFrame([{
                 "Data": data,
                 "Tipo": tipo,
-                "Valor": valor,
+                "valor": valor,
                 "Categoria": categoria,
                 "Subcategoria": "",
                 "Descricao": descricao,
@@ -672,7 +672,7 @@ if menu == "📝 LANÇAMENTOS":
 
         st.dataframe(
             df_hist.sort_values("Data", ascending=False).style.format({
-                "Valor": "R$ {:,.2f}"
+                "valor": "R$ {:,.2f}"
             }),
             use_container_width=True,
             height=450
@@ -742,7 +742,7 @@ elif menu == "💰 INVESTIMENTOS":
                 )
 
             with col2:
-                valor_atual = st.number_input("Valor Atual (R$)", min_value=0.0, step=100.0)
+                valor_atual = st.number_input("valor Atual (R$)", min_value=0.0, step=100.0)
                 rendimento = st.number_input(
                     "Rendimento Mensal (%)",
                     min_value=0.0,
@@ -851,7 +851,7 @@ elif menu == "🎯 SONHOS & METAS":
 
             with col1:
                 nome = st.text_input("Nome")
-                valor_alvo = st.number_input("Valor Alvo (R$)", min_value=0.0, step=1000.0)
+                valor_alvo = st.number_input("valor Alvo (R$)", min_value=0.0, step=1000.0)
                 categoria = st.selectbox(
                     "Categoria",
                     ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"]
@@ -860,7 +860,7 @@ elif menu == "🎯 SONHOS & METAS":
             with col2:
                 data_alvo = st.date_input("Data Alvo", date.today() + timedelta(days=365))
                 prioridade = st.selectbox("Prioridade", ["Baixa", "Média", "Alta"])
-                valor_inicial = st.number_input("Valor Inicial (R$)", min_value=0.0, step=500.0)
+                valor_inicial = st.number_input("valor Inicial (R$)", min_value=0.0, step=500.0)
 
             descricao = st.text_area("Descrição")
 
@@ -904,9 +904,9 @@ elif menu == "🏢 FLUXOS FIXOS":
     despesas = dados["fluxo_fixo"][dados["fluxo_fixo"]["Tipo"] == "Despesa"]
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("Receitas Fixas", f"R$ {receitas['Valor'].sum():,.2f}")
-    col2.metric("Despesas Fixas", f"R$ {despesas['Valor'].sum():,.2f}")
-    col3.metric("Saldo Fixo", f"R$ {(receitas['Valor'].sum() - despesas['Valor'].sum()):,.2f}")
+    col1.metric("Receitas Fixas", f"R$ {receitas['valor'].sum():,.2f}")
+    col2.metric("Despesas Fixas", f"R$ {despesas['valor'].sum():,.2f}")
+    col3.metric("Saldo Fixo", f"R$ {(receitas['valor'].sum() - despesas['valor'].sum()):,.2f}")
 
     st.divider()
 
@@ -914,13 +914,13 @@ elif menu == "🏢 FLUXOS FIXOS":
 
     with tab1:
         st.dataframe(
-            receitas.style.format({"Valor": "R$ {:,.2f}"}),
+            receitas.style.format({"valor": "R$ {:,.2f}"}),
             use_container_width=True
         )
 
     with tab2:
         st.dataframe(
-            despesas.style.format({"Valor": "R$ {:,.2f}"}),
+            despesas.style.format({"valor": "R$ {:,.2f}"}),
             use_container_width=True
         )
 
@@ -931,7 +931,7 @@ elif menu == "🏢 FLUXOS FIXOS":
 
             with col1:
                 nome = st.text_input("Nome")
-                valor = st.number_input("Valor Mensal (R$)", min_value=0.0, step=10.0)
+                valor = st.number_input("valor Mensal (R$)", min_value=0.0, step=10.0)
                 tipo = st.selectbox("Tipo", ["Receita", "Despesa"])
 
             with col2:
@@ -951,7 +951,7 @@ elif menu == "🏢 FLUXOS FIXOS":
             if st.form_submit_button("💾 Salvar Fluxo"):
                 novo = pd.DataFrame([{
                     "Nome": nome,
-                    "Valor": valor,
+                    "valor": valor,
                     "Tipo": tipo,
                     "Categoria": categoria,
                     "Data_Inicio": data_inicio,
@@ -978,7 +978,7 @@ elif menu == "🏢 FLUXOS FIXOS":
         df_fluxo["Label"] = (
             df_fluxo["Nome"] + " | " +
             df_fluxo["Tipo"] + " | R$ " +
-            df_fluxo["Valor"].astype(str)
+            df_fluxo["valor"].astype(str)
         )
 
         fluxo_sel = st.selectbox(
@@ -1026,11 +1026,11 @@ elif menu == "💸 CONTROLE DE GASTOS":
 
     # ---------- CARREGAR GASTOS ----------
     if "controle_gastos" not in dados or dados["controle_gastos"].empty:
-        df_gastos = pd.DataFrame(columns=["Data", "Descricao", "Valor"])
+        df_gastos = pd.DataFrame(columns=["Data", "Descricao", "valor"])
     else:
         df_gastos = dados["controle_gastos"].copy()
 
-    gasto_total = df_gastos["Valor"].sum() if not df_gastos.empty else 0
+    gasto_total = df_gastos["valor"].sum() if not df_gastos.empty else 0
     saldo_restante = reserva_mensal - gasto_total
 
     col1, col2, col3 = st.columns(3)
@@ -1052,13 +1052,13 @@ elif menu == "💸 CONTROLE DE GASTOS":
         with col1:
             descricao = st.text_input("Descrição", placeholder="Padaria, café, lanche...")
         with col2:
-            valor = st.number_input("Valor (R$)", min_value=0.01, step=1.0)
+            valor = st.number_input("valor (R$)", min_value=0.01, step=1.0)
 
         if st.form_submit_button("💸 Registrar Gasto"):
             novo = pd.DataFrame([{
                 "Data": date.today(),
                 "Descricao": descricao,
-                "Valor": valor
+                "valor": valor
             }])
 
             df_gastos = pd.concat([df_gastos, novo], ignore_index=True)
@@ -1077,7 +1077,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
     if not df_gastos.empty:
         st.dataframe(
             df_gastos.sort_values("Data", ascending=False).style.format({
-                "Valor": "R$ {:,.2f}"
+                "valor": "R$ {:,.2f}"
             }),
             use_container_width=True,
             height=350
@@ -1130,14 +1130,14 @@ elif menu == "📊 DASHBOARD":
 
     df_comp = pd.DataFrame({
         "Tipo": ["Receitas Fixas", "Despesas Fixas", "Saldo Variável"],
-        "Valor": [receitas_fixas, despesas_fixas, saldo_variavel]
+        "valor": [receitas_fixas, despesas_fixas, saldo_variavel]
     })
 
     fig_comp = px.bar(
         df_comp,
         x="Tipo",
-        y="Valor",
-        text="Valor",
+        y="valor",
+        text="valor",
         color="Tipo"
     )
 
@@ -1409,12 +1409,12 @@ elif menu == "⚙️ CONFIGURAÇÕES":
 
         if submitted:
             df_config = pd.DataFrame([
-                {"chave": "meta_patrimonio", "Valor": meta, "Descricao": "Meta total de patrimônio"},
-                {"chave": "orcamento_mensal", "Valor": orcamento, "Descricao": "Orçamento mensal"},
-                {"chave": "nome_familia", "Valor": nome, "Descricao": "Nome da família"},
-                {"chave": "rendimento_mensal", "Valor": rendimento, "Descricao": "Rendimento mensal"},
-                {"chave": "inflacao_mensal", "Valor": inflacao, "Descricao": "Inflação mensal"},
-                {"chave": "reserva_gastos", "Valor": reserva, "Descricao": "Reserva mensal de gastos rápidos"}
+                {"chave": "meta_patrimonio", "valor": meta, "Descricao": "Meta total de patrimônio"},
+                {"chave": "orcamento_mensal", "valor": orcamento, "Descricao": "Orçamento mensal"},
+                {"chave": "nome_familia", "valor": nome, "Descricao": "Nome da família"},
+                {"chave": "rendimento_mensal", "valor": rendimento, "Descricao": "Rendimento mensal"},
+                {"chave": "inflacao_mensal", "valor": inflacao, "Descricao": "Inflação mensal"},
+                {"chave": "reserva_gastos", "valor": reserva, "Descricao": "Reserva mensal de gastos rápidos"}
 
             ])
 
