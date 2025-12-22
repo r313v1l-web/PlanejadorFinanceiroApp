@@ -8,6 +8,7 @@ from database import DatabaseManager
 from dateutil.relativedelta import relativedelta
 
 import io
+import os
 import bcrypt
 
 
@@ -32,6 +33,8 @@ def normalizar_df(df):
 
 def tela_login():
 
+    import os
+
     # CSS específico do login
     st.markdown("""
     <style>
@@ -45,25 +48,23 @@ def tela_login():
     </style>
     """, unsafe_allow_html=True)
 
-    # CENTRALIZAÇÃO REAL (layout nativo Streamlit)
+    # Centralização real
     col_esq, col_centro, col_dir = st.columns([1, 1.2, 1])
 
     with col_centro:
         st.markdown("<div class='login-card'>", unsafe_allow_html=True)
 
-        # LOGO (se existir no projeto)
-        st.markdown(
-            "<div style='text-align:center; margin-bottom:15px'>"
-            "<img src='assets/images/logo.png' width='90'>"
-            "</div>",
-            unsafe_allow_html=True
-        )
+        # 🔥 LOGO — só renderiza se existir
+        logo_path = "assets/images/logo.png"
+        if os.path.exists(logo_path):
+            col1, col_logo, col3 = st.columns([1, 2, 1])
+            with col_logo:
+                st.image(logo_path, width=90)
 
         # TÍTULO
         st.markdown(
             "<h2 style='text-align:center; margin-bottom:4px;'>Gestão Financeira</h2>"
-            "<p style='text-align:center; color:#9ca3af; margin-bottom:25px;'>"
-            "Acesso ao sistema</p>",
+            "<p style='text-align:center; color:#9ca3af; margin-bottom:25px;'>Acesso ao sistema</p>",
             unsafe_allow_html=True
         )
 
@@ -71,10 +72,8 @@ def tela_login():
         usuario = st.text_input("Usuário")
         senha = st.text_input("Senha", type="password")
 
-        # CARREGA USUÁRIOS
         df_users = DatabaseManager.load_users()
 
-        # BOTÃO
         if st.button("Entrar", use_container_width=True):
             usuario_input = usuario.strip().lower()
             senha_input = senha.strip()
