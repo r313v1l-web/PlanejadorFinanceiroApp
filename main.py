@@ -1373,7 +1373,10 @@ elif menu == "🏷️ CATEGORIAS":
     if "categorias" not in dados or dados["categorias"].empty:
         df_cat = pd.DataFrame(columns=["nome", "tipo", "ativa"])
     else:
-        df_cat = dados["categorias"].copy() if not dados["categorias"].empty else pd.DataFrame()
+        df_cat = dados["categorias"].copy()
+
+        # 🔒 NORMALIZAÇÃO OBRIGATÓRIA
+        df_cat.columns = df_cat.columns.str.lower()
 
         # 🔒 blindagem obrigatória
         for col in ["nome", "tipo", "ativa"]:
@@ -1381,32 +1384,46 @@ elif menu == "🏷️ CATEGORIAS":
                 df_cat[col] = True if col == "ativa" else ""
 
     # ---------------- LISTA ----------------
-        st.subheader("📋 Categorias Cadastradas")
+    st.subheader("📋 Categorias Cadastradas")
 
-        if not df_cat.empty:
-            # Resetar índice para evitar erros de índice duplicado
-            df_display = df_cat.reset_index(drop=True).copy()
-            
-            # Criar um estilo customizado sem applymap
-            def highlight_inactive(val):
-                if isinstance(val, bool) and not val:
-                    return 'color: gray;'
-                return ''
-            
-            # Aplicar estilo manualmente
-            styled_df = df_display.style
-            styled_df = styled_df.applymap(
-                highlight_inactive, 
-                subset=["ativa"]
-            )
-            
-            st.dataframe(
-                styled_df,
-                use_container_width=True,
-                height=350
-            )
-        else:
-            st.caption("Nenhuma categoria cadastrada.")
+    if not df_cat.empty:
+        # 🔥 SOLUÇÃO: Criar uma cópia com índice resetado e remover colunas duplicadas
+        df_display = df_cat.copy()
+        
+        # 1. Remover colunas duplicadas
+        df_display = df_display.loc[:, ~df_display.columns.duplicated()]
+        
+        # 2. Resetar índice para garantir unicidade
+        df_display = df_display.reset_index(drop=True)
+        
+        # 3. Garantir que 'ativa' é booleana para a formatação
+        if "ativa" in df_display.columns:
+            df_display["ativa"] = df_display["ativa"].astype(bool)
+        
+        # 4. Aplicar estilo CORRETAMENTE
+        def highlight_inactive(row):
+            styles = [''] * len(row)
+            if 'ativa' in df_display.columns and not row['ativa']:
+                styles[df_display.columns.get_loc('ativa')] = 'color: gray;'
+            return styles
+        
+        # Usar apply (não applymap) para estilo condicional por linha
+        styled_df = df_display.style.apply(
+            highlight_inactive, 
+            axis=1,  # Aplicar por linha
+            subset=None
+        )
+        
+        # Adicionar formatação básica
+        styled_df = styled_df.format(None)  # Formatação padrão
+        
+        st.dataframe(
+            styled_df,
+            use_container_width=True,
+            height=350
+        )
+    else:
+        st.caption("Nenhuma categoria cadastrada.")
 
     st.divider()
 
@@ -1433,22 +1450,36 @@ elif menu == "🏷️ CATEGORIAS":
         if submitted:
             if nome.strip() == "":
                 st.error("Informe o nome da categoria.")
-            elif not df_cat[df_cat["nome"].str.lower() == nome.lower()].empty:
-                st.error("Categoria já existe.")
-            else:
-                nova = pd.DataFrame([{
-                    "Nome": nome,
-                    "tipo": tipo,
-                    "ativa": ativa
-                }])
+                st.stop()
+            
+            # Verificar se categoria já existe (case-insensitive)
+            if not df_cat.empty:
+                nome_exists = df_cat["nome"].astype(str).str.lower().str.contains(nome.lower()).any()
+                if nome_exists:
+                    st.error("Categoria já existe.")
+                    st.stop()
+            
+            # Criar nova categoria
+            nova = pd.DataFrame([{
+                "nome": nome.strip(),
+                "tipo": tipo,
+                "ativa": ativa
+            }])
 
-                df_cat = pd.concat([df_cat, nova], ignore_index=True)
-                dados["categorias"] = df_cat
-                st.session_state["dados"] = dados
-                DatabaseManager.save("categorias", df_cat, usuario)
-                st.session_state["msg"] = "Salvo"
-                st.session_state["msg_tipo"] = "success"
-                st.rerun()
+            # Concatenar e normalizar
+            df_cat = pd.concat([df_cat, nova], ignore_index=True)
+            
+            # 🔥 Garantir normalização antes de salvar
+            df_cat.columns = df_cat.columns.str.lower()
+            dados["categorias"] = df_cat
+            st.session_state["dados"] = dados
+            
+            # Salvar no banco
+            DatabaseManager.save("categorias", df_cat, usuario)
+            
+            st.session_state["msg"] = "Categoria criada com sucesso."
+            st.session_state["msg_tipo"] = "success"
+            st.rerun()
 
     st.divider()
 
@@ -1456,23 +1487,44 @@ elif menu == "🏷️ CATEGORIAS":
     st.subheader("🔁 Ativar / Desativar Categoria")
 
     if not df_cat.empty:
-        categoria_sel = st.selectbox(
-            "Selecione a categoria",
-            df_cat["nome"].tolist()
-        )
-
-        status_atual = df_cat.loc[df_cat["nome"] == categoria_sel, "ativa"].values[0]
-
-        if st.button("🔄 Alternar Status"):
-            df_cat.loc[df_cat["nome"] == categoria_sel, "ativa"] = not status_atual
-            dados["categorias"] = df_cat
-            st.session_state["dados"] = dados
-            DatabaseManager.save("categorias", df_cat, usuario)
-
-            st.caption(
-                f"Categoria {'ativada' if not status_atual else 'desativada'} com sucesso."
+        # Criar lista de categorias únicas
+        categorias_lista = df_cat["nome"].dropna().unique().tolist()
+        
+        if categorias_lista:
+            categoria_sel = st.selectbox(
+                "Selecione a categoria",
+                categorias_lista,
+                key="select_categoria"
             )
-            st.rerun()
+
+            # Encontrar status atual
+            status_atual = df_cat.loc[df_cat["nome"] == categoria_sel, "ativa"].values
+            if len(status_atual) > 0:
+                status_atual = status_atual[0]
+            else:
+                status_atual = True
+
+            col_btn1, col_btn2 = st.columns(2)
+            
+            with col_btn1:
+                if st.button("✅ Ativar Categoria", use_container_width=True):
+                    df_cat.loc[df_cat["nome"] == categoria_sel, "ativa"] = True
+                    dados["categorias"] = df_cat
+                    st.session_state["dados"] = dados
+                    DatabaseManager.save("categorias", df_cat, usuario)
+                    st.success(f"Categoria '{categoria_sel}' ativada.")
+                    st.rerun()
+            
+            with col_btn2:
+                if st.button("❌ Desativar Categoria", use_container_width=True):
+                    df_cat.loc[df_cat["nome"] == categoria_sel, "ativa"] = False
+                    dados["categorias"] = df_cat
+                    st.session_state["dados"] = dados
+                    DatabaseManager.save("categorias", df_cat, usuario)
+                    st.warning(f"Categoria '{categoria_sel}' desativada.")
+                    st.rerun()
+        else:
+            st.caption("Nenhuma categoria disponível para alteração.")
 
 # =========================================================
 # ⚙️ CONFIGURAÇÕES
