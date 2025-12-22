@@ -320,8 +320,8 @@ if not dados["historico"].empty:
     hist["mes"] = hist["data"].dt.strftime("%Y-%m")
     hist_mes = hist[hist["mes"] == mes_atual]
 
-    receitas_variaveis = hist_mes[hist_mes["tipo"] == "Receita"]["valor"].sum()
-    despesas_variaveis = hist_mes[hist_mes["tipo"] == "Despesa"]["valor"].sum()
+    receitas_variaveis = hist_mes[hist_mes["tipo"] == "receita"]["valor"].sum()
+    despesas_variaveis = hist_mes[hist_mes["tipo"] == "despesa"]["valor"].sum()
 else:
     receitas_variaveis = despesas_variaveis = 0
 
@@ -855,12 +855,12 @@ elif menu == "🎯 SONHOS & METAS":
             st.caption(sonho.get("descricao", ""))
 
             progresso = sonho["valor_atual"] / sonho["valor_alvo"] if sonho["valor_alvo"] > 0 else 0
-            st.progress(progresso, text=f"R$ {sonho['Valor_Atual']:,.0f} / R$ {sonho['Valor_Alvo']:,.0f}")
+            st.progress(progresso, text=f"R$ {sonho['valor_atual']:,.0f} / R$ {sonho['valor_alvo']:,.0f}")
 
             col_s1, col_s2, col_s3 = st.columns(3)
-            col_s1.caption(f"📅 {sonho['Data_Alvo']}")
-            col_s2.caption(f"🔸 {sonho['Prioridade']}")
-            col_s3.caption(f"📊 {sonho['Status']}")
+            col_s1.caption(f"📅 {sonho['data_alvo']}")
+            col_s2.caption(f"🔸 {sonho['prioridade']}")
+            col_s3.caption(f"📊 {sonho['status']}")
 
             # --- adicionar valor ---
             with st.form(f"form_add_{i}", clear_on_submit=True):
