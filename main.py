@@ -194,14 +194,14 @@ def salvar_relatorio_mensal(
 
     # 🔒 Blindagem de colunas
     if "Mes" not in df_hist.columns:
-        df_hist["Mes"] = ""
+        df_hist["mes"] = ""
 
     if "Status" not in df_hist.columns:
         df_hist["Status"] = ""
 
     # Se já existe FINALIZADO, não permite sobrescrever
     existente = df_hist[
-        (df_hist["Mes"] == mes_ref) &
+        (df_hist["mes"] == mes_ref) &
         (df_hist["Status"] == "Finalizado")
     ]
 
@@ -209,7 +209,7 @@ def salvar_relatorio_mensal(
         return False, "Relatório já finalizado para este mês."
 
     # Remove rascunho anterior do mesmo mês
-    df_hist = df_hist[df_hist["Mes"] != mes_ref]
+    df_hist = df_hist[df_hist["mes"] != mes_ref]
 
     novo = pd.DataFrame([{
         "Mes": mes_ref,
@@ -241,8 +241,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-if "usuario" not in st.session_state:
-    st.session_state["usuario"] = "default"
 
 # ===============================
 # CONTROLE DE LOGIN
@@ -300,24 +298,24 @@ hoje = date.today()
 mes_atual = hoje.strftime("%Y-%m")
 
 # ---------------- PATRIMÔNIO ----------------
-patrimonio = dados["investimentos"]["Valor_Atual"].sum() if not dados["investimentos"].empty else 0
+patrimonio = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
 
 # ---------------- HISTÓRICO (VARIÁVEL) ----------------
 if not dados["historico"].empty:
     hist = dados["historico"].copy()
-    hist["Data"] = pd.to_datetime(hist["Data"])
-    hist["Mes"] = hist["Data"].dt.strftime("%Y-%m")
-    hist_mes = hist[hist["Mes"] == mes_atual]
+    hist["data"] = pd.to_datetime(hist["data"])
+    hist["mes"] = hist["data"].dt.strftime("%Y-%m")
+    hist_mes = hist[hist["mes"] == mes_atual]
 
-    receitas_variaveis = hist_mes[hist_mes["Tipo"] == "Receita"]["Valor"].sum()
-    despesas_variaveis = hist_mes[hist_mes["Tipo"] == "Despesa"]["Valor"].sum()
+    receitas_variaveis = hist_mes[hist_mes["tipo"] == "Receita"]["valor"].sum()
+    despesas_variaveis = hist_mes[hist_mes["tipo"] == "Despesa"]["valor"].sum()
 else:
     receitas_variaveis = despesas_variaveis = 0
 
 
 # ---------------- CONTROLE DE GASTOS (DESPESA VARIÁVEL) ----------------
 if not dados.get("controle_gastos", pd.DataFrame()).empty:
-    gastos_rapidos_mes = dados["controle_gastos"]["Valor"].sum()
+    gastos_rapidos_mes = dados["controle_gastos"]["valor"].sum()
 else:
     gastos_rapidos_mes = 0
 
@@ -327,16 +325,16 @@ saldo_variavel = receitas_variaveis - despesas_variaveis - gastos_rapidos_mes
 
 # ---------------- FLUXO FIXO ----------------
 if not dados["fluxo_fixo"].empty:
-    receitas_fixas = dados["fluxo_fixo"][dados["fluxo_fixo"]["Tipo"] == "Receita"]["Valor"].sum()
-    despesas_fixas = dados["fluxo_fixo"][dados["fluxo_fixo"]["Tipo"] == "Despesa"]["Valor"].sum()
+    receitas_fixas = dados["fluxo_fixo"][dados["fluxo_fixo"]["tipo"] == "Receita"]["valor"].sum()
+    despesas_fixas = dados["fluxo_fixo"][dados["fluxo_fixo"]["tipo"] == "Despesa"]["valor"].sum()
     saldo_fixo = receitas_fixas - despesas_fixas
 else:
     receitas_fixas = despesas_fixas = saldo_fixo = 0
 
 # ---------------- SONHOS ----------------
 if not dados["sonhos_projetos"].empty:
-    total_sonhos = dados["sonhos_projetos"]["Valor_Alvo"].sum()
-    total_atual = dados["sonhos_projetos"]["Valor_Atual"].sum()
+    total_sonhos = dados["sonhos_projetos"]["valor_alvo"].sum()
+    total_atual = dados["sonhos_projetos"]["valor_atual"].sum()
     progresso_sonhos = (total_atual / total_sonhos * 100) if total_sonhos > 0 else 0
 else:
     total_sonhos = total_atual = progresso_sonhos = 0
@@ -649,7 +647,7 @@ if menu == "📝 LANÇAMENTOS":
             valor = st.number_input("Valor (R$)", min_value=0.0, step=10.0, format="%.2f")
             categoria = st.selectbox(
                 "Categoria",
-                dados["categorias"]["Nome"].tolist() if not dados["categorias"].empty else []
+                dados["categorias"]["nome"].tolist() if not dados["categorias"].empty else []
             )
 
         with col3:
@@ -689,7 +687,7 @@ if menu == "📝 LANÇAMENTOS":
 
     if not dados["historico"].empty:
         df_hist = dados["historico"].copy()
-        df_hist["Data"] = pd.to_datetime(df_hist["Data"])
+        df_hist["data"] = pd.to_datetime(df_hist["data"])
 
         st.dataframe(
             df_hist.sort_values("Data", ascending=False).style.format({
@@ -718,7 +716,7 @@ elif menu == "💰 INVESTIMENTOS":
         st.session_state["msg"] = None
 
     # ---------------- RESUMO ----------------
-    total = dados["investimentos"]["Valor_Atual"].sum() if not dados["investimentos"].empty else 0
+    total = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
     st.metric("Total Investido", f"R$ {total:,.2f}")
 
     st.divider()
@@ -822,8 +820,8 @@ elif menu == "🎯 SONHOS & METAS":
 
     # ---------------- RESUMO ----------------
     if not dados["sonhos_projetos"].empty:
-        total_alvo = dados["sonhos_projetos"]["Valor_Alvo"].sum()
-        total_atual = dados["sonhos_projetos"]["Valor_Atual"].sum()
+        total_alvo = dados["sonhos_projetos"]["valor_alvo"].sum()
+        total_atual = dados["sonhos_projetos"]["valor_atual"].sum()
         progresso = (total_atual / total_alvo * 100) if total_alvo > 0 else 0
     else:
         total_alvo = total_atual = progresso = 0
@@ -839,10 +837,10 @@ elif menu == "🎯 SONHOS & METAS":
     if not dados["sonhos_projetos"].empty:
         for i, sonho in dados["sonhos_projetos"].iterrows():
 
-            st.subheader(sonho["Nome"])
+            st.subheader(sonho["nome"])
             st.caption(sonho.get("Descricao", ""))
 
-            progresso = sonho["Valor_Atual"] / sonho["Valor_Alvo"] if sonho["Valor_Alvo"] > 0 else 0
+            progresso = sonho["valor_atual"] / sonho["valor_alvo"] if sonho["valor_alvo"] > 0 else 0
             st.progress(progresso, text=f"R$ {sonho['Valor_Atual']:,.0f} / R$ {sonho['Valor_Alvo']:,.0f}")
 
             col_s1, col_s2, col_s3 = st.columns(3)
@@ -925,9 +923,9 @@ elif menu == "🏢 FLUXOS FIXOS":
     despesas = dados["fluxo_fixo"][dados["fluxo_fixo"]["tipo"] == "Despesa"]
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("Receitas Fixas", f"R$ {receitas['Valor'].sum():,.2f}")
-    col2.metric("Despesas Fixas", f"R$ {despesas['Valor'].sum():,.2f}")
-    col3.metric("Saldo Fixo", f"R$ {(receitas['Valor'].sum() - despesas['Valor'].sum()):,.2f}")
+    col1.metric("Receitas Fixas", f"R$ {receitas['valor'].sum():,.2f}")
+    col2.metric("Despesas Fixas", f"R$ {despesas['valor'].sum():,.2f}")
+    col3.metric("Saldo Fixo", f"R$ {(receitas['valor'].sum() - despesas['valor'].sum()):,.2f}")
 
     st.divider()
 
@@ -958,7 +956,7 @@ elif menu == "🏢 FLUXOS FIXOS":
             with col2:
                 categoria = st.selectbox(
                     "Categoria",
-                    dados["categorias"]["Nome"].tolist() if not dados["categorias"].empty else []
+                    dados["categorias"]["nome"].tolist() if not dados["categorias"].empty else []
                 )
                 recorrencia = st.selectbox(
                     "Recorrência",
@@ -1051,7 +1049,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
     else:
         df_gastos = dados["controle_gastos"].copy()
 
-    gasto_total = df_gastos["Valor"].sum() if not df_gastos.empty else 0
+    gasto_total = df_gastos["valor"].sum() if not df_gastos.empty else 0
     saldo_restante = reserva_mensal - gasto_total
 
     col1, col2, col3 = st.columns(3)
@@ -1276,7 +1274,7 @@ elif menu == "🏷️ CATEGORIAS":
 
     # Garantir DataFrame
     if "categorias" not in dados or dados["categorias"].empty:
-        df_cat = pd.DataFrame(columns=["Nome", "Tipo", "Ativa"])
+        df_cat = pd.DataFrame(columns=["nome", "tipo", "ativa"])
     else:
         df_cat = dados["categorias"].copy()
 
@@ -1287,7 +1285,7 @@ elif menu == "🏷️ CATEGORIAS":
         st.dataframe(
             df_cat.style.applymap(
                 lambda x: "color: gray;" if x is False else "",
-                subset=["Ativa"]
+                subset=["ativa"]
             ),
             use_container_width=True,
             height=350
@@ -1320,7 +1318,7 @@ elif menu == "🏷️ CATEGORIAS":
         if submitted:
             if nome.strip() == "":
                 st.error("Informe o nome da categoria.")
-            elif not df_cat[df_cat["Nome"].str.lower() == nome.lower()].empty:
+            elif not df_cat[df_cat["nome"].str.lower() == nome.lower()].empty:
                 st.error("Categoria já existe.")
             else:
                 nova = pd.DataFrame([{
@@ -1345,13 +1343,13 @@ elif menu == "🏷️ CATEGORIAS":
     if not df_cat.empty:
         categoria_sel = st.selectbox(
             "Selecione a categoria",
-            df_cat["Nome"].tolist()
+            df_cat["nome"].tolist()
         )
 
-        status_atual = df_cat.loc[df_cat["Nome"] == categoria_sel, "Ativa"].values[0]
+        status_atual = df_cat.loc[df_cat["nome"] == categoria_sel, "Ativa"].values[0]
 
         if st.button("🔄 Alternar Status"):
-            df_cat.loc[df_cat["Nome"] == categoria_sel, "Ativa"] = not status_atual
+            df_cat.loc[df_cat["nome"] == categoria_sel, "Ativa"] = not status_atual
             dados["categorias"] = df_cat
             st.session_state["dados"] = dados
             DatabaseManager.save("categorias", df_cat, usuario)
