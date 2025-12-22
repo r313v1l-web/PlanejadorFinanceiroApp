@@ -83,29 +83,29 @@ def tela_admin_usuarios():
         novo_perfil = st.selectbox("Perfil", ["user", "admin"])
 
         if st.form_submit_button("Criar Usuário"):
-        if not novo_usuario or not nova_senha:
-            st.error("Usuário e senha são obrigatórios.")
-            return
+            if not novo_usuario or not nova_senha:
+                st.error("Usuário e senha são obrigatórios.")
+                return
 
-        if novo_usuario in df["usuario"].values:
-            st.error("Usuário já existe.")
-            return
+            if novo_usuario in df["usuario"].values:
+                st.error("Usuário já existe.")
+                return
 
-        senha_hash = bcrypt.hashpw(
-            nova_senha.encode("utf-8"),
-            bcrypt.gensalt()
-        ).decode("utf-8")
+            senha_hash = bcrypt.hashpw(
+                nova_senha.encode("utf-8"),
+                bcrypt.gensalt()
+            ).decode("utf-8")
 
-        # ✅ AQUI É O LUGAR CORRETO
-        DatabaseManager.create_user(
-            novo_usuario,
-            novo_nome,
-            senha_hash,
-            novo_perfil
-        )
+            # ✅ AQUI É O LUGAR CORRETO
+            DatabaseManager.create_user(
+                novo_usuario,
+                novo_nome,
+                senha_hash,
+                novo_perfil
+            )
 
-        st.success("Usuário criado com sucesso.")
-        st.rerun()
+            st.success("Usuário criado com sucesso.")
+            st.rerun()
 
     st.divider()
     st.subheader("Usuários Existentes")
@@ -330,7 +330,7 @@ config_dict = {}
 
 if not dados["config"].empty:
     for _, row in dados["config"].iterrows():
-        config_dict[row["Chave"]] = row["Valor"]
+        config_dict[row["chave"]] = row["valor"]
 
 # Valores com fallback seguro
 meta_patrimonio = float(config_dict.get("meta_patrimonio", 0))
@@ -1409,18 +1409,22 @@ elif menu == "⚙️ CONFIGURAÇÕES":
 
         if submitted:
             df_config = pd.DataFrame([
-                {"Chave": "meta_patrimonio", "Valor": meta, "Descricao": "Meta total de patrimônio"},
-                {"Chave": "orcamento_mensal", "Valor": orcamento, "Descricao": "Orçamento mensal"},
-                {"Chave": "nome_familia", "Valor": nome, "Descricao": "Nome da família"},
-                {"Chave": "rendimento_mensal", "Valor": rendimento, "Descricao": "Rendimento mensal"},
-                {"Chave": "inflacao_mensal", "Valor": inflacao, "Descricao": "Inflação mensal"},
-                {"Chave": "reserva_gastos", "Valor": reserva, "Descricao": "Reserva mensal de gastos rápidos"}
-
+                {"chave": "meta_patrimonio", "valor": meta, "descricao": "Meta total de patrimônio"},
+                {"chave": "orcamento_mensal", "valor": orcamento, "descricao": "Orçamento mensal"},
+                {"chave": "nome_familia", "valor": nome, "descricao": "Nome da família"},
+                {"chave": "rendimento_mensal", "valor": rendimento, "descricao": "Rendimento mensal"},
+                {"chave": "inflacao_mensal", "valor": inflacao, "descricao": "Inflação mensal"},
+                {"chave": "reserva_gastos", "valor": reserva, "descricao": "Reserva mensal de gastos rápidos"}
             ])
+
+            # Normaliza colunas ANTES de salvar
+            df_config.columns = df_config.columns.str.lower()
 
             dados["config"] = df_config
             st.session_state["dados"] = dados
+
             DatabaseManager.save("config", df_config, st.session_state["usuario"])
+
             st.session_state["msg"] = "Salvo"
             st.session_state["msg_tipo"] = "success"
             st.rerun()
