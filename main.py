@@ -82,7 +82,7 @@ def tela_admin_usuarios():
     st.subheader("➕ Novo Usuário")
 
     with st.form("form_novo_usuario", clear_on_submit=True):
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns(3, gap="large")
 
         with col1:
             novo_usuario = st.text_input("Usuário").strip().lower()
@@ -128,7 +128,7 @@ def tela_admin_usuarios():
     df_edit = df.copy()
 
     for i, row in df_edit.iterrows():
-        col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
+        col1, col2, col3, col4 = st.columns([3, 2, 2, 2] , gap="large")
 
         with col1:
             st.write(f"**{row['usuario']}** ({row['nome']})")
@@ -819,7 +819,7 @@ if menu == "📝 LANÇAMENTOS":
 
     # ---------------- FORM ----------------
     with st.form("form_lancamento", clear_on_submit=True):
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns(3 , gap="large")
 
         with col1:
             data = st.date_input("data", date.today())
@@ -919,7 +919,7 @@ elif menu == "💰 INVESTIMENTOS":
     # ---------------- FORM ----------------
     with st.expander("➕ Adicionar Investimento"):
         with st.form("form_investimento", clear_on_submit=True):
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2, gap="large")
 
             with col1:
                 instituicao = st.text_input("Instituição")
@@ -996,7 +996,7 @@ elif menu == "🎯 SONHOS & METAS":
     else:
         total_alvo = total_atual = progresso = 0
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3, gap="large")
     col1.metric("Total em Metas", f"R$ {total_alvo:,.2f}")
     col2.metric("Economizado", f"R$ {total_atual:,.2f}")
     col3.metric("Progresso Geral", f"{progresso:.1f}%")
@@ -1036,7 +1036,7 @@ elif menu == "🎯 SONHOS & METAS":
     # ---------------- NOVO SONHO ----------------
     with st.expander("➕ Adicionar Novo Sonho"):
         with st.form("form_novo_sonho", clear_on_submit=True):
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2, gap="large")
 
             with col1:
                 nome = st.text_input("Nome")
@@ -1110,7 +1110,7 @@ elif menu == "🏢 FLUXOS FIXOS":
     total_despesas = despesas["valor"].sum() if not despesas.empty and "valor" in despesas.columns else 0
     saldo_fixo = total_receitas - total_despesas
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3, gap="large")
     col1.metric("Receitas Fixas", f"R$ {total_receitas:,.2f}")
     col2.metric("Despesas Fixas", f"R$ {total_despesas:,.2f}")
     col3.metric("Saldo Fixo", f"R$ {saldo_fixo:,.2f}")
@@ -1140,7 +1140,7 @@ elif menu == "🏢 FLUXOS FIXOS":
     # ---------------- NOVO FLUXO ----------------
     with st.expander("➕ Adicionar Fluxo Fixo"):
         with st.form("form_fluxo", clear_on_submit=True):
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2, gap="large")
 
             with col1:
                 nome = st.text_input("Nome")
@@ -1313,7 +1313,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
     gasto_total = df_gastos["valor"].sum() if not df_gastos.empty else 0
     saldo_restante = reserva_mensal - gasto_total
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3, gap="large")
     col1.metric("💰 Reserva Mensal", f"R$ {reserva_mensal:,.2f}")
     col2.metric("🧾 Total Gasto", f"R$ {gasto_total:,.2f}")
     col3.metric(
@@ -1327,7 +1327,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
     st.subheader("➕ Registrar Gasto Rápido")
 
     with st.form("form_gasto_rapido", clear_on_submit=True):
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2, gap="large")
 
         with col1:
             descricao = st.text_input("descrição", placeholder="Padaria, café, lanche...")
@@ -1385,7 +1385,7 @@ elif menu == "📊 DASHBOARD":
 
         st.session_state["msg"] = None
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns(4, gap="large")
 
     col1.metric("💰 Patrimônio", f"R$ {patrimonio:,.2f}")
 
@@ -1648,7 +1648,7 @@ elif menu == "🏷️ CATEGORIAS":
     st.subheader("➕ Nova Categoria")
 
     with st.form("form_categoria", clear_on_submit=True):
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns(3, gap="large")
 
         with col1:
             nome = st.text_input("Nome da Categoria")
@@ -1790,7 +1790,7 @@ elif menu == "⚙️ CONFIGURAÇÕES":
 
     with st.form("form_config", clear_on_submit=False):
 
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2, gap="large")
 
         with col1:
             meta = st.number_input(
@@ -1893,7 +1893,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
 
     st.subheader("📌 Resumo Executivo")
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns(4, gap="large")
 
     # ================= RESUMO EXECUTIVO =================
 
@@ -2056,7 +2056,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
     st.caption("Simule ajustes financeiros e veja o impacto no patrimônio ao longo do tempo.")
 
     with st.expander("⚙️ Configurar cenário de simulação"):
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2, gap="large")
 
         with col1:
             aporte_extra = st.number_input(
@@ -2212,7 +2212,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
     st.divider()
     st.subheader("🗂️ Controle do Relatório Mensal")
 
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2, gap="large")
 
     with col1:
         if st.button("💾 Salvar como Rascunho"):
