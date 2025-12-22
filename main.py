@@ -981,6 +981,7 @@ elif menu == "🏢 FLUXOS FIXOS":
 
                 df_fluxo = dados["fluxo_fixo"].copy()
                 df_fluxo = pd.concat([df_fluxo, novo], ignore_index=True)
+                df_fluxo.columns = df_fluxo.columns.str.lower()   # 🔥 ESSENCIAL
 
                 dados["fluxo_fixo"] = df_fluxo
                 st.session_state["dados"] = dados
