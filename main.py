@@ -2323,17 +2323,22 @@ elif menu == "💸 CONTROLE DE GASTOS":
 
     st.divider()
 
-    # ---------- CARDS PARA HISTÓRICO DE GASTOS ----------
+    # ---------- CARDS PARA HISTÓRICO DE GASTOS COM ABAS ----------
     st.markdown("### 📋 Histórico de Gastos")
-    
+        
     if not df_gastos.empty:
         # Ordenar por data (mais recente primeiro)
         df_gastos = df_gastos.sort_values("data", ascending=False)
         
-        # Card de resumo do dia
-        if qtd_gastos_hoje > 0:
-            with st.container():
-                st.markdown("""
+        # Criar abas para organização
+        tab1, tab2, tab3, tab4 = st.tabs(["📅 Hoje", "📊 Este Mês", "📈 Todos", "🏷️ Categorias"])
+        
+        with tab1:
+            # Gastos de hoje
+            df_hoje = df_gastos[df_gastos["data"].dt.date == hoje]
+            
+            if not df_hoje.empty:
+                st.markdown(f"""
                 <div style="
                     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
                     border-radius: 12px;
@@ -2344,279 +2349,463 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 ">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <div style="font-size: 16px; font-weight: bold;">📅 Hoje</div>
-                            <div style="font-size: 14px;">{qtd} gastos registrados hoje</div>
+                            <div style="font-size: 16px; font-weight: bold;">📅 Resumo de Hoje</div>
+                            <div style="font-size: 14px;">{len(df_hoje)} gastos registrados</div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 20px; font-weight: bold;">R$ {total:,.2f}</div>
+                            <div style="font-size: 20px; font-weight: bold;">R$ {df_hoje['valor'].sum():,.2f}</div>
                             <div style="font-size: 12px;">Total gasto hoje</div>
                         </div>
                     </div>
                 </div>
-                """.format(qtd=qtd_gastos_hoje, total=gastos_hoje), unsafe_allow_html=True)
-        
-        # Lista de gastos em cards
-        st.markdown(f"<h4 style='color: #d1d5db; margin-bottom: 16px;'>Últimos {min(15, len(df_gastos))} gastos:</h4>", unsafe_allow_html=True)
-        
-        for idx, row in df_gastos.head(15).iterrows():
-            # Formatar data
-            if isinstance(row['data'], pd.Timestamp):
-                data_str = row['data'].strftime("%d/%m")
-                dia_semana = row['data'].strftime("%a")
-                data_completa = row['data'].strftime("%d/%m/%Y")
+                """, unsafe_allow_html=True)
+                
+                # Mostrar gastos de hoje
+                for idx, row in df_hoje.iterrows():
+                    mostrar_gasto_card(idx, row, df_gastos)
             else:
-                data_str = str(row['data'])[:10]
-                dia_semana = ""
-                data_completa = data_str
+                st.info("Nenhum gasto registrado hoje.")
+        
+        with tab2:
+            # Gastos deste mês
+            mes_atual = hoje.strftime("%Y-%m")
+            df_mes = df_gastos[df_gastos["data"].dt.strftime("%Y-%m") == mes_atual]
             
-            # Determinar categoria pela descrição (simples)
-            desc_lower = row['descricao'].lower()
-            if any(word in desc_lower for word in ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café']):
-                categoria = "🍔 Alimentação"
-                cor_categoria = "#f87171"
-            elif any(word in desc_lower for word in ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro']):
-                categoria = "🚗 Transporte"
-                cor_categoria = "#60a5fa"
-            elif any(word in desc_lower for word in ['mercado', 'supermercado', 'feira', 'padaria']):
-                categoria = "🛒 Compras"
-                cor_categoria = "#34d399"
-            elif any(word in desc_lower for word in ['cinema', 'shopping', 'parque', 'lazer', 'bar']):
-                categoria = "🎯 Lazer"
-                cor_categoria = "#a78bfa"
-            else:
-                categoria = "📝 Outros"
-                cor_categoria = "#9ca3af"
-            
-            # Card para cada gasto
-            with st.container():
+            if not df_mes.empty:
                 st.markdown(f"""
                 <div style="
-                    background: #1f2937;
-                    border-radius: 10px;
+                    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+                    border-radius: 12px;
                     padding: 16px;
-                    margin-bottom: 12px;
-                    border-left: 4px solid {cor_categoria};
-                    border: 1px solid #374151;
-                    transition: all 0.2s;
+                    color: #1e40af;
+                    margin-bottom: 20px;
+                    border: 1px solid #60a5fa;
                 ">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <div style="
-                                    background: {cor_categoria}20;
-                                    color: {cor_categoria};
-                                    padding: 4px 12px;
-                                    border-radius: 20px;
-                                    font-size: 12px;
-                                    font-weight: bold;
-                                    margin-right: 12px;
-                                ">
-                                    {categoria}
-                                </div>
-                                <div style="
-                                    background: #374151;
-                                    color: #d1d5db;
-                                    padding: 4px 10px;
-                                    border-radius: 6px;
-                                    font-size: 12px;
-                                    font-weight: bold;
-                                ">
-                                    {data_str} • {dia_semana}
-                                </div>
-                            </div>
-                            <div style="font-size: 16px; font-weight: bold; color: #f9fafb; margin-bottom: 4px;">
-                                {row['descricao']}
-                            </div>
-                            <div style="font-size: 12px; color: #9ca3af;">
-                                Registrado em: {data_completa}
-                            </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 16px; font-weight: bold;">📊 Resumo do Mês</div>
+                            <div style="font-size: 14px;">{len(df_mes)} gastos em {hoje.strftime('%B')}</div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 20px; font-weight: bold; color: #f87171; margin-bottom: 8px;">
-                                R$ {row['valor']:,.2f}
-                            </div>
-                """, unsafe_allow_html=True)
-                
-                # Botão de exclusão dentro do card
-                col_btn1, col_btn2 = st.columns([1, 1])
-                with col_btn1:
-                    if st.button("🗑️ Excluir", key=f"del_gasto_{idx}", use_container_width=True):
-                        # Confirmação de exclusão
-                        st.session_state[f"confirm_delete_{idx}"] = True
-                        st.rerun()
-                
-                with col_btn2:
-                    if st.button("📋 Detalhes", key=f"detail_{idx}", use_container_width=True):
-                        st.session_state[f"show_detail_{idx}"] = True
-                        st.rerun()
-                
-                st.markdown("""
+                            <div style="font-size: 20px; font-weight: bold;">R$ {df_mes['valor'].sum():,.2f}</div>
+                            <div style="font-size: 12px;">Total do mês</div>
                         </div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Modal de confirmação de exclusão
-                if st.session_state.get(f"confirm_delete_{idx}", False):
-                    with st.container():
-                        st.markdown(f"""
-                        <div style="
-                            background: rgba(239, 68, 68, 0.1);
-                            border: 2px solid #ef4444;
-                            border-radius: 10px;
-                            padding: 16px;
-                            margin: 8px 0;
-                        ">
-                            <div style="color: #fca5a5; font-weight: bold; margin-bottom: 12px;">
-                                ⚠️ Confirmar exclusão
-                            </div>
-                            <div style="color: #f9fafb; margin-bottom: 16px;">
-                                Tem certeza que deseja excluir o gasto "{row['descricao'][:30]}..."?
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        col_confirm1, col_confirm2 = st.columns(2)
-                        with col_confirm1:
-                            if st.button("✅ Sim, excluir", key=f"confirm_yes_{idx}", type="primary", use_container_width=True):
-                                df_gastos = df_gastos.drop(idx).reset_index(drop=True)
-                                dados["controle_gastos"] = df_gastos
-                                st.session_state["dados"] = dados
-                                DatabaseManager.save("controle_gastos", df_gastos, usuario)
-                                st.session_state[f"confirm_delete_{idx}"] = False
-                                st.success("Gasto excluído!")
-                                st.rerun()
-                        
-                        with col_confirm2:
-                            if st.button("❌ Cancelar", key=f"confirm_no_{idx}", use_container_width=True):
-                                st.session_state[f"confirm_delete_{idx}"] = False
-                                st.rerun()
+                # Paginação para gastos do mês
+                itens_por_pagina = 10
+                total_paginas = (len(df_mes) - 1) // itens_por_pagina + 1
                 
-                # Detalhes do gasto
-                if st.session_state.get(f"show_detail_{idx}", False):
-                    with st.container():
-                        st.markdown(f"""
-                        <div style="
-                            background: rgba(59, 130, 246, 0.1);
-                            border: 1px solid #3b82f6;
-                            border-radius: 10px;
-                            padding: 16px;
-                            margin: 8px 0;
-                        ">
-                            <div style="color: #93c5fd; font-weight: bold; margin-bottom: 12px;">
-                                📋 Detalhes do Gasto
-                            </div>
-                            <div style="color: #f9fafb; margin-bottom: 8px;">
-                                <strong>Descrição:</strong> {row['descricao']}
-                            </div>
-                            <div style="color: #f9fafb; margin-bottom: 8px;">
-                                <strong>Valor:</strong> R$ {row['valor']:,.2f}
-                            </div>
-                            <div style="color: #f9fafb; margin-bottom: 8px;">
-                                <strong>Data:</strong> {data_completa}
-                            </div>
-                            <div style="color: #f9fafb;">
-                                <strong>Categoria:</strong> {categoria}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        if st.button("Fechar detalhes", key=f"close_detail_{idx}", use_container_width=True):
-                            st.session_state[f"show_detail_{idx}"] = False
-                            st.rerun()
-        
-        # Botão para ver mais gastos
-        if len(df_gastos) > 15:
-            col_more1, col_more2, col_more3 = st.columns([1, 2, 1])
-            with col_more2:
-                if st.button("📜 Ver todos os gastos", use_container_width=True):
-                    st.session_state["show_all_gastos"] = not st.session_state.get("show_all_gastos", False)
-                    st.rerun()
-            
-            if st.session_state.get("show_all_gastos", False):
-                st.dataframe(
-                    df_gastos.style.format({
-                        "valor": "R$ {:,.2f}",
-                        "data": lambda x: x.strftime("%d/%m/%Y") if hasattr(x, 'strftime') else x
-                    }),
-                    use_container_width=True,
-                    height=400
+                # Selecionar página
+                pagina_atual = st.number_input(
+                    "Página",
+                    min_value=1,
+                    max_value=total_paginas,
+                    value=1,
+                    key="pagina_mes"
                 )
-    
-    else:
-        # Card para estado vazio
-        with st.container():
+                
+                inicio = (pagina_atual - 1) * itens_por_pagina
+                fim = inicio + itens_por_pagina
+                
+                # Mostrar gastos da página atual
+                for idx in df_mes.iloc[inicio:fim].index:
+                    mostrar_gasto_card(idx, df_mes.loc[idx], df_gastos)
+                
+                # Controles de paginação
+                if total_paginas > 1:
+                    col_pag1, col_pag2, col_pag3 = st.columns([1, 2, 1])
+                    with col_pag2:
+                        st.caption(f"Página {pagina_atual} de {total_paginas} • {len(df_mes)} gastos no total")
+            else:
+                st.info("Nenhum gasto registrado este mês.")
+        
+        with tab3:
+            # Todos os gastos com paginação
+            if not df_gastos.empty:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+                    border-radius: 12px;
+                    padding: 16px;
+                    color: #374151;
+                    margin-bottom: 20px;
+                    border: 1px solid #9ca3af;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 16px; font-weight: bold;">📈 Todos os Gastos</div>
+                            <div style="font-size: 14px;">{len(df_gastos)} gastos registrados</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 20px; font-weight: bold;">R$ {df_gastos['valor'].sum():,.2f}</div>
+                            <div style="font-size: 12px;">Total geral</div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Filtros
+                col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
+                
+                with col_filtro1:
+                    ordenar_por = st.selectbox(
+                        "Ordenar por",
+                        ["Data (recente)", "Data (antigo)", "Valor (maior)", "Valor (menor)"],
+                        key="ordenar_gastos"
+                    )
+                
+                with col_filtro2:
+                    # Filtro por período
+                    periodo = st.selectbox(
+                        "Período",
+                        ["Todos", "Últimos 7 dias", "Últimos 30 dias", "Este ano", "Ano passado"],
+                        key="periodo_gastos"
+                    )
+                
+                with col_filtro3:
+                    # Filtro por valor mínimo
+                    valor_min = st.number_input(
+                        "Valor mínimo (R$)",
+                        min_value=0.0,
+                        value=0.0,
+                        step=10.0,
+                        key="valor_min_gastos"
+                    )
+                
+                # Aplicar filtros
+                df_filtrado = df_gastos.copy()
+                
+                # Filtrar por período
+                if periodo == "Últimos 7 dias":
+                    data_limite = hoje - timedelta(days=7)
+                    df_filtrado = df_filtrado[df_filtrado["data"] >= pd.Timestamp(data_limite)]
+                elif periodo == "Últimos 30 dias":
+                    data_limite = hoje - timedelta(days=30)
+                    df_filtrado = df_filtrado[df_filtrado["data"] >= pd.Timestamp(data_limite)]
+                elif periodo == "Este ano":
+                    df_filtrado = df_filtrado[df_filtrado["data"].dt.year == hoje.year]
+                elif periodo == "Ano passado":
+                    df_filtrado = df_filtrado[df_filtrado["data"].dt.year == hoje.year - 1]
+                
+                # Filtrar por valor mínimo
+                df_filtrado = df_filtrado[df_filtrado["valor"] >= valor_min]
+                
+                # Ordenar
+                if ordenar_por == "Data (recente)":
+                    df_filtrado = df_filtrado.sort_values("data", ascending=False)
+                elif ordenar_por == "Data (antigo)":
+                    df_filtrado = df_filtrado.sort_values("data", ascending=True)
+                elif ordenar_por == "Valor (maior)":
+                    df_filtrado = df_filtrado.sort_values("valor", ascending=False)
+                elif ordenar_por == "Valor (menor)":
+                    df_filtrado = df_filtrado.sort_values("valor", ascending=True)
+                
+                # Paginação
+                itens_por_pagina_total = st.slider(
+                    "Itens por página",
+                    min_value=5,
+                    max_value=50,
+                    value=15,
+                    step=5,
+                    key="itens_por_pagina"
+                )
+                
+                total_paginas_total = (len(df_filtrado) - 1) // itens_por_pagina_total + 1
+                
+                # Selecionar página
+                pagina_atual_total = st.number_input(
+                    "Página",
+                    min_value=1,
+                    max_value=total_paginas_total,
+                    value=1,
+                    key="pagina_total"
+                )
+                
+                inicio_total = (pagina_atual_total - 1) * itens_por_pagina_total
+                fim_total = inicio_total + itens_por_pagina_total
+                
+                # Mostrar resultados
+                st.caption(f"Mostrando {min(len(df_filtrado), itens_por_pagina_total)} de {len(df_filtrado)} gastos")
+                
+                for idx in df_filtrado.iloc[inicio_total:fim_total].index:
+                    mostrar_gasto_card(idx, df_filtrado.loc[idx], df_gastos)
+                
+                # Controles de paginação
+                if total_paginas_total > 1:
+                    col_nav1, col_nav2, col_nav3, col_nav4, col_nav5 = st.columns(5)
+                    
+                    with col_nav1:
+                        if pagina_atual_total > 1:
+                            if st.button("⏮️ Primeira", use_container_width=True):
+                                st.session_state["pagina_total"] = 1
+                                st.rerun()
+                    
+                    with col_nav2:
+                        if pagina_atual_total > 1:
+                            if st.button("◀️ Anterior", use_container_width=True):
+                                st.session_state["pagina_total"] = pagina_atual_total - 1
+                                st.rerun()
+                    
+                    with col_nav3:
+                        st.markdown(f"**{pagina_atual_total} / {total_paginas_total}**", unsafe_allow_html=True)
+                    
+                    with col_nav4:
+                        if pagina_atual_total < total_paginas_total:
+                            if st.button("Próxima ▶️", use_container_width=True):
+                                st.session_state["pagina_total"] = pagina_atual_total + 1
+                                st.rerun()
+                    
+                    with col_nav5:
+                        if pagina_atual_total < total_paginas_total:
+                            if st.button("Última ⏭️", use_container_width=True):
+                                st.session_state["pagina_total"] = total_paginas_total
+                                st.rerun()
+        
+        with tab4:
+            # Análise por categorias
             st.markdown("""
             <div style="
-                background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+                background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
                 border-radius: 12px;
-                padding: 60px 20px;
-                text-align: center;
-                border: 2px dashed #374151;
-                margin: 20px 0;
+                padding: 16px;
+                color: #7c3aed;
+                margin-bottom: 20px;
+                border: 1px solid #a78bfa;
             ">
-                <div style="font-size: 64px; margin-bottom: 20px; color: #6b7280;">📭</div>
-                <h3 style="color: #9ca3af; margin-bottom: 12px;">Nenhum gasto registrado</h3>
-                <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
-                    Use o formulário acima para registrar seus primeiros gastos e começar seu controle financeiro!
-                </p>
+                <div style="font-size: 16px; font-weight: bold;">🏷️ Análise por Categorias</div>
+                <div style="font-size: 14px;">Distribuição dos seus gastos</div>
             </div>
             """, unsafe_allow_html=True)
+            
+            # Detectar categorias automaticamente
+            categorias = {
+                "🍔 Alimentação": 0,
+                "🚗 Transporte": 0,
+                "🛒 Compras": 0,
+                "🎯 Lazer": 0,
+                "🏠 Casa": 0,
+                "📱 Serviços": 0,
+                "📝 Outros": 0
+            }
+            
+            palavras_chave = {
+                "🍔 Alimentação": ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café', 'padaria', 'pizza', 'hamburguer', 'sorvete'],
+                "🚗 Transporte": ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro', 'estacionamento', 'pedágio'],
+                "🛒 Compras": ['mercado', 'supermercado', 'feira', 'shopping', 'roupa', 'calçado', 'eletrônico', 'livro'],
+                "🎯 Lazer": ['cinema', 'parque', 'bar', 'show', 'viagem', 'hotel', 'play', 'jogo', 'streaming'],
+                "🏠 Casa": ['aluguel', 'condomínio', 'luz', 'água', 'gás', 'internet', 'manutenção', 'reforma'],
+                "📱 Serviços": ['celular', 'assinatura', 'plano', 'conserto', 'serviço', 'taxa', 'assinatura']
+            }
+            
+            for idx, row in df_gastos.iterrows():
+                desc_lower = row['descricao'].lower()
+                categoria_encontrada = False
+                
+                for categoria, palavras in palavras_chave.items():
+                    if any(palavra in desc_lower for palavra in palavras):
+                        categorias[categoria] += row['valor']
+                        categoria_encontrada = True
+                        break
+                
+                if not categoria_encontrada:
+                    categorias["📝 Outros"] += row['valor']
+            
+            # Mostrar gráfico de pizza
+            df_categorias = pd.DataFrame({
+                'Categoria': list(categorias.keys()),
+                'Valor': list(categorias.values())
+            })
+            df_categorias = df_categorias[df_categorias['Valor'] > 0]
+            
+            if not df_categorias.empty:
+                col_graf1, col_graf2 = st.columns([2, 1])
+                
+                with col_graf1:
+                    fig = px.pie(
+                        df_categorias,
+                        values='Valor',
+                        names='Categoria',
+                        title='Distribuição por Categoria',
+                        color_discrete_sequence=px.colors.qualitative.Set3
+                    )
+                    fig.update_layout(
+                        height=400,
+                        showlegend=True,
+                        plot_bgcolor='#0e1117',
+                        paper_bgcolor='#0e1117',
+                        font=dict(color='#e5e7eb')
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                with col_graf2:
+                    # Tabela de resumo
+                    st.markdown("**📊 Resumo por Categoria**")
+                    
+                    for categoria, valor in categorias.items():
+                        if valor > 0:
+                            percentual = (valor / df_gastos['valor'].sum()) * 100
+                            st.markdown(f"""
+                            <div style="
+                                background: #1f2937;
+                                border-radius: 8px;
+                                padding: 10px;
+                                margin-bottom: 8px;
+                                border-left: 4px solid #3b82f6;
+                            ">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="font-weight: bold;">{categoria}</span>
+                                    <span style="color: #f87171;">R$ {valor:,.2f}</span>
+                                </div>
+                                <div style="font-size: 12px; color: #9ca3af;">
+                                    {percentual:.1f}% do total
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+            
+            # Gastos por categoria específica
+            categoria_selecionada = st.selectbox(
+                "Ver gastos por categoria",
+                [cat for cat, valor in categorias.items() if valor > 0],
+                key="categoria_selecionada"
+            )
+            
+            if categoria_selecionada:
+                # Filtrar gastos por categoria
+                gastos_categoria = []
+                for idx, row in df_gastos.iterrows():
+                    desc_lower = row['descricao'].lower()
+                    palavras = palavras_chave.get(categoria_selecionada, [])
+                    
+                    if any(palavra in desc_lower for palavra in palavras) or \
+                    (categoria_selecionada == "📝 Outros" and not any(
+                        any(p in desc_lower for p in palavras_chave[cat]) 
+                        for cat in palavras_chave.keys()
+                    )):
+                        gastos_categoria.append((idx, row))
+                
+                if gastos_categoria:
+                    st.markdown(f"### Gastos em {categoria_selecionada}")
+                    for idx, row in gastos_categoria:
+                        mostrar_gasto_card(idx, row, df_gastos)
+                else:
+                    st.info(f"Nenhum gasto encontrado na categoria {categoria_selecionada}")
+
+    else:
+        # (Mantém o mesmo código para estado vazio...)
+        pass
+
+    # ---------- FUNÇÃO AUXILIAR PARA MOSTRAR CARD DE GASTO ----------
+    def mostrar_gasto_card(idx, row, df_original):
+        """Função auxiliar para mostrar um card de gasto"""
+        # Formatar data
+        if isinstance(row['data'], pd.Timestamp):
+            data_str = row['data'].strftime("%d/%m")
+            dia_semana = row['data'].strftime("%a")
+            data_completa = row['data'].strftime("%d/%m/%Y %H:%M")
+        else:
+            data_str = str(row['data'])[:10]
+            dia_semana = ""
+            data_completa = data_str
         
-        # Card de dicas
-        with st.expander("💡 Dicas para um bom controle de gastos", expanded=True):
-            col_tip1, col_tip2, col_tip3 = st.columns(3)
+        # Determinar categoria
+        desc_lower = row['descricao'].lower()
+        if any(word in desc_lower for word in ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café']):
+            categoria = "🍔 Alimentação"
+            cor_categoria = "#f87171"
+        elif any(word in desc_lower for word in ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro']):
+            categoria = "🚗 Transporte"
+            cor_categoria = "#60a5fa"
+        elif any(word in desc_lower for word in ['mercado', 'supermercado', 'feira', 'padaria']):
+            categoria = "🛒 Compras"
+            cor_categoria = "#34d399"
+        elif any(word in desc_lower for word in ['cinema', 'shopping', 'parque', 'lazer', 'bar']):
+            categoria = "🎯 Lazer"
+            cor_categoria = "#a78bfa"
+        else:
+            categoria = "📝 Outros"
+            cor_categoria = "#9ca3af"
+        
+        # Card para cada gasto
+        with st.container():
+            st.markdown(f"""
+            <div style="
+                background: #1f2937;
+                border-radius: 10px;
+                padding: 16px;
+                margin-bottom: 12px;
+                border-left: 4px solid {cor_categoria};
+                border: 1px solid #374151;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                            <div style="
+                                background: {cor_categoria}20;
+                                color: {cor_categoria};
+                                padding: 4px 12px;
+                                border-radius: 20px;
+                                font-size: 12px;
+                                font-weight: bold;
+                                margin-right: 12px;
+                            ">
+                                {categoria}
+                            </div>
+                            <div style="
+                                background: #374151;
+                                color: #d1d5db;
+                                padding: 4px 10px;
+                                border-radius: 6px;
+                                font-size: 12px;
+                                font-weight: bold;
+                            ">
+                                {data_str} • {dia_semana}
+                            </div>
+                        </div>
+                        <div style="font-size: 16px; font-weight: bold; color: #f9fafb; margin-bottom: 4px;">
+                            {row['descricao']}
+                        </div>
+                        <div style="font-size: 12px; color: #9ca3af;">
+                            {data_completa}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 20px; font-weight: bold; color: #f87171; margin-bottom: 8px;">
+                            R$ {row['valor']:,.2f}
+                        </div>
+            """, unsafe_allow_html=True)
             
-            with col_tip1:
-                st.markdown("""
-                <div style="
-                    background: #1f2937;
-                    border-radius: 10px;
-                    padding: 16px;
-                    height: 100%;
-                    border: 1px solid #374151;
-                ">
-                    <div style="font-size: 24px; margin-bottom: 12px;">⏰</div>
-                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Registre imediatamente</div>
-                    <div style="font-size: 14px; color: #9ca3af;">
-                        Anote cada gasto logo após ocorrer para não esquecer
+            # Botão de exclusão
+            if st.button("🗑️", key=f"del_btn_{idx}", help="Excluir este gasto"):
+                st.session_state[f"confirm_delete_{idx}"] = True
+                st.rerun()
+            
+            st.markdown("""
                     </div>
                 </div>
-                """, unsafe_allow_html=True)
+            </div>
+            """, unsafe_allow_html=True)
             
-            with col_tip2:
-                st.markdown("""
-                <div style="
-                    background: #1f2937;
-                    border-radius: 10px;
-                    padding: 16px;
-                    height: 100%;
-                    border: 1px solid #374151;
-                ">
-                    <div style="font-size: 24px; margin-bottom: 12px;">🏷️</div>
-                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Categorize seus gastos</div>
-                    <div style="font-size: 14px; color: #9ca3af;">
-                        Use descrições claras para identificar padrões de consumo
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col_tip3:
-                st.markdown("""
-                <div style="
-                    background: #1f2937;
-                    border-radius: 10px;
-                    padding: 16px;
-                    height: 100%;
-                    border: 1px solid #374151;
-                ">
-                    <div style="font-size: 24px; margin-bottom: 12px;">📈</div>
-                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Revise semanalmente</div>
-                    <div style="font-size: 14px; color: #9ca3af;">
-                        Analise seus gastos regularmente para ajustar hábitos
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+            # Confirmação de exclusão
+            if st.session_state.get(f"confirm_delete_{idx}", False):
+                with st.container():
+                    st.warning(f"Excluir '{row['descricao'][:30]}...'?")
+                    col_conf1, col_conf2 = st.columns(2)
+                    with col_conf1:
+                        if st.button("✅ Sim", key=f"confirm_yes_{idx}", use_container_width=True):
+                            df_novo = df_original.drop(idx).reset_index(drop=True)
+                            dados["controle_gastos"] = df_novo
+                            st.session_state["dados"] = dados
+                            DatabaseManager.save("controle_gastos", df_novo, usuario)
+                            st.session_state[f"confirm_delete_{idx}"] = False
+                            st.success("Gasto excluído!")
+                            st.rerun()
+                    with col_conf2:
+                        if st.button("❌ Não", key=f"confirm_no_{idx}", use_container_width=True):
+                            st.session_state[f"confirm_delete_{idx}"] = False
+                            st.rerun()
 
     # ---------- CARDS PARA ESTATÍSTICAS AVANÇADAS ----------
     if not df_gastos.empty and len(df_gastos) > 5:
