@@ -2696,16 +2696,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
                     idx_original = df_filtrado.iloc[inicio_total:fim_total].index[i]
                     mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"todos_{st.session_state['pagina_total_atual']}_{i}")
                 
-                # Controles de paginação usando a função auxiliar
-                nova_pagina = criar_controles_paginacao(
-                    pagina_atual=st.session_state["pagina_total_atual"],
-                    total_paginas=total_paginas_total,
-                    key_prefix="todos_gastos"
-                )
-                
-                if nova_pagina != st.session_state["pagina_total_atual"]:
-                    st.session_state["pagina_total_atual"] = nova_pagina
-                    st.rerun()
+
         
         with tab4:
             # Análise por categorias
