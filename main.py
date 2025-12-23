@@ -2020,7 +2020,7 @@ elif menu == "🏢 FLUXOS FIXOS":
 
 
 # =========================================================
-# 💸 CONTROLE DE GASTOS - VERSÃO COMPACTA
+# 💸 CONTROLE DE GASTOS - VERSÃO COM CARDS
 # =========================================================
 
 elif menu == "💸 CONTROLE DE GASTOS":
@@ -2061,191 +2061,649 @@ elif menu == "💸 CONTROLE DE GASTOS":
     gasto_total = df_gastos["valor"].sum() if not df_gastos.empty else 0
     saldo_restante = reserva_mensal - gasto_total
     percentual_gasto = (gasto_total / reserva_mensal * 100) if reserva_mensal > 0 else 0
+    total_gastos = len(df_gastos)
+    media_gasto = df_gastos["valor"].mean() if not df_gastos.empty else 0
+    
+    # Gastos de hoje
+    hoje = date.today()
+    df_gastos_hoje = df_gastos[df_gastos["data"].dt.date == hoje]
+    gastos_hoje = df_gastos_hoje["valor"].sum() if not df_gastos_hoje.empty else 0
+    qtd_gastos_hoje = len(df_gastos_hoje)
 
-    # ---------- RESUMO COMPACTO ----------
+    # ---------- CARDS DE RESUMO ----------
     st.markdown("### 📊 Resumo do Mês")
     
-    # Container para métricas
+    # Container para os cards
     with st.container():
-        col1, col2, col3, col4 = st.columns(4, gap="small")
+        col1, col2, col3, col4 = st.columns(4, gap="medium")
         
         with col1:
-            st.markdown("**💰 Reserva**")
-            st.markdown(f"<h3 style='color: #60a5fa; margin: 0;'>R$ {reserva_mensal:,.2f}</h3>", unsafe_allow_html=True)
+            # Card 1: Reserva Mensal
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                margin-bottom: 10px;
+            ">
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 10px;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-right: 12px;
+                    ">
+                        <span style="font-size: 20px;">💰</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 14px; opacity: 0.9;">Reserva Mensal</div>
+                        <div style="font-size: 24px; font-weight: bold;">R$ {reserva:,.0f}</div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>Valor disponível para gastos do mês</i>
+                </div>
+            </div>
+            """.format(reserva=reserva_mensal), unsafe_allow_html=True)
         
         with col2:
-            st.markdown("**🧾 Gasto Total**")
-            st.markdown(f"<h3 style='color: #f87171; margin: 0;'>R$ {gasto_total:,.2f}</h3>", unsafe_allow_html=True)
+            # Card 2: Total Gasto
+            cor_gasto = "#f87171" if percentual_gasto > 80 else "#fbbf24" if percentual_gasto > 50 else "#60a5fa"
+            
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                margin-bottom: 10px;
+            ">
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                    <div style="
+                        background: {cor};
+                        border-radius: 10px;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-right: 12px;
+                    ">
+                        <span style="font-size: 20px;">🧾</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 14px; opacity: 0.9;">Total Gasto</div>
+                        <div style="font-size: 24px; font-weight: bold;">R$ {gasto:,.0f}</div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>{percentual:.1f}% da reserva utilizada</i>
+                </div>
+            </div>
+            """.format(cor=cor_gasto, gasto=gasto_total, percentual=percentual_gasto), unsafe_allow_html=True)
         
         with col3:
-            st.markdown("**📊 Utilizado**")
-            st.markdown(f"<h3 style='color: #fbbf24; margin: 0;'>{percentual_gasto:.1f}%</h3>", unsafe_allow_html=True)
-            st.progress(min(percentual_gasto / 100, 1.0))
+            # Card 3: Saldo Disponível
+            cor_saldo = "#34d399" if saldo_restante >= 0 else "#f87171"
+            icone_saldo = "🟢" if saldo_restante >= 0 else "🔴"
+            texto_saldo = "Saldo Disponível" if saldo_restante >= 0 else "Estouro"
+            
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                margin-bottom: 10px;
+            ">
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 10px;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-right: 12px;
+                    ">
+                        <span style="font-size: 20px;">{icone}</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 14px; opacity: 0.9;">{texto}</div>
+                        <div style="font-size: 24px; font-weight: bold;">R$ {saldo:,.0f}</div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>{status}</i>
+                </div>
+            </div>
+            """.format(
+                icone=icone_saldo,
+                texto=texto_saldo,
+                saldo=abs(saldo_restante),
+                status="Dentro do orçamento" if saldo_restante >= 0 else "Acima do limite"
+            ), unsafe_allow_html=True)
         
         with col4:
-            st.markdown("**🟢 Saldo**")
-            if saldo_restante >= 0:
-                st.markdown(f"<h3 style='color: #34d399; margin: 0;'>R$ {saldo_restante:,.2f}</h3>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<h3 style='color: #f87171; margin: 0;'>-R$ {abs(saldo_restante):,.2f}</h3>", unsafe_allow_html=True)
-
-    st.divider()
-
-    # ---------- NOVO GASTO RÁPIDO ----------
-    st.markdown("### ➕ Novo Gasto")
+            # Card 4: Estatísticas
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+                margin-bottom: 10px;
+            ">
+                <div style="margin-bottom: 12px;">
+                    <div style="font-size: 14px; opacity: 0.9;">📊 Estatísticas</div>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 20px; font-weight: bold;">{total}</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Gastos</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 20px; font-weight: bold;">R$ {media:,.0f}</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Média</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 20px; font-weight: bold;">{hoje}</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Hoje</div>
+                    </div>
+                </div>
+            </div>
+            """.format(total=total_gastos, media=media_gasto, hoje=qtd_gastos_hoje), unsafe_allow_html=True)
     
-    with st.form("form_gasto_rapido", clear_on_submit=True):
-        col1, col2, col3 = st.columns([2, 1, 1], gap="small")
-        
-        with col1:
-            descricao = st.text_input(
-                "Descrição",
-                placeholder="Ex: Padaria, Uber, Lanche...",
-                help="Descreva brevemente o gasto"
-            )
-        
-        with col2:
-            valor = st.number_input(
-                "Valor (R$)",
-                min_value=0.01,
-                step=1.0,
-                value=10.0,
-                format="%.2f"
-            )
-        
-        with col3:
-            # Botão alinhado na altura do campo
-            st.markdown("<br>", unsafe_allow_html=True)  # Espaçamento para alinhar
-            submitted = st.form_submit_button(
-                "💸 Registrar",
-                type="primary",
-                use_container_width=True
-            )
-
-        if submitted and descricao.strip():
-            novo = pd.DataFrame([{
-                "data": date.today(),
-                "descricao": descricao.strip(),
-                "valor": valor
-            }])
-
-            df_gastos = pd.concat([df_gastos, novo], ignore_index=True)
-            dados["controle_gastos"] = df_gastos
-            st.session_state["dados"] = dados
-            DatabaseManager.save("controle_gastos", df_gastos, usuario)
-            
-            st.success(f"✅ Gasto de R$ {valor:,.2f} registrado!")
-            st.rerun()
-        elif submitted:
-            st.error("❌ Informe uma descrição para o gasto")
+    # Barra de progresso estilizada
+    st.markdown("""
+    <div style="
+        background: #1f2937;
+        border-radius: 10px;
+        padding: 16px;
+        margin: 16px 0;
+        border: 1px solid #374151;
+    ">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: #d1d5db; font-size: 14px;">Utilização da Reserva</span>
+            <span style="color: #60a5fa; font-weight: bold; font-size: 14px;">{percentual:.1f}%</span>
+        </div>
+        <div style="
+            background: #374151;
+            border-radius: 20px;
+            height: 10px;
+            overflow: hidden;
+        ">
+            <div style="
+                background: linear-gradient(90deg, #3b82f6, #60a5fa);
+                width: {percentual}%;
+                height: 100%;
+                border-radius: 20px;
+                transition: width 0.5s ease;
+            "></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px;">
+            <span style="color: #9ca3af;">R$ 0</span>
+            <span style="color: #9ca3af;">R$ {reserva:,.0f}</span>
+        </div>
+    </div>
+    """.format(percentual=min(percentual_gasto, 100), reserva=reserva_mensal), unsafe_allow_html=True)
 
     st.divider()
 
-    # ---------- HISTÓRICO COMPACTO ----------
+    # ---------- CARD PARA NOVO GASTO ----------
+    st.markdown("### ➕ Registrar Novo Gasto")
+    
+    with st.container():
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #374151;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        ">
+        """, unsafe_allow_html=True)
+        
+        with st.form("form_gasto_rapido", clear_on_submit=True):
+            col1, col2, col3 = st.columns([2, 1, 1], gap="medium")
+            
+            with col1:
+                descricao = st.text_input(
+                    "📝 Descrição",
+                    placeholder="Ex: Café da manhã, Combustível, Farmácia...",
+                    help="Descreva brevemente o gasto"
+                )
+            
+            with col2:
+                valor = st.number_input(
+                    "💰 Valor (R$)",
+                    min_value=0.01,
+                    step=1.0,
+                    value=10.0,
+                    format="%.2f"
+                )
+            
+            with col3:
+                st.markdown("<br>", unsafe_allow_html=True)  # Espaçamento para alinhar
+                submitted = st.form_submit_button(
+                    "💸 Registrar Gasto",
+                    type="primary",
+                    use_container_width=True
+                )
+
+            if submitted and descricao.strip():
+                novo = pd.DataFrame([{
+                    "data": date.today(),
+                    "descricao": descricao.strip(),
+                    "valor": valor
+                }])
+
+                df_gastos = pd.concat([df_gastos, novo], ignore_index=True)
+                dados["controle_gastos"] = df_gastos
+                st.session_state["dados"] = dados
+                DatabaseManager.save("controle_gastos", df_gastos, usuario)
+                
+                st.success(f"✅ Gasto de **R$ {valor:,.2f}** registrado com sucesso!")
+                st.rerun()
+            elif submitted:
+                st.error("❌ Por favor, informe uma descrição para o gasto")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.divider()
+
+    # ---------- CARDS PARA HISTÓRICO DE GASTOS ----------
     st.markdown("### 📋 Histórico de Gastos")
     
     if not df_gastos.empty:
         # Ordenar por data (mais recente primeiro)
         df_gastos = df_gastos.sort_values("data", ascending=False)
         
-        # Estatísticas rápidas
-        total_gastos = len(df_gastos)
-        media_gasto = df_gastos["valor"].mean()
+        # Card de resumo do dia
+        if qtd_gastos_hoje > 0:
+            with st.container():
+                st.markdown("""
+                <div style="
+                    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                    border-radius: 12px;
+                    padding: 16px;
+                    color: #92400e;
+                    margin-bottom: 20px;
+                    border: 1px solid #fbbf24;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 16px; font-weight: bold;">📅 Hoje</div>
+                            <div style="font-size: 14px;">{qtd} gastos registrados hoje</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 20px; font-weight: bold;">R$ {total:,.2f}</div>
+                            <div style="font-size: 12px;">Total gasto hoje</div>
+                        </div>
+                    </div>
+                </div>
+                """.format(qtd=qtd_gastos_hoje, total=gastos_hoje), unsafe_allow_html=True)
         
-        col_stats1, col_stats2, col_stats3 = st.columns(3, gap="small")
-        with col_stats1:
-            st.caption(f"**Total:** {total_gastos} gastos")
-        with col_stats2:
-            st.caption(f"**Média:** R$ {media_gasto:,.2f}")
-        with col_stats3:
-            st.caption(f"**Mês:** {date.today().strftime('%B')}")
+        # Lista de gastos em cards
+        st.markdown(f"<h4 style='color: #d1d5db; margin-bottom: 16px;'>Últimos {min(15, len(df_gastos))} gastos:</h4>", unsafe_allow_html=True)
         
-        # Lista compacta de gastos
-        st.markdown("---")
-        
-        for idx, row in df_gastos.iterrows():
+        for idx, row in df_gastos.head(15).iterrows():
             # Formatar data
             if isinstance(row['data'], pd.Timestamp):
                 data_str = row['data'].strftime("%d/%m")
                 dia_semana = row['data'].strftime("%a")
-            elif hasattr(row['data'], 'strftime'):
-                data_str = row['data'].strftime("%d/%m")
-                dia_semana = row['data'].strftime("%a")
+                data_completa = row['data'].strftime("%d/%m/%Y")
             else:
                 data_str = str(row['data'])[:10]
                 dia_semana = ""
+                data_completa = data_str
             
-            # Container para cada gasto
+            # Determinar categoria pela descrição (simples)
+            desc_lower = row['descricao'].lower()
+            if any(word in desc_lower for word in ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café']):
+                categoria = "🍔 Alimentação"
+                cor_categoria = "#f87171"
+            elif any(word in desc_lower for word in ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro']):
+                categoria = "🚗 Transporte"
+                cor_categoria = "#60a5fa"
+            elif any(word in desc_lower for word in ['mercado', 'supermercado', 'feira', 'padaria']):
+                categoria = "🛒 Compras"
+                cor_categoria = "#34d399"
+            elif any(word in desc_lower for word in ['cinema', 'shopping', 'parque', 'lazer', 'bar']):
+                categoria = "🎯 Lazer"
+                cor_categoria = "#a78bfa"
+            else:
+                categoria = "📝 Outros"
+                cor_categoria = "#9ca3af"
+            
+            # Card para cada gasto
             with st.container():
-                col1, col2, col3, col4 = st.columns([1, 3, 2, 1], gap="small")
+                st.markdown(f"""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    margin-bottom: 12px;
+                    border-left: 4px solid {cor_categoria};
+                    border: 1px solid #374151;
+                    transition: all 0.2s;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <div style="
+                                    background: {cor_categoria}20;
+                                    color: {cor_categoria};
+                                    padding: 4px 12px;
+                                    border-radius: 20px;
+                                    font-size: 12px;
+                                    font-weight: bold;
+                                    margin-right: 12px;
+                                ">
+                                    {categoria}
+                                </div>
+                                <div style="
+                                    background: #374151;
+                                    color: #d1d5db;
+                                    padding: 4px 10px;
+                                    border-radius: 6px;
+                                    font-size: 12px;
+                                    font-weight: bold;
+                                ">
+                                    {data_str} • {dia_semana}
+                                </div>
+                            </div>
+                            <div style="font-size: 16px; font-weight: bold; color: #f9fafb; margin-bottom: 4px;">
+                                {row['descricao']}
+                            </div>
+                            <div style="font-size: 12px; color: #9ca3af;">
+                                Registrado em: {data_completa}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 20px; font-weight: bold; color: #f87171; margin-bottom: 8px;">
+                                R$ {row['valor']:,.2f}
+                            </div>
+                """, unsafe_allow_html=True)
                 
-                with col1:
-                    # Data compacta
-                    st.markdown(f"**{data_str}**")
-                    if dia_semana:
-                        st.caption(dia_semana)
+                # Botão de exclusão dentro do card
+                col_btn1, col_btn2 = st.columns([1, 1])
+                with col_btn1:
+                    if st.button("🗑️ Excluir", key=f"del_gasto_{idx}", use_container_width=True):
+                        # Confirmação de exclusão
+                        st.session_state[f"confirm_delete_{idx}"] = True
+                        st.rerun()
                 
-                with col2:
-                    # Descrição
-                    desc = row['descricao'][:25] + "..." if len(row['descricao']) > 25 else row['descricao']
-                    st.markdown(f"**{desc}**")
+                with col_btn2:
+                    if st.button("📋 Detalhes", key=f"detail_{idx}", use_container_width=True):
+                        st.session_state[f"show_detail_{idx}"] = True
+                        st.rerun()
                 
-                with col3:
-                    # Valor com cor baseado no saldo
-                    if saldo_restante < 0:
-                        valor_color = "#ef4444"  # Vermelho para estouro
-                    elif percentual_gasto > 80:
-                        valor_color = "#f59e0b"  # Laranja para alto uso
-                    else:
-                        valor_color = "#6b7280"  # Cinza para normal
-                    
-                    st.markdown(
-                        f"<div style='text-align: right; color: {valor_color}; font-weight: bold;'>"
-                        f"R$ {row['valor']:,.2f}"
-                        f"</div>",
-                        unsafe_allow_html=True
-                    )
+                st.markdown("""
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                with col4:
-                    # Botão de exclusão compacto
-                    if st.button("🗑️", key=f"del_gasto_{idx}", help="Excluir este gasto"):
-                        # Confirmação rápida
-                        confirm = st.checkbox(f"Confirmar exclusão?", key=f"confirm_del_{idx}")
-                        if confirm:
-                            df_gastos = df_gastos.drop(idx).reset_index(drop=True)
-                            dados["controle_gastos"] = df_gastos
-                            st.session_state["dados"] = dados
-                            DatabaseManager.save("controle_gastos", df_gastos, usuario)
-                            st.success("Gasto excluído!")
+                # Modal de confirmação de exclusão
+                if st.session_state.get(f"confirm_delete_{idx}", False):
+                    with st.container():
+                        st.markdown(f"""
+                        <div style="
+                            background: rgba(239, 68, 68, 0.1);
+                            border: 2px solid #ef4444;
+                            border-radius: 10px;
+                            padding: 16px;
+                            margin: 8px 0;
+                        ">
+                            <div style="color: #fca5a5; font-weight: bold; margin-bottom: 12px;">
+                                ⚠️ Confirmar exclusão
+                            </div>
+                            <div style="color: #f9fafb; margin-bottom: 16px;">
+                                Tem certeza que deseja excluir o gasto "{row['descricao'][:30]}..."?
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        col_confirm1, col_confirm2 = st.columns(2)
+                        with col_confirm1:
+                            if st.button("✅ Sim, excluir", key=f"confirm_yes_{idx}", type="primary", use_container_width=True):
+                                df_gastos = df_gastos.drop(idx).reset_index(drop=True)
+                                dados["controle_gastos"] = df_gastos
+                                st.session_state["dados"] = dados
+                                DatabaseManager.save("controle_gastos", df_gastos, usuario)
+                                st.session_state[f"confirm_delete_{idx}"] = False
+                                st.success("Gasto excluído!")
+                                st.rerun()
+                        
+                        with col_confirm2:
+                            if st.button("❌ Cancelar", key=f"confirm_no_{idx}", use_container_width=True):
+                                st.session_state[f"confirm_delete_{idx}"] = False
+                                st.rerun()
+                
+                # Detalhes do gasto
+                if st.session_state.get(f"show_detail_{idx}", False):
+                    with st.container():
+                        st.markdown(f"""
+                        <div style="
+                            background: rgba(59, 130, 246, 0.1);
+                            border: 1px solid #3b82f6;
+                            border-radius: 10px;
+                            padding: 16px;
+                            margin: 8px 0;
+                        ">
+                            <div style="color: #93c5fd; font-weight: bold; margin-bottom: 12px;">
+                                📋 Detalhes do Gasto
+                            </div>
+                            <div style="color: #f9fafb; margin-bottom: 8px;">
+                                <strong>Descrição:</strong> {row['descricao']}
+                            </div>
+                            <div style="color: #f9fafb; margin-bottom: 8px;">
+                                <strong>Valor:</strong> R$ {row['valor']:,.2f}
+                            </div>
+                            <div style="color: #f9fafb; margin-bottom: 8px;">
+                                <strong>Data:</strong> {data_completa}
+                            </div>
+                            <div style="color: #f9fafb;">
+                                <strong>Categoria:</strong> {categoria}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        if st.button("Fechar detalhes", key=f"close_detail_{idx}", use_container_width=True):
+                            st.session_state[f"show_detail_{idx}"] = False
                             st.rerun()
-                
-                # Linha divisória fina entre itens
-                st.markdown("<hr style='margin: 4px 0; border-color: #374151;'>", unsafe_allow_html=True)
         
-        # Resumo do dia (opcional)
-        hoje = date.today()
-        gastos_hoje = df_gastos[df_gastos["data"].dt.date == hoje]["valor"].sum()
-        if gastos_hoje > 0:
-            st.markdown("---")
-            col_today1, col_today2 = st.columns([3, 1])
-            with col_today1:
-                st.caption(f"💰 **Hoje:** {len(df_gastos[df_gastos['data'].dt.date == hoje])} gastos")
-            with col_today2:
-                st.caption(f"**R$ {gastos_hoje:,.2f}**")
+        # Botão para ver mais gastos
+        if len(df_gastos) > 15:
+            col_more1, col_more2, col_more3 = st.columns([1, 2, 1])
+            with col_more2:
+                if st.button("📜 Ver todos os gastos", use_container_width=True):
+                    st.session_state["show_all_gastos"] = not st.session_state.get("show_all_gastos", False)
+                    st.rerun()
+            
+            if st.session_state.get("show_all_gastos", False):
+                st.dataframe(
+                    df_gastos.style.format({
+                        "valor": "R$ {:,.2f}",
+                        "data": lambda x: x.strftime("%d/%m/%Y") if hasattr(x, 'strftime') else x
+                    }),
+                    use_container_width=True,
+                    height=400
+                )
+    
+    else:
+        # Card para estado vazio
+        with st.container():
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+                border-radius: 12px;
+                padding: 60px 20px;
+                text-align: center;
+                border: 2px dashed #374151;
+                margin: 20px 0;
+            ">
+                <div style="font-size: 64px; margin-bottom: 20px; color: #6b7280;">📭</div>
+                <h3 style="color: #9ca3af; margin-bottom: 12px;">Nenhum gasto registrado</h3>
+                <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                    Use o formulário acima para registrar seus primeiros gastos e começar seu controle financeiro!
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         
-        # Exportar dados (opcional)
-        with st.expander("📤 Exportar Dados"):
+        # Card de dicas
+        with st.expander("💡 Dicas para um bom controle de gastos", expanded=True):
+            col_tip1, col_tip2, col_tip3 = st.columns(3)
+            
+            with col_tip1:
+                st.markdown("""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    height: 100%;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 24px; margin-bottom: 12px;">⏰</div>
+                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Registre imediatamente</div>
+                    <div style="font-size: 14px; color: #9ca3af;">
+                        Anote cada gasto logo após ocorrer para não esquecer
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_tip2:
+                st.markdown("""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    height: 100%;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 24px; margin-bottom: 12px;">🏷️</div>
+                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Categorize seus gastos</div>
+                    <div style="font-size: 14px; color: #9ca3af;">
+                        Use descrições claras para identificar padrões de consumo
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_tip3:
+                st.markdown("""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    height: 100%;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 24px; margin-bottom: 12px;">📈</div>
+                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Revise semanalmente</div>
+                    <div style="font-size: 14px; color: #9ca3af;">
+                        Analise seus gastos regularmente para ajustar hábitos
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    # ---------- CARDS PARA ESTATÍSTICAS AVANÇADAS ----------
+    if not df_gastos.empty and len(df_gastos) > 5:
+        st.divider()
+        st.markdown("### 📈 Análise de Gastos")
+        
+        col_stat1, col_stat2 = st.columns(2)
+        
+        with col_stat1:
+            # Card de média diária
+            dias_com_gastos = df_gastos["data"].dt.date.nunique()
+            media_diaria = gasto_total / dias_com_gastos if dias_com_gastos > 0 else 0
+            
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+            ">
+                <div style="text-align: center;">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📅 Média Diária</div>
+                    <div style="font-size: 28px; font-weight: bold; margin-bottom: 4px;">R$ {media:,.2f}</div>
+                    <div style="font-size: 12px; opacity: 0.8;">
+                        Baseado em {dias} dias com gastos
+                    </div>
+                </div>
+            </div>
+            """.format(media=media_diaria, dias=dias_com_gastos), unsafe_allow_html=True)
+        
+        with col_stat2:
+            # Card de projeção mensal
+            dias_no_mes = 30
+            projecao_mensal = media_diaria * dias_no_mes
+            
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #7c2d12 0%, #f97316 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+            ">
+                <div style="text-align: center;">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📊 Projeção Mensal</div>
+                    <div style="font-size: 28px; font-weight: bold; margin-bottom: 4px;">R$ {proj:,.0f}</div>
+                    <div style="font-size: 12px; opacity: 0.8;">
+                        {status} da reserva
+                    </div>
+                </div>
+            </div>
+            """.format(
+                proj=projecao_mensal,
+                status="Dentro" if projecao_mensal <= reserva_mensal else "Acima"
+            ), unsafe_allow_html=True)
+
+    # ---------- BOTÃO PARA EXPORTAR ----------
+    if not df_gastos.empty:
+        st.divider()
+        
+        with st.container():
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 10px;
+                padding: 20px;
+                border: 1px solid #374151;
+            ">
+                <div style="text-align: center;">
+                    <div style="font-size: 16px; color: #d1d5db; margin-bottom: 16px;">
+                        📤 Exportar Dados
+                    </div>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+            """, unsafe_allow_html=True)
+            
             col_exp1, col_exp2 = st.columns(2)
+            
             with col_exp1:
-                if st.button("📋 Copiar Resumo"):
-                    resumo = f"""Resumo de Gastos - {date.today().strftime('%d/%m/%Y')}
-                    
-Reserva Mensal: R$ {reserva_mensal:,.2f}
-Total Gasto: R$ {gasto_total:,.2f}
-Saldo Disponível: R$ {saldo_restante:,.2f}
-Percentual Utilizado: {percentual_gasto:.1f}%
-Total de Gastos: {total_gastos}
-Média por Gasto: R$ {media_gasto:,.2f}
+                if st.button("📋 Copiar Resumo", use_container_width=True):
+                    resumo = f"""💸 RESUMO DE GASTOS - {date.today().strftime('%d/%m/%Y')}
+
+💰 Reserva Mensal: R$ {reserva_mensal:,.2f}
+🧾 Total Gasto: R$ {gasto_total:,.2f}
+🟢 Saldo Disponível: R$ {saldo_restante:,.2f}
+📊 Percentual Utilizado: {percentual_gasto:.1f}%
+📈 Total de Gastos: {total_gastos}
+📅 Média por Gasto: R$ {media_gasto:,.2f}
+📅 Gastos Hoje: {qtd_gastos_hoje} (R$ {gastos_hoje:,.2f})
 """
                     st.code(resumo)
             
@@ -2253,96 +2711,18 @@ Média por Gasto: R$ {media_gasto:,.2f}
                 # Download CSV
                 csv = df_gastos.to_csv(index=False)
                 st.download_button(
-                    label="📥 Baixar CSV",
+                    label="📥 Baixar CSV Completo",
                     data=csv,
                     file_name=f"gastos_{date.today().strftime('%Y_%m')}.csv",
-                    mime="text/csv"
+                    mime="text/csv",
+                    use_container_width=True
                 )
-    
-    else:
-        # Estado vazio
-        st.markdown("---")
-        col_empty1, col_empty2, col_empty3 = st.columns([1, 2, 1])
-        with col_empty2:
+            
             st.markdown("""
-            <div style="text-align: center; padding: 40px 0;">
-                <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
-                <h4 style="color: #9ca3af; margin-bottom: 8px;">Nenhum gasto registrado</h4>
-                <p style="color: #6b7280; font-size: 14px;">
-                    Use o formulário acima para registrar seus primeiros gastos
-                </p>
+                    </div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
-        
-        # Dicas rápidas
-        with st.expander("💡 Dicas para controle de gastos"):
-            st.markdown("""
-            **Melhores práticas:**
-            1. **Registre imediatamente** após cada gasto
-            2. **Seja específico** nas descrições
-            3. **Revise diariamente** seus gastos
-            4. **Ajuste conforme necessário** sua reserva mensal
-            
-            **Categorias sugeridas:**
-            - 🍔 Alimentação
-            - 🚗 Transporte
-            - 🛒 Compras
-            - 🎯 Lazer
-            - 🏠 Casa
-            - 📱 Serviços
-            """)
-
-    # ---------- VISUALIZAÇÃO GRÁFICA ----------
-    if not df_gastos.empty and len(df_gastos) > 1:
-        st.divider()
-        st.markdown("### 📈 Visualização")
-        
-        tab1, tab2 = st.tabs(["📊 Por Dia", "📋 Top Gastos"])
-        
-        with tab1:
-            # Gráfico de gastos por dia
-            df_diario = df_gastos.copy()
-            df_diario['data_dia'] = df_diario['data'].dt.date
-            gastos_diarios = df_diario.groupby('data_dia')['valor'].sum().reset_index()
-            gastos_diarios = gastos_diarios.sort_values('data_dia')
-            
-            if len(gastos_diarios) > 1:
-                fig = px.bar(
-                    gastos_diarios,
-                    x='data_dia',
-                    y='valor',
-                    title='Gastos por Dia',
-                    labels={'data_dia': 'Data', 'valor': 'Valor (R$)'}
-                )
-                fig.update_layout(
-                    height=300,
-                    plot_bgcolor='#0e1117',
-                    paper_bgcolor='#0e1117',
-                    font=dict(color='#e5e7eb'),
-                    xaxis=dict(tickformat='%d/%m'),
-                    showlegend=False
-                )
-                fig.update_traces(marker_color='#3b82f6')
-                st.plotly_chart(fig, use_container_width=True)
-        
-        with tab2:
-            # Top 10 maiores gastos
-            top_gastos = df_gastos.nlargest(10, 'valor')
-            
-            for _, row in top_gastos.iterrows():
-                col_t1, col_t2 = st.columns([3, 1])
-                with col_t1:
-                    desc = row['descricao'][:30] + "..." if len(row['descricao']) > 30 else row['descricao']
-                    st.markdown(f"**{desc}**")
-                    if isinstance(row['data'], pd.Timestamp):
-                        st.caption(row['data'].strftime("%d/%m"))
-                
-                with col_t2:
-                    st.markdown(f"<div style='text-align: right; color: #ef4444; font-weight: bold;'>R$ {row['valor']:,.2f}</div>", unsafe_allow_html=True)
-                
-                st.markdown("<hr style='margin: 4px 0; border-color: #374151;'>", unsafe_allow_html=True)
-
-
 
 
 # =========================================================
