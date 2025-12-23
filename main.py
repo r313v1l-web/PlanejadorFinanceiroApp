@@ -12,6 +12,80 @@ import os
 import bcrypt
 
 
+# Adicione este CSS no início do arquivo, logo após os outros estilos
+
+st.markdown("""
+<style>
+/* ====== ESTILOS COMPACTOS PARA LISTAS ====== */
+
+/* Container compacto para itens */
+.compact-item {
+    border: 1px solid #1f2933;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background-color: #111827;
+    transition: all 0.2s;
+}
+
+.compact-item:hover {
+    background-color: #1f2933;
+    border-color: #3b82f6;
+}
+
+/* Layout de colunas mais compacto */
+.compact-grid {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+}
+
+/* Espaçamento reduzido entre itens */
+.compact-divider {
+    margin: 4px 0;
+    border: none;
+    border-top: 1px solid #1f2933;
+}
+
+/* Botões compactos */
+.compact-button {
+    padding: 2px 8px !important;
+    margin: 0 !important;
+    min-height: 28px !important;
+}
+
+/* Texto compacto */
+.compact-text {
+    font-size: 0.9em !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+}
+
+/* Cabeçalhos compactos */
+.compact-header {
+    font-size: 1em !important;
+    margin: 8px 0 4px 0 !important;
+}
+
+/* Contêiner sem margens extras */
+.no-margin-container {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Linhas alternadas para melhor legibilidade */
+.compact-row:nth-child(even) {
+    background-color: #0f172a;
+}
+
+.compact-row:nth-child(odd) {
+    background-color: #111827;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 
 
 # =========================================================
