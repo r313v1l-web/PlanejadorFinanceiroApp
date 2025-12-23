@@ -1357,18 +1357,6 @@ with st.sidebar:
             st.session_state.clear()
             st.rerun()
 
-    # ===============================
-    # USUÁRIO LOGADO
-    # ===============================
-    st.caption(f"👤 {st.session_state.get('nome')}")
-
-    # ===============================
-    # LOGOUT
-    # ===============================
-    if st.button("🚪 Logout"):
-        st.session_state.clear()
-        st.rerun()
-
 # =========================================================
 # 📝 LANÇAMENTOS - VERSÃO COMPACTA
 # =========================================================
