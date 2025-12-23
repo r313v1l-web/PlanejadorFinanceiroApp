@@ -1068,38 +1068,7 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
                         st.rerun()
 
 
-# =========================================================
-# FUNÇÕES AUXILIARES PARA PAGINAÇÃO
-# =========================================================
 
-def criar_controles_paginacao(pagina_atual, total_paginas, key_prefix):
-    """Cria controles de paginação que não causam conflitos com session_state"""
-    col_nav1, col_nav2, col_nav3, col_nav4, col_nav5 = st.columns(5)
-    
-    with col_nav1:
-        if pagina_atual > 1:
-            if st.button("⏮️", key=f"{key_prefix}_primeira", help="Primeira página", use_container_width=True):
-                return 1
-    
-    with col_nav2:
-        if pagina_atual > 1:
-            if st.button("◀️", key=f"{key_prefix}_anterior", help="Página anterior", use_container_width=True):
-                return pagina_atual - 1
-    
-    with col_nav3:
-        st.markdown(f"**{pagina_atual} / {total_paginas}**", unsafe_allow_html=True)
-    
-    with col_nav4:
-        if pagina_atual < total_paginas:
-            if st.button("▶️", key=f"{key_prefix}_proxima", help="Próxima página", use_container_width=True):
-                return pagina_atual + 1
-    
-    with col_nav5:
-        if pagina_atual < total_paginas:
-            if st.button("⏭️", key=f"{key_prefix}_ultima", help="Última página", use_container_width=True):
-                return total_paginas
-    
-    return pagina_atual
 
 
 # =========================================================
@@ -2608,16 +2577,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
                     idx_original = df_mes.iloc[inicio:fim].index[i]
                     mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"mes_{st.session_state['pagina_mes_atual']}_{i}")
                 
-                # Controles de paginação usando a função auxiliar
-                nova_pagina_mes = criar_controles_paginacao(
-                    pagina_atual=st.session_state["pagina_mes_atual"],
-                    total_paginas=total_paginas,
-                    key_prefix="mes_gastos"
-                )
-                
-                if nova_pagina_mes != st.session_state["pagina_mes_atual"]:
-                    st.session_state["pagina_mes_atual"] = nova_pagina_mes
-                    st.rerun()
+
                 
                 # Informação sobre total de páginas
                 st.caption(f"Página {st.session_state['pagina_mes_atual']} de {total_paginas} • {len(df_mes)} gastos no total")
@@ -2761,16 +2721,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
                     idx_original = df_filtrado.iloc[inicio_total:fim_total].index[i]
                     mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"todos_{st.session_state['pagina_total_atual']}_{i}")
                 
-                # Controles de paginação usando a função auxiliar
-                nova_pagina = criar_controles_paginacao(
-                    pagina_atual=st.session_state["pagina_total_atual"],
-                    total_paginas=total_paginas_total,
-                    key_prefix="todos_gastos"
-                )
-                
-                if nova_pagina != st.session_state["pagina_total_atual"]:
-                    st.session_state["pagina_total_atual"] = nova_pagina
-                    st.rerun()
+
                         
 
         
