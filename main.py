@@ -980,7 +980,7 @@ with st.sidebar:
         st.rerun()
 
 # =========================================================
-# 📝 LANÇAMENTOS - CORREÇÃO
+# 📝 LANÇAMENTOS - VERSÃO COMPACTA
 # =========================================================
 if menu == "📝 LANÇAMENTOS":
 
@@ -1043,7 +1043,7 @@ if menu == "📝 LANÇAMENTOS":
 
     st.divider()
     
-    # ================= NOVA SEÇÃO: LISTA DE LANÇAMENTOS COM EXCLUSÃO =================
+    # ================= LISTA DE LANÇAMENTOS COMPACTA =================
     st.subheader("📋 Lançamentos Registrados")
     
     if not dados["historico"].empty:
@@ -1052,52 +1052,61 @@ if menu == "📝 LANÇAMENTOS":
         # Ordenar por data (mais recente primeiro)
         df_historico = df_historico.sort_values("data", ascending=False)
         
-        # Mostrar a tabela
-        for idx, row in df_historico.iterrows():
-            col1, col2, col3, col4, col5 = st.columns([2, 1, 2, 2, 1])
-            
-            with col1:
-                st.write(f"**{row['descricao']}**")
-                st.caption(f"{row['categoria']} | {row['responsavel']}")
-            
-            with col2:
-                # Definir cor baseada no tipo
+        # Container para a lista
+        lista_container = st.container()
+        
+        with lista_container:
+            for idx, row in df_historico.iterrows():
+                # Determinar cor baseada no tipo
                 if row['tipo'] == "Despesa":
-                    st.markdown(f"<span style='color: red; font-weight: bold;'>-R$ {row['valor']:,.2f}</span>", unsafe_allow_html=True)
+                    valor_color = "red"
+                    valor_prefix = "-"
                 elif row['tipo'] == "Receita":
-                    st.markdown(f"<span style='color: green; font-weight: bold;'>+R$ {row['valor']:,.2f}</span>", unsafe_allow_html=True)
+                    valor_color = "green"
+                    valor_prefix = "+"
                 else:
-                    st.write(f"R$ {row['valor']:,.2f}")
-            
-            with col3:
-                st.caption(f"Tipo: {row['tipo']}")
-            
-            with col4:
+                    valor_color = "white"
+                    valor_prefix = ""
+                
+                # Formatar data
                 if isinstance(row['data'], str):
                     data_str = row['data']
                 else:
                     data_str = row['data'].strftime("%d/%m/%Y")
-                st.caption(f"Data: {data_str}")
-            
-            with col5:
-                # Botão para excluir
-                if st.button("❌", key=f"del_hist_{idx}"):
-                    # Remover da lista
-                    df_historico = df_historico.drop(idx).reset_index(drop=True)
-                    dados["historico"] = df_historico
-                    st.session_state["dados"] = dados
-                    DatabaseManager.save("historico", df_historico, usuario)
-                    st.success("Lançamento excluído!")
-                    st.rerun()
-            
-            st.divider()
+                
+                # Criar item compacto
+                col1, col2, col3, col4 = st.columns([3, 2, 1, 1], gap="small")
+                
+                with col1:
+                    st.markdown(f"**{row['descricao'][:30]}{'...' if len(row['descricao']) > 30 else ''}**")
+                    st.caption(f"{row['categoria']} • {row['responsavel']} • {data_str}")
+                
+                with col2:
+                    st.markdown(f"<span style='color: {valor_color}; font-weight: bold;'>{valor_prefix}R$ {row['valor']:,.2f}</span>", unsafe_allow_html=True)
+                
+                with col3:
+                    st.caption(row['tipo'])
+                
+                with col4:
+                    # Botão para excluir - mais compacto
+                    if st.button("🗑️", key=f"del_hist_{idx}", help="Excluir"):
+                        # Remover da lista
+                        df_historico = df_historico.drop(idx).reset_index(drop=True)
+                        dados["historico"] = df_historico
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("historico", df_historico, usuario)
+                        st.success("Lançamento excluído!")
+                        st.rerun()
+                
+                # Divisor fino
+                st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
     else:
         st.caption("Nenhum lançamento registrado.")
 
 
 
 # =========================================================
-# 💰 INVESTIMENTOS - COM EDIÇÃO E EXCLUSÃO
+# 💰 INVESTIMENTOS - VERSÃO COMPACTA
 # =========================================================
 
 elif menu == "💰 INVESTIMENTOS":
@@ -1120,7 +1129,7 @@ elif menu == "💰 INVESTIMENTOS":
     st.divider()
 
     # ---------------- FORM ADICIONAR ----------------
-    with st.expander("➕ Adicionar Investimento"):
+    with st.expander("➕ Adicionar Investimento", expanded=False):
         with st.form("form_investimento", clear_on_submit=True):
             col1, col2 = st.columns(2, gap="large")
 
@@ -1147,7 +1156,7 @@ elif menu == "💰 INVESTIMENTOS":
                 )
 
             data_entrada = st.date_input("Data de Entrada", date.today())
-            observacao = st.text_area("Observações")
+            observacao = st.text_area("Observações", height=60)
 
             submitted = st.form_submit_button("💾 SALVAR INVESTIMENTO")
 
@@ -1174,9 +1183,7 @@ elif menu == "💰 INVESTIMENTOS":
                 st.session_state["msg_tipo"] = "success"
                 st.rerun()
 
-    st.divider()
-
-    # ---------------- LISTA DE INVESTIMENTOS COM EDIÇÃO/EXCLUSÃO ----------------
+    # ---------------- LISTA DE INVESTIMENTOS COMPACTA ----------------
     st.subheader("📋 Meus Investimentos")
     
     if not dados["investimentos"].empty:
@@ -1185,194 +1192,190 @@ elif menu == "💰 INVESTIMENTOS":
         # Normalizar nomes das colunas
         df_investimentos.columns = df_investimentos.columns.str.lower()
         
-        for idx, row in df_investimentos.iterrows():
-            # Container para cada investimento
-            with st.container():
-                col1, col2, col3 = st.columns([3, 2, 1])
+        # Container para lista
+        lista_container = st.container()
+        
+        with lista_container:
+            for idx, row in df_investimentos.iterrows():
+                # Formatar data de entrada
+                data_str = ""
+                if 'data_entrada' in row and row['data_entrada']:
+                    if hasattr(row['data_entrada'], 'strftime'):
+                        data_str = row['data_entrada'].strftime("%d/%m/%Y")
+                    else:
+                        data_str = str(row['data_entrada'])
+                
+                # Criar linha compacta
+                col1, col2, col3, col4 = st.columns([3, 2, 2, 1], gap="small")
                 
                 with col1:
                     st.markdown(f"**{row.get('ativo', 'Sem nome')}**")
-                    st.caption(f"🏛️ {row.get('instituicao', '')} | {row.get('tipo', '')} | {row.get('categoria', '')}")
+                    st.caption(f"{row.get('instituicao', '')} • {row.get('tipo', '')}")
                 
                 with col2:
                     st.markdown(f"**R$ {row.get('valor_atual', 0):,.2f}**")
                     rendimento = row.get('rendimento_mensal', 0)
                     if isinstance(rendimento, (int, float)):
-                        st.caption(f"📈 Rendimento: {rendimento:.2%} ao mês")
-                    
-                    # Mostrar data de entrada se existir
-                    if 'data_entrada' in row and row['data_entrada']:
-                        if hasattr(row['data_entrada'], 'strftime'):
-                            data_str = row['data_entrada'].strftime("%d/%m/%Y")
-                        else:
-                            data_str = str(row['data_entrada'])
-                        st.caption(f"📅 Entrada: {data_str}")
+                        st.caption(f"{rendimento:.2%} ao mês")
                 
                 with col3:
-                    # Botões de ação
+                    st.caption(f"Perfil: {row.get('categoria', '')}")
+                    if data_str:
+                        st.caption(f"Entrada: {data_str}")
+                
+                with col4:
+                    # Botões compactos
                     col_btn1, col_btn2 = st.columns(2)
                     
                     with col_btn1:
-                        # Botão para editar
-                        if st.button("✏️", key=f"edit_{idx}", help="Editar este investimento"):
+                        if st.button("✏️", key=f"edit_{idx}", help="Editar"):
                             st.session_state[f"editing_{idx}"] = True
+                            st.rerun()
                     
                     with col_btn2:
-                        # Botão para excluir
-                        delete_key = f"delete_invest_{idx}"
-                        if delete_key not in st.session_state:
-                            st.session_state[delete_key] = False
-                        
-                        if not st.session_state[delete_key]:
-                            if st.button("❌", key=f"del_{idx}", help="Excluir este investimento"):
-                                st.session_state[delete_key] = True
-                                st.warning(f"Tem certeza que deseja excluir {row.get('ativo', 'este investimento')}?")
-                        else:
-                            col_confirm1, col_confirm2 = st.columns(2)
-                            with col_confirm1:
-                                if st.button("✅ Sim", key=f"confirm_del_{idx}"):
-                                    # Excluir investimento
-                                    df_investimentos = df_investimentos.drop(idx).reset_index(drop=True)
-                                    dados["investimentos"] = df_investimentos
-                                    st.session_state["dados"] = dados
-                                    DatabaseManager.save("investimentos", df_investimentos, usuario)
-                                    st.success("Investimento excluído!")
-                                    st.rerun()
-                            with col_confirm2:
-                                if st.button("❌ Não", key=f"cancel_del_{idx}"):
-                                    st.session_state[delete_key] = False
-                                    st.rerun()
-                
-                # Se estiver editando, mostrar formulário de edição
-                if st.session_state.get(f"editing_{idx}", False):
-                    st.markdown("---")
-                    st.markdown("**✏️ Editar Investimento**")
-                    
-                    with st.form(f"form_edit_{idx}"):
-                        col_e1, col_e2 = st.columns(2, gap="large")
-                        
-                        with col_e1:
-                            edit_instituicao = st.text_input("Instituição", value=row.get('instituicao', ''), key=f"edit_inst_{idx}")
-                            edit_ativo = st.text_input("Ativo", value=row.get('ativo', ''), key=f"edit_ativo_{idx}")
-                            edit_tipo = st.selectbox(
-                                "tipo",
-                                ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"],
-                                index=["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"].index(row.get('tipo', 'Renda Fixa')) 
-                                if row.get('tipo') in ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"] else 0,
-                                key=f"edit_tipo_{idx}"
-                            )
-                        
-                        with col_e2:
-                            edit_valor = st.number_input(
-                                "Valor Atual (R$)", 
-                                min_value=0.0, 
-                                step=100.0, 
-                                value=float(row.get('valor_atual', 0)),
-                                key=f"edit_valor_{idx}"
-                            )
-                            edit_rendimento = st.number_input(
-                                "Rendimento Mensal (%)",
-                                min_value=0.0,
-                                max_value=100.0,
-                                value=float(row.get('rendimento_mensal', 0.8) * 100),
-                                step=0.1,
-                                key=f"edit_rend_{idx}"
-                            ) / 100
-                            edit_categoria = st.selectbox(
-                                "Perfil",
-                                ["Conservador", "Moderado", "Arrojado", "Especulativo"],
-                                index=["Conservador", "Moderado", "Arrojado", "Especulativo"].index(row.get('categoria', 'Conservador')) 
-                                if row.get('categoria') in ["Conservador", "Moderado", "Arrojado", "Especulativo"] else 0,
-                                key=f"edit_cat_{idx}"
-                            )
-                        
-                        # Tratar data de entrada
-                        edit_data_entrada = st.date_input(
-                            "Data de Entrada", 
-                            value=pd.to_datetime(row.get('data_entrada', date.today())),
-                            key=f"edit_data_{idx}"
-                        )
-                        
-                        edit_observacao = st.text_area(
-                            "Observações", 
-                            value=row.get('observacao', ''),
-                            key=f"edit_obs_{idx}"
-                        )
-                        
-                        col_save, col_cancel = st.columns(2)
-                        with col_save:
-                            if st.form_submit_button("💾 Salvar Alterações"):
-                                # Atualizar os dados
-                                df_investimentos.at[idx, 'instituicao'] = edit_instituicao
-                                df_investimentos.at[idx, 'ativo'] = edit_ativo
-                                df_investimentos.at[idx, 'tipo'] = edit_tipo
-                                df_investimentos.at[idx, 'valor_atual'] = edit_valor
-                                df_investimentos.at[idx, 'data_entrada'] = edit_data_entrada
-                                df_investimentos.at[idx, 'rendimento_mensal'] = edit_rendimento
-                                df_investimentos.at[idx, 'categoria'] = edit_categoria
-                                df_investimentos.at[idx, 'observacao'] = edit_observacao
-                                
+                        if st.button("🗑️", key=f"del_{idx}", help="Excluir"):
+                            # Confirmar exclusão rápida
+                            confirm = st.checkbox(f"Confirmar exclusão de {row.get('ativo', 'este investimento')}", key=f"confirm_{idx}")
+                            if confirm:
+                                df_investimentos = df_investimentos.drop(idx).reset_index(drop=True)
                                 dados["investimentos"] = df_investimentos
                                 st.session_state["dados"] = dados
                                 DatabaseManager.save("investimentos", df_investimentos, usuario)
-                                
-                                st.session_state[f"editing_{idx}"] = False
-                                st.success("Investimento atualizado!")
-                                st.rerun()
-                        
-                        with col_cancel:
-                            if st.form_submit_button("❌ Cancelar"):
-                                st.session_state[f"editing_{idx}"] = False
+                                st.success("Investimento excluído!")
                                 st.rerun()
                 
-                # Mostrar observações se existirem
-                if row.get('observacao') and str(row.get('observacao')).strip():
-                    with st.expander("📝 Observações"):
-                        st.write(row.get('observacao'))
+                # Formulário de edição (aparece apenas quando ativado)
+                if st.session_state.get(f"editing_{idx}", False):
+                    with st.expander(f"✏️ Editar {row.get('ativo', 'Investimento')}", expanded=True):
+                        with st.form(f"form_edit_{idx}"):
+                            col_e1, col_e2 = st.columns(2, gap="small")
+                            
+                            with col_e1:
+                                edit_instituicao = st.text_input("Instituição", value=row.get('instituicao', ''), key=f"edit_inst_{idx}")
+                                edit_ativo = st.text_input("Ativo", value=row.get('ativo', ''), key=f"edit_ativo_{idx}")
+                                edit_tipo = st.selectbox(
+                                    "tipo",
+                                    ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"],
+                                    index=["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"].index(row.get('tipo', 'Renda Fixa')) 
+                                    if row.get('tipo') in ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"] else 0,
+                                    key=f"edit_tipo_{idx}"
+                                )
+                            
+                            with col_e2:
+                                edit_valor = st.number_input(
+                                    "Valor Atual (R$)", 
+                                    min_value=0.0, 
+                                    step=100.0, 
+                                    value=float(row.get('valor_atual', 0)),
+                                    key=f"edit_valor_{idx}"
+                                )
+                                edit_rendimento = st.number_input(
+                                    "Rendimento Mensal (%)",
+                                    min_value=0.0,
+                                    max_value=100.0,
+                                    value=float(row.get('rendimento_mensal', 0.8) * 100),
+                                    step=0.1,
+                                    key=f"edit_rend_{idx}"
+                                ) / 100
+                                edit_categoria = st.selectbox(
+                                    "Perfil",
+                                    ["Conservador", "Moderado", "Arrojado", "Especulativo"],
+                                    index=["Conservador", "Moderado", "Arrojado", "Especulativo"].index(row.get('categoria', 'Conservador')) 
+                                    if row.get('categoria') in ["Conservador", "Moderado", "Arrojado", "Especulativo"] else 0,
+                                    key=f"edit_cat_{idx}"
+                                )
+                            
+                            edit_data_entrada = st.date_input(
+                                "Data de Entrada", 
+                                value=pd.to_datetime(row.get('data_entrada', date.today())),
+                                key=f"edit_data_{idx}"
+                            )
+                            
+                            edit_observacao = st.text_area(
+                                "Observações", 
+                                value=row.get('observacao', ''),
+                                key=f"edit_obs_{idx}",
+                                height=60
+                            )
+                            
+                            col_save, col_cancel = st.columns(2)
+                            with col_save:
+                                if st.form_submit_button("💾 Salvar"):
+                                    # Atualizar os dados
+                                    df_investimentos.at[idx, 'instituicao'] = edit_instituicao
+                                    df_investimentos.at[idx, 'ativo'] = edit_ativo
+                                    df_investimentos.at[idx, 'tipo'] = edit_tipo
+                                    df_investimentos.at[idx, 'valor_atual'] = edit_valor
+                                    df_investimentos.at[idx, 'data_entrada'] = edit_data_entrada
+                                    df_investimentos.at[idx, 'rendimento_mensal'] = edit_rendimento
+                                    df_investimentos.at[idx, 'categoria'] = edit_categoria
+                                    df_investimentos.at[idx, 'observacao'] = edit_observacao
+                                    
+                                    dados["investimentos"] = df_investimentos
+                                    st.session_state["dados"] = dados
+                                    DatabaseManager.save("investimentos", df_investimentos, usuario)
+                                    
+                                    st.session_state[f"editing_{idx}"] = False
+                                    st.success("Investimento atualizado!")
+                                    st.rerun()
+                            
+                            with col_cancel:
+                                if st.form_submit_button("❌ Cancelar"):
+                                    st.session_state[f"editing_{idx}"] = False
+                                    st.rerun()
                 
-                st.divider()
+                # Divisor fino entre itens
+                st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
     else:
         st.caption("Nenhum investimento cadastrado.")
 
-    # ---------------- GRÁFICO ----------------
+    # ---------------- GRÁFICOS ----------------
     if not dados["investimentos"].empty:
+        st.divider()
         st.subheader("📊 Distribuição da Carteira")
-        fig = px.pie(
-            dados["investimentos"],
-            values="valor_atual",
-            names="categoria",
-            hole=0.4,
-            title="Distribuição por Perfil"
-        )
-        fig.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="#0e1117",
-            plot_bgcolor="#0e1117",
-            font=dict(color="#e5e7eb"),
-            hovermode="x unified"
-        )
-        st.plotly_chart(fig, use_container_width=True)
         
-        # Gráfico adicional por tipo
-        fig2 = px.pie(
-            dados["investimentos"],
-            values="valor_atual",
-            names="tipo",
-            hole=0.4,
-            title="Distribuição por Tipo"
-        )
-        fig2.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="#0e1117",
-            plot_bgcolor="#0e1117",
-            font=dict(color="#e5e7eb")
-        )
-        st.plotly_chart(fig2, use_container_width=True)
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            fig = px.pie(
+                dados["investimentos"],
+                values="valor_atual",
+                names="categoria",
+                hole=0.4,
+                title="Por Perfil"
+            )
+            fig.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="#0e1117",
+                plot_bgcolor="#0e1117",
+                font=dict(color="#e5e7eb", size=10),
+                showlegend=True,
+                legend=dict(font=dict(size=9))
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            fig2 = px.pie(
+                dados["investimentos"],
+                values="valor_atual",
+                names="tipo",
+                hole=0.4,
+                title="Por Tipo"
+            )
+            fig2.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="#0e1117",
+                plot_bgcolor="#0e1117",
+                font=dict(color="#e5e7eb", size=10),
+                showlegend=True,
+                legend=dict(font=dict(size=9))
+            )
+            st.plotly_chart(fig2, use_container_width=True)
 
 
 
 # =========================================================
-# 🎯 SONHOS & METAS - VERSÃO CORRIGIDA (COM VALOR NEGATIVO)
+# 🎯 SONHOS & METAS - VERSÃO COMPACTA
 # =========================================================
 
 elif menu == "🎯 SONHOS & METAS":
@@ -1388,41 +1391,30 @@ elif menu == "🎯 SONHOS & METAS":
 
         st.session_state["msg"] = None
 
-    # ---------------- RESUMO (APENAS SONHOS ATIVOS) ----------------
+    # ---------------- RESUMO ----------------
     if not dados["sonhos_projetos"].empty:
-        # Filtrar apenas sonhos ativos para o resumo
         sonhos_ativos = dados["sonhos_projetos"][dados["sonhos_projetos"]["status"] != "Desistido"]
         
         if not sonhos_ativos.empty:
             total_alvo = sonhos_ativos["valor_alvo"].sum()
             total_atual = sonhos_ativos["valor_atual"].sum()
             progresso = (total_atual / total_alvo * 100) if total_alvo > 0 else 0
-            
-            # Contar sonhos ativos vs desistidos
-            total_sonhos = len(dados["sonhos_projetos"])
-            sonhos_desistidos = len(dados["sonhos_projetos"][dados["sonhos_projetos"]["status"] == "Desistido"])
-            sonhos_ativos_count = total_sonhos - sonhos_desistidos
         else:
             total_alvo = total_atual = progresso = 0
-            sonhos_ativos_count = 0
-            sonhos_desistidos = len(dados["sonhos_projetos"])
     else:
-        total_alvo = total_atual = progresso = sonhos_ativos_count = sonhos_desistidos = 0
+        total_alvo = total_atual = progresso = 0
 
-    col1, col2, col3 = st.columns(3, gap="large")
+    col1, col2, col3 = st.columns(3, gap="small")
     col1.metric("Total em Metas", f"R$ {total_alvo:,.2f}")
     col2.metric("Economizado", f"R$ {total_atual:,.2f}")
-    col3.metric("Progresso Geral", f"{progresso:.1f}%")
-    
-    # Status dos sonhos
-    st.caption(f"📊 {sonhos_ativos_count} sonhos ativos | {sonhos_desistidos} desistidos")
+    col3.metric("Progresso", f"{progresso:.1f}%")
 
     st.divider()
 
     # ---------------- NOVO SONHO ----------------
-    with st.expander("➕ Adicionar Novo Sonho"):
+    with st.expander("➕ Novo Sonho", expanded=False):
         with st.form("form_novo_sonho", clear_on_submit=True):
-            col1, col2 = st.columns(2, gap="large")
+            col1, col2 = st.columns(2, gap="small")
 
             with col1:
                 nome = st.text_input("Nome")
@@ -1437,9 +1429,9 @@ elif menu == "🎯 SONHOS & METAS":
                 prioridade = st.selectbox("prioridade", ["Baixa", "Média", "Alta"])
                 valor_inicial = st.number_input("Valor Inicial (R$)", min_value=0.0, step=500.0)
 
-            descricao = st.text_area("descrição")
+            descricao = st.text_area("descrição", height=60)
 
-            if st.form_submit_button("🎯 Criar Sonho"):
+            if st.form_submit_button("🎯 Criar"):
                 novo = pd.DataFrame([{
                     "nome": nome,
                     "descricao": descricao,
@@ -1459,164 +1451,157 @@ elif menu == "🎯 SONHOS & METAS":
                 st.session_state["msg_tipo"] = "success"
                 st.rerun()    
 
-    # ---------------- LISTA ----------------
+    # ---------------- LISTA COMPACTA ----------------
+    st.subheader("📋 Meus Sonhos")
+    
     if not dados["sonhos_projetos"].empty:
         for i, sonho in dados["sonhos_projetos"].iterrows():
-
-            # Indicador visual para sonhos desistidos
-            if sonho.get("status") == "Desistido":
-                st.markdown(f"""
-                <div style="background-color: #fef3c7; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
-                    <span style="color: #92400e;">😢 SONHO DESISTIDO</span>
-                </div>
-                """, unsafe_allow_html=True)
-
-            st.subheader(sonho["nome"])
-            st.caption(sonho.get("descricao", ""))
-
-            progresso = sonho["valor_atual"] / sonho["valor_alvo"] if sonho["valor_alvo"] > 0 else 0
+            # Container para cada sonho
+            is_desistido = sonho.get("status") == "Desistido"
             
-            # Barra de progresso (desativada para sonhos desistidos)
-            if sonho.get("status") != "Desistido":
-                st.progress(progresso, text=f"R$ {sonho['valor_atual']:,.0f} / R$ {sonho['valor_alvo']:,.0f}")
-            else:
-                st.markdown(f"**Valor atual: R$ {sonho['valor_atual']:,.0f}** *(desistido)*")
-
-            col_s1, col_s2, col_s3, col_s4 = st.columns(4)
-            col_s1.caption(f"📅 {sonho['data_alvo']}")
-            col_s2.caption(f"🔸 {sonho['prioridade']}")
-            col_s3.caption(f"📊 {sonho['status']}")
+            # Cabeçalho do sonho
+            col1, col2, col3 = st.columns([3, 1, 1], gap="small")
             
-            with col_s4:
-                # Se o sonho já está desistido, mostrar opção de reativar
-                if sonho.get("status") == "Desistido":
-                    if st.button("🔄 Reativar", key=f"reativar_{i}", help="Reativar este sonho"):
+            with col1:
+                if is_desistido:
+                    st.markdown(f"😢 **{sonho['nome']}** *(Desistido)*")
+                else:
+                    st.markdown(f"🎯 **{sonho['nome']}**")
+                st.caption(f"{sonho.get('categoria', '')} • {sonho.get('prioridade', '')} • {sonho['data_alvo']}")
+            
+            with col2:
+                progresso = sonho["valor_atual"] / sonho["valor_alvo"] if sonho["valor_alvo"] > 0 else 0
+                if not is_desistido:
+                    st.progress(min(progresso, 1.0))
+            
+            with col3:
+                st.markdown(f"**R$ {sonho['valor_atual']:,.0f}** / R$ {sonho['valor_alvo']:,.0f}")
+            
+            # Barra de progresso fina
+            if not is_desistido:
+                st.caption(f"Progresso: {progresso:.1%}")
+            
+            # Ações rápidas
+            col_a1, col_a2, col_a3, col_a4 = st.columns(4, gap="small")
+            
+            with col_a1:
+                # Adicionar/retirar valor rápido
+                with st.popover("💰 Movimentar", use_container_width=True):
+                    valor = st.number_input("Valor", min_value=-sonho["valor_atual"], value=0.0, step=100.0, key=f"mov_{i}")
+                    if st.button("Aplicar", key=f"apply_{i}"):
+                        novo_valor = sonho["valor_atual"] + valor
+                        if novo_valor >= 0:
+                            dados["sonhos_projetos"].loc[i, "valor_atual"] = novo_valor
+                            st.session_state["dados"] = dados
+                            DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                            st.success("Atualizado!")
+                            st.rerun()
+                        else:
+                            st.error("Valor não pode ser negativo!")
+            
+            with col_a2:
+                if is_desistido:
+                    if st.button("🔄 Reativar", key=f"reat_{i}", use_container_width=True):
                         dados["sonhos_projetos"].loc[i, "status"] = "Em Andamento"
                         st.session_state["dados"] = dados
                         DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                        st.success("Sonho reativado! 🎉")
+                        st.success("Reativado!")
                         st.rerun()
                 else:
-                    # BOTÃO "DESISTIR DO SONHO" 😢
-                    if st.button("😢 Desistir", key=f"desistir_{i}", help="Marcar como desistido (mantém histórico)"):
+                    if st.button("😢 Desistir", key=f"des_{i}", use_container_width=True):
                         dados["sonhos_projetos"].loc[i, "status"] = "Desistido"
                         st.session_state["dados"] = dados
                         DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                        st.success("Sonho marcado como desistido. 😢")
+                        st.success("Marcado como desistido")
                         st.rerun()
-
-            # --- ADICIONAR OU RETIRAR VALOR ---
-            with st.form(f"form_add_{i}", clear_on_submit=True):
-                st.markdown("**Movimentar caixinha:**")
-                
-                # Campo para valor (pode ser positivo ou negativo)
-                valor_mov = st.number_input(
-                    "Valor (positivo = adicionar, negativo = retirar)",
-                    min_value=-999999.0,  # Permite valores negativos
-                    max_value=999999.0,
-                    value=0.0,
-                    step=100.0,
-                    key=f"mov_val_{i}"
-                )
-                
-                col_btn1, col_btn2, col_btn3 = st.columns(3)
-                
-                with col_btn1:
-                    if st.form_submit_button("💸 Aplicar"):
-                        # Validar se pode retirar (não pode ficar negativo)
-                        novo_valor = sonho["valor_atual"] + valor_mov
-                        
-                        if novo_valor < 0:
-                            st.error("❌ Valor não pode ficar negativo!")
-                        else:
-                            dados["sonhos_projetos"].loc[i, "valor_atual"] = novo_valor
-                            st.session_state["dados"] = dados
-                            DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                            
-                            if valor_mov > 0:
-                                st.success(f"✅ Adicionado R$ {valor_mov:,.2f}")
-                            elif valor_mov < 0:
-                                st.warning(f"⚠️ Retirado R$ {abs(valor_mov):,.2f}")
-                            else:
-                                st.info("Nenhuma alteração")
-                            st.rerun()
-                
-                with col_btn2:
-                    # Botões de ação rápida
-                    if st.form_submit_button("➕ R$ 100"):
-                        dados["sonhos_projetos"].loc[i, "valor_atual"] += 100
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                        st.success("+R$ 100 adicionados")
-                        st.rerun()
-                
-                with col_btn3:
-                    if st.form_submit_button("➖ R$ 100"):
-                        novo_valor = sonho["valor_atual"] - 100
-                        if novo_valor < 0:
-                            st.error("❌ Valor não pode ficar negativo!")
-                        else:
-                            dados["sonhos_projetos"].loc[i, "valor_atual"] = novo_valor
-                            st.session_state["dados"] = dados
-                            DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                            st.warning("-R$ 100 retirados")
-                            st.rerun()
-
-            # --- EXCLUSÃO PERMANENTE ---
-            st.markdown("---")
-            st.markdown("**⚠️ Ações irreversíveis:**")
             
-            delete_key = f"delete_sonho_{i}"
-            if delete_key not in st.session_state:
-                st.session_state[delete_key] = False
+            with col_a3:
+                if st.button("✏️ Editar", key=f"edit_sonho_{i}", use_container_width=True):
+                    st.session_state[f"editing_sonho_{i}"] = True
+                    st.rerun()
             
-            if not st.session_state[delete_key]:
-                if st.button("🗑️ Excluir Permanentemente", key=f"btn_delete_{i}", type="secondary"):
-                    st.session_state[delete_key] = True
-                    st.warning("⚠️ CUIDADO: Esta ação não pode ser desfeita!")
-                    st.info("Clique novamente no botão para confirmar a exclusão permanente")
-            else:
-                col_confirm1, col_confirm2 = st.columns(2)
-                with col_confirm1:
-                    if st.button("✅ CONFIRMAR EXCLUSÃO", key=f"confirm_delete_{i}", type="primary"):
-                        # Excluir permanentemente
+            with col_a4:
+                if st.button("🗑️", key=f"del_sonho_{i}", use_container_width=True):
+                    # Confirmação rápida
+                    confirm = st.checkbox("Confirmar exclusão", key=f"confirm_del_{i}")
+                    if confirm:
                         dados["sonhos_projetos"] = dados["sonhos_projetos"].drop(i).reset_index(drop=True)
                         st.session_state["dados"] = dados
                         DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                        st.session_state[delete_key] = False
-                        st.error("Sonho excluído permanentemente! 🗑️")
+                        st.success("Excluído!")
                         st.rerun()
-                with col_confirm2:
-                    if st.button("❌ Cancelar", key=f"cancel_delete_{i}"):
-                        st.session_state[delete_key] = False
-                        st.rerun()
-
-            # Tooltip explicativo
-            with st.expander("ℹ️ Como usar esta seção"):
-                st.markdown("""
-                **💸 Movimentar caixinha:**
-                - **Valor positivo**: Adiciona dinheiro à caixinha do sonho
-                - **Valor negativo**: Retira dinheiro da caixinha (útil para emergências)
-                - **Não pode ficar negativo**: O valor atual nunca pode ser menor que zero
-                
-                **😢 Desistir do Sonho:**
-                - Mantém o sonho na lista, mas marca como "Desistido"
-                - Sonhos desistidos **NÃO CONTAM** para o cálculo das metas totais
-                - Pode ser reativado depois com o botão "🔄 Reativar"
-                
-                **🗑️ Excluir Permanentemente:**
-                - Remove completamente do sistema (sem histórico)
-                - Use apenas se criou por engano
-                """)
-
-            st.divider()
+            
+            # Formulário de edição
+            if st.session_state.get(f"editing_sonho_{i}", False):
+                with st.expander("✏️ Editar Sonho", expanded=True):
+                    with st.form(f"form_edit_sonho_{i}"):
+                        col_e1, col_e2 = st.columns(2, gap="small")
+                        
+                        with col_e1:
+                            edit_nome = st.text_input("Nome", value=sonho["nome"], key=f"edit_nome_{i}")
+                            edit_valor_alvo = st.number_input("Valor Alvo", value=sonho["valor_alvo"], min_value=0.0, key=f"edit_alvo_{i}")
+                            edit_categoria = st.selectbox(
+                                "Categoria",
+                                ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"],
+                                index=["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"].index(sonho.get('categoria', 'Outros')) 
+                                if sonho.get('categoria') in ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"] else 5,
+                                key=f"edit_cat_{i}"
+                            )
+                        
+                        with col_e2:
+                            edit_data_alvo = st.date_input("Data Alvo", value=pd.to_datetime(sonho["data_alvo"]), key=f"edit_data_{i}")
+                            edit_prioridade = st.selectbox(
+                                "Prioridade",
+                                ["Baixa", "Média", "Alta"],
+                                index=["Baixa", "Média", "Alta"].index(sonho.get('prioridade', 'Média')),
+                                key=f"edit_prio_{i}"
+                            )
+                            edit_valor_atual = st.number_input(
+                                "Valor Atual",
+                                value=sonho["valor_atual"],
+                                min_value=0.0,
+                                key=f"edit_atual_{i}"
+                            )
+                        
+                        edit_descricao = st.text_area("Descrição", value=sonho.get("descricao", ""), height=60, key=f"edit_desc_{i}")
+                        edit_status = st.selectbox(
+                            "Status",
+                            ["Em Andamento", "Desistido", "Concluído"],
+                            index=["Em Andamento", "Desistido", "Concluído"].index(sonho.get('status', 'Em Andamento')),
+                            key=f"edit_status_{i}"
+                        )
+                        
+                        col_save, col_cancel = st.columns(2)
+                        with col_save:
+                            if st.form_submit_button("💾 Salvar"):
+                                dados["sonhos_projetos"].loc[i, "nome"] = edit_nome
+                                dados["sonhos_projetos"].loc[i, "valor_alvo"] = edit_valor_alvo
+                                dados["sonhos_projetos"].loc[i, "categoria"] = edit_categoria
+                                dados["sonhos_projetos"].loc[i, "data_alvo"] = edit_data_alvo
+                                dados["sonhos_projetos"].loc[i, "prioridade"] = edit_prioridade
+                                dados["sonhos_projetos"].loc[i, "valor_atual"] = edit_valor_atual
+                                dados["sonhos_projetos"].loc[i, "descricao"] = edit_descricao
+                                dados["sonhos_projetos"].loc[i, "status"] = edit_status
+                                
+                                st.session_state["dados"] = dados
+                                DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                                st.session_state[f"editing_sonho_{i}"] = False
+                                st.success("Atualizado!")
+                                st.rerun()
+                        
+                        with col_cancel:
+                            if st.form_submit_button("❌ Cancelar"):
+                                st.session_state[f"editing_sonho_{i}"] = False
+                                st.rerun()
+            
+            # Divisor fino
+            st.markdown("<hr style='margin: 8px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
     else:
         st.caption("Nenhum sonho cadastrado.")
 
 
-
 # =========================================================
-# 🏢 FLUXOS FIXOS - CORREÇÃO (Adicionar exclusão de linhas)
+# 🏢 FLUXOS FIXOS - VERSÃO COMPACTA
 # =========================================================
 elif menu == "🏢 FLUXOS FIXOS":
 
@@ -1635,87 +1620,34 @@ elif menu == "🏢 FLUXOS FIXOS":
     if not dados["fluxo_fixo"].empty:
         df_fluxo = dados["fluxo_fixo"].copy()
         df_fluxo.columns = df_fluxo.columns.str.lower()
-        
-        if "tipo" not in df_fluxo.columns:
-            st.error("Erro: Coluna 'tipo' não encontrada")
-            st.stop()
-        
         df_fluxo["tipo"] = df_fluxo["tipo"].astype(str).str.strip().str.title()
     else:
         df_fluxo = pd.DataFrame(columns=["tipo", "valor", "nome", "categoria"])
     
-    # FILTRAR
+    # RESUMO
     receitas = df_fluxo[df_fluxo["tipo"] == "Receita"]
     despesas = df_fluxo[df_fluxo["tipo"] == "Despesa"]
-
-    total_receitas = receitas["valor"].sum() if not receitas.empty and "valor" in receitas.columns else 0
-    total_despesas = despesas["valor"].sum() if not despesas.empty and "valor" in despesas.columns else 0
+    
+    total_receitas = receitas["valor"].sum() if not receitas.empty else 0
+    total_despesas = despesas["valor"].sum() if not despesas.empty else 0
     saldo_fixo = total_receitas - total_despesas
 
-    col1, col2, col3 = st.columns(3, gap="large")
-    col1.metric("Receitas Fixas", f"R$ {total_receitas:,.2f}")
-    col2.metric("Despesas Fixas", f"R$ {total_despesas:,.2f}")
-    col3.metric("Saldo Fixo", f"R$ {saldo_fixo:,.2f}")
+    col1, col2, col3 = st.columns(3, gap="small")
+    col1.metric("Receitas", f"R$ {total_receitas:,.2f}")
+    col2.metric("Despesas", f"R$ {total_despesas:,.2f}")
+    col3.metric("Saldo", f"R$ {saldo_fixo:,.2f}")
 
     st.divider()
 
-    tab1, tab2 = st.tabs(["📈 Receitas", "📉 Despesas"])
-
-    with tab1:
-        if not receitas.empty:
-            # Criar uma tabela interativa com botões de exclusão
-            for idx, row in receitas.iterrows():
-                col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
-                with col1:
-                    st.write(f"**{row.get('nome', 'Sem nome')}**")
-                with col2:
-                    st.write(f"R$ {row.get('valor', 0):,.2f}")
-                with col3:
-                    st.caption(row.get('categoria', ''))
-                with col4:
-                    if st.button("❌", key=f"del_rec_{idx}"):
-                        df_fluxo = df_fluxo.drop(idx).reset_index(drop=True)
-                        dados["fluxo_fixo"] = df_fluxo
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
-                        st.success("Receita excluída!")
-                        st.rerun()
-                st.divider()
-        else:
-            st.caption("Nenhuma receita fixa cadastrada.")
-
-    with tab2:
-        if not despesas.empty:
-            # Criar uma tabela interativa com botões de exclusão
-            for idx, row in despesas.iterrows():
-                col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
-                with col1:
-                    st.write(f"**{row.get('nome', 'Sem nome')}**")
-                with col2:
-                    st.write(f"R$ {row.get('valor', 0):,.2f}")
-                with col3:
-                    st.caption(row.get('categoria', ''))
-                with col4:
-                    if st.button("❌", key=f"del_desp_{idx}"):
-                        df_fluxo = df_fluxo.drop(idx).reset_index(drop=True)
-                        dados["fluxo_fixo"] = df_fluxo
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
-                        st.success("Despesa excluída!")
-                        st.rerun()
-                st.divider()
-        else:
-            st.caption("Nenhuma despesa fixa cadastrada.")
-
-    # ---------------- NOVO FLUXO ----------------
-    with st.expander("➕ Adicionar Fluxo Fixo"):
+    # ---------------- ADICIONAR FLUXO ----------------
+    with st.expander("➕ Novo Fluxo", expanded=False):
         with st.form("form_fluxo", clear_on_submit=True):
-            col1, col2 = st.columns(2, gap="large")
+            col1, col2 = st.columns(2, gap="small")
 
             with col1:
                 nome = st.text_input("Nome")
-                valor = st.number_input("Valor Mensal (R$)", min_value=0.0, step=10.0)
-                tipo = st.selectbox("tipo", ["Receita", "Despesa"])
+                valor = st.number_input("Valor (R$)", min_value=0.0, step=10.0)
+                tipo = st.selectbox("Tipo", ["Receita", "Despesa"])
 
             with col2:
                 categorias_disponiveis = []
@@ -1735,63 +1667,98 @@ elif menu == "🏢 FLUXOS FIXOS":
                 if not categorias_disponiveis:
                     categorias_disponiveis = ["Outros"]
                 
-                categoria = st.selectbox(
-                    "categoria",
-                    categorias_disponiveis
-                )
-                
-                recorrencia = st.selectbox(
-                    "Recorrência",
-                    ["Mensal", "Anual", "Trimestral", "Semestral"]
-                )
+                categoria = st.selectbox("Categoria", categorias_disponiveis)
+                recorrencia = st.selectbox("Recorrência", ["Mensal", "Anual", "Trimestral", "Semestral"])
 
-            data_inicio = st.date_input("Data de Início", date.today())
-            data_fim = st.date_input("Data de Fim (opcional)", value=None)
-            observacao = st.text_area("Observações")
+            observacao = st.text_area("Observações", height=60)
 
-            submitted = st.form_submit_button("💾 Salvar Fluxo")
-
-            if submitted:
-                data_inicio_str = data_inicio.isoformat() if data_inicio else None
-                data_fim_str = data_fim.isoformat() if data_fim else None
-                
+            if st.form_submit_button("💾 Salvar"):
                 novo = pd.DataFrame([{
                     "nome": nome.strip(),
                     "valor": float(valor),
                     "tipo": tipo.strip().title(),
                     "categoria": categoria,
-                    "data_inicio": data_inicio_str,
-                    "data_fim": data_fim_str,
                     "recorrencia": recorrencia,
                     "observacao": observacao.strip()
                 }])
 
-                df_novo_fluxo = df_fluxo.copy() if not df_fluxo.empty else pd.DataFrame()
+                df_novo_fluxo = pd.concat([df_fluxo, novo], ignore_index=True) if not df_fluxo.empty else novo
                 
-                colunas_base = ["nome", "valor", "tipo", "categoria", "data_inicio", 
-                               "data_fim", "recorrencia", "observacao"]
-                for col in colunas_base:
-                    if col not in df_novo_fluxo.columns:
-                        df_novo_fluxo[col] = None if df_novo_fluxo.empty else ""
-                
-                df_novo_fluxo = pd.concat([df_novo_fluxo, novo], ignore_index=True)
-                df_novo_fluxo.columns = df_novo_fluxo.columns.str.lower()
-
-                for date_col in ["data_inicio", "data_fim"]:
-                    if date_col in df_novo_fluxo.columns:
-                        df_novo_fluxo[date_col] = df_novo_fluxo[date_col].apply(
-                            lambda x: x.isoformat() if hasattr(x, 'isoformat') else x
-                        )
-
                 dados["fluxo_fixo"] = df_novo_fluxo
                 st.session_state["dados"] = dados
                 DatabaseManager.save("fluxo_fixo", df_novo_fluxo, usuario)
 
-                st.session_state["msg"] = "Fluxo fixo adicionado com sucesso."
-                st.session_state["msg_tipo"] = "success"
+                st.success("Fluxo adicionado!")
                 st.rerun()
 
-    st.divider()
+    # ---------------- LISTA COMPACTA ----------------
+    st.subheader("📋 Meus Fluxos")
+    
+    tab1, tab2 = st.tabs(["📈 Receitas", "📉 Despesas"])
+    
+    with tab1:
+        if not receitas.empty:
+            for idx, row in receitas.iterrows():
+                col1, col2, col3, col4 = st.columns([3, 2, 1, 1], gap="small")
+                
+                with col1:
+                    st.markdown(f"**{row.get('nome', '')}**")
+                    st.caption(f"{row.get('categoria', '')} • {row.get('recorrencia', 'Mensal')}")
+                
+                with col2:
+                    st.markdown(f"**R$ {row.get('valor', 0):,.2f}**")
+                    if row.get('observacao'):
+                        st.caption(f"{row.get('observacao', '')[:30]}...")
+                
+                with col3:
+                    if st.button("✏️", key=f"edit_rec_{idx}", help="Editar"):
+                        st.session_state[f"editing_rec_{idx}"] = True
+                        st.rerun()
+                
+                with col4:
+                    if st.button("🗑️", key=f"del_rec_{idx}", help="Excluir"):
+                        df_fluxo = df_fluxo.drop(idx).reset_index(drop=True)
+                        dados["fluxo_fixo"] = df_fluxo
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+                        st.success("Excluído!")
+                        st.rerun()
+                
+                st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
+        else:
+            st.caption("Nenhuma receita fixa")
+    
+    with tab2:
+        if not despesas.empty:
+            for idx, row in despesas.iterrows():
+                col1, col2, col3, col4 = st.columns([3, 2, 1, 1], gap="small")
+                
+                with col1:
+                    st.markdown(f"**{row.get('nome', '')}**")
+                    st.caption(f"{row.get('categoria', '')} • {row.get('recorrencia', 'Mensal')}")
+                
+                with col2:
+                    st.markdown(f"**R$ {row.get('valor', 0):,.2f}**")
+                    if row.get('observacao'):
+                        st.caption(f"{row.get('observacao', '')[:30]}...")
+                
+                with col3:
+                    if st.button("✏️", key=f"edit_desp_{idx}", help="Editar"):
+                        st.session_state[f"editing_desp_{idx}"] = True
+                        st.rerun()
+                
+                with col4:
+                    if st.button("🗑️", key=f"del_desp_{idx}", help="Excluir"):
+                        df_fluxo = df_fluxo.drop(idx).reset_index(drop=True)
+                        dados["fluxo_fixo"] = df_fluxo
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+                        st.success("Excluído!")
+                        st.rerun()
+                
+                st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
+        else:
+            st.caption("Nenhuma despesa fixa")
        
 
 
