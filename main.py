@@ -1100,18 +1100,6 @@ elif menu == "💰 INVESTIMENTOS":
                 st.rerun()
 
 
-    # ---------------- TABELA ----------------
-    if not dados["investimentos"].empty:
-        st.dataframe(
-            dados["investimentos"].style.format({
-                "valor_atual": "R$ {:,.2f}",
-                "Rendimento_Mensal": "{:.2%}"
-            }),
-            use_container_width=True,
-            height=400
-        )
-    else:
-        st.caption("Nenhum investimento cadastrado.")
 
     # ---------------- GRÁFICO ----------------
     if not dados["investimentos"].empty:
@@ -1130,6 +1118,19 @@ elif menu == "💰 INVESTIMENTOS":
             hovermode="x unified"
         )
         st.plotly_chart(fig, use_container_width=True)
+
+    # ---------------- TABELA ----------------
+    if not dados["investimentos"].empty:
+        st.dataframe(
+            dados["investimentos"].style.format({
+                "valor_atual": "R$ {:,.2f}",
+                "Rendimento_Mensal": "{:.2%}"
+            }),
+            use_container_width=True,
+            height=400
+        )
+    else:
+        st.caption("Nenhum investimento cadastrado.")
 
     st.divider()
 
