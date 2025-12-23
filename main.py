@@ -2427,16 +2427,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
     st.markdown("### ➕ Registrar Novo Gasto")
     
     with st.container():
-        st.markdown("""
-        <div style="
-            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-            border-radius: 12px;
-            padding: 24px;
-            border: 1px solid #374151;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        ">
-        """, unsafe_allow_html=True)
+        
         
         with st.form("form_gasto_rapido", clear_on_submit=True):
             col1, col2, col3 = st.columns([2, 1, 1], gap="medium")
