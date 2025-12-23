@@ -1181,6 +1181,46 @@ elif menu == "🎯 SONHOS & METAS":
 
     st.divider()
 
+    # ---------------- NOVO SONHO ----------------
+    with st.expander("➕ Adicionar Novo Sonho"):
+        with st.form("form_novo_sonho", clear_on_submit=True):
+            col1, col2 = st.columns(2, gap="large")
+
+            with col1:
+                nome = st.text_input("Nome")
+                valor_alvo = st.number_input("Valor Alvo (R$)", min_value=0.0, step=1000.0)
+                categoria = st.selectbox(
+                    "categoria",
+                    ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"]
+                )
+
+            with col2:
+                data_alvo = st.date_input("Data Alvo", date.today() + timedelta(days=365))
+                prioridade = st.selectbox("prioridade", ["Baixa", "Média", "Alta"])
+                valor_inicial = st.number_input("Valor Inicial (R$)", min_value=0.0, step=500.0)
+
+            descricao = st.text_area("descrição")
+
+            if st.form_submit_button("🎯 Criar Sonho"):
+                novo = pd.DataFrame([{
+                    "nome": nome,
+                    "descricao": descricao,
+                    "valor_alvo": valor_alvo,
+                    "valor_atual": valor_inicial,
+                    "data_alvo": data_alvo,
+                    "prioridade": prioridade,
+                    "status": "Em Andamento",
+                    "categoria": categoria
+                }])
+
+                df = pd.concat([dados["sonhos_projetos"], novo], ignore_index=True)
+                dados["sonhos_projetos"] = df
+                st.session_state["dados"] = dados
+                DatabaseManager.save("sonhos_projetos", df, usuario)
+                st.session_state["msg"] = "Salvo"
+                st.session_state["msg_tipo"] = "success"
+                st.rerun()    
+
     # ---------------- LISTA ----------------
     if not dados["sonhos_projetos"].empty:
         for i, sonho in dados["sonhos_projetos"].iterrows():
@@ -1335,46 +1375,8 @@ elif menu == "🎯 SONHOS & METAS":
     else:
         st.caption("Nenhum sonho cadastrado.")
 
-    # ---------------- NOVO SONHO ----------------
-    with st.expander("➕ Adicionar Novo Sonho"):
-        with st.form("form_novo_sonho", clear_on_submit=True):
-            col1, col2 = st.columns(2, gap="large")
 
-            with col1:
-                nome = st.text_input("Nome")
-                valor_alvo = st.number_input("Valor Alvo (R$)", min_value=0.0, step=1000.0)
-                categoria = st.selectbox(
-                    "categoria",
-                    ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"]
-                )
 
-            with col2:
-                data_alvo = st.date_input("Data Alvo", date.today() + timedelta(days=365))
-                prioridade = st.selectbox("prioridade", ["Baixa", "Média", "Alta"])
-                valor_inicial = st.number_input("Valor Inicial (R$)", min_value=0.0, step=500.0)
-
-            descricao = st.text_area("descrição")
-
-            if st.form_submit_button("🎯 Criar Sonho"):
-                novo = pd.DataFrame([{
-                    "nome": nome,
-                    "descricao": descricao,
-                    "valor_alvo": valor_alvo,
-                    "valor_atual": valor_inicial,
-                    "data_alvo": data_alvo,
-                    "prioridade": prioridade,
-                    "status": "Em Andamento",
-                    "categoria": categoria
-                }])
-
-                df = pd.concat([dados["sonhos_projetos"], novo], ignore_index=True)
-                dados["sonhos_projetos"] = df
-                st.session_state["dados"] = dados
-                DatabaseManager.save("sonhos_projetos", df, usuario)
-                st.session_state["msg"] = "Salvo"
-                st.session_state["msg_tipo"] = "success"
-                st.rerun()
-                
 # =========================================================
 # 🏢 FLUXOS FIXOS - CORREÇÃO (Adicionar exclusão de linhas)
 # =========================================================
