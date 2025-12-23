@@ -1042,6 +1042,41 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
                         st.session_state[f"confirm_delete_{unique_key}"] = False
                         st.rerun()
 
+
+# =========================================================
+# FUNÇÕES AUXILIARES PARA PAGINAÇÃO
+# =========================================================
+
+def criar_controles_paginacao(pagina_atual, total_paginas, key_prefix):
+    """Cria controles de paginação que não causam conflitos com session_state"""
+    col_nav1, col_nav2, col_nav3, col_nav4, col_nav5 = st.columns(5)
+    
+    with col_nav1:
+        if pagina_atual > 1:
+            if st.button("⏮️", key=f"{key_prefix}_primeira", help="Primeira página", use_container_width=True):
+                return 1
+    
+    with col_nav2:
+        if pagina_atual > 1:
+            if st.button("◀️", key=f"{key_prefix}_anterior", help="Página anterior", use_container_width=True):
+                return pagina_atual - 1
+    
+    with col_nav3:
+        st.markdown(f"**{pagina_atual} / {total_paginas}**", unsafe_allow_html=True)
+    
+    with col_nav4:
+        if pagina_atual < total_paginas:
+            if st.button("▶️", key=f"{key_prefix}_proxima", help="Próxima página", use_container_width=True):
+                return pagina_atual + 1
+    
+    with col_nav5:
+        if pagina_atual < total_paginas:
+            if st.button("⏭️", key=f"{key_prefix}_ultima", help="Última página", use_container_width=True):
+                return total_paginas
+    
+    return pagina_atual
+
+
 # =========================================================
 # SIDEBAR (MENU ÚNICO DO SISTEMA)
 # =========================================================
@@ -2522,20 +2557,32 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Paginação para gastos do mês
+                # Paginação para gastos do mês - usando session_state para controle
+                if "pagina_mes_atual" not in st.session_state:
+                    st.session_state["pagina_mes_atual"] = 1
+                
                 itens_por_pagina = 10
                 total_paginas = (len(df_mes) - 1) // itens_por_pagina + 1
                 
-                # Selecionar página
-                pagina_atual = st.number_input(
+                # Ajustar página atual se necessário
+                if st.session_state["pagina_mes_atual"] > total_paginas:
+                    st.session_state["pagina_mes_atual"] = 1
+                
+                # Exibir seleção de página
+                pagina_mes_selecionada = st.number_input(
                     "Página",
                     min_value=1,
                     max_value=total_paginas,
-                    value=1,
-                    key="pagina_mes"
+                    value=st.session_state["pagina_mes_atual"],
+                    key="pagina_mes_input"
                 )
                 
-                inicio = (pagina_atual - 1) * itens_por_pagina
+                # Atualizar se o usuário mudou manualmente
+                if pagina_mes_selecionada != st.session_state["pagina_mes_atual"]:
+                    st.session_state["pagina_mes_atual"] = pagina_mes_selecionada
+                    st.rerun()
+                
+                inicio = (st.session_state["pagina_mes_atual"] - 1) * itens_por_pagina
                 fim = inicio + itens_por_pagina
                 
                 # Mostrar gastos da página atual - resetar índices para garantir unicidade
@@ -2543,13 +2590,21 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 for i, (idx, row) in enumerate(df_mes_pagina.iterrows()):
                     # Encontrar o índice original correspondente
                     idx_original = df_mes.iloc[inicio:fim].index[i]
-                    mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"mes_{pagina_atual}_{i}")
+                    mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"mes_{st.session_state['pagina_mes_atual']}_{i}")
                 
-                # Controles de paginação
-                if total_paginas > 1:
-                    col_pag1, col_pag2, col_pag3 = st.columns([1, 2, 1])
-                    with col_pag2:
-                        st.caption(f"Página {pagina_atual} de {total_paginas} • {len(df_mes)} gastos no total")
+                # Controles de paginação usando a função auxiliar
+                nova_pagina_mes = criar_controles_paginacao(
+                    pagina_atual=st.session_state["pagina_mes_atual"],
+                    total_paginas=total_paginas,
+                    key_prefix="mes_gastos"
+                )
+                
+                if nova_pagina_mes != st.session_state["pagina_mes_atual"]:
+                    st.session_state["pagina_mes_atual"] = nova_pagina_mes
+                    st.rerun()
+                
+                # Informação sobre total de páginas
+                st.caption(f"Página {st.session_state['pagina_mes_atual']} de {total_paginas} • {len(df_mes)} gastos no total")
             else:
                 st.info("Nenhum gasto registrado este mês.")
         
@@ -2634,28 +2689,50 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 elif ordenar_por == "Valor (menor)":
                     df_filtrado = df_filtrado.sort_values("valor", ascending=True)
                 
-                # Paginação
+                # Paginação - usar session_state para manter o estado
+                if "pagina_total_atual" not in st.session_state:
+                    st.session_state["pagina_total_atual"] = 1
+                
+                if "itens_por_pagina_total" not in st.session_state:
+                    st.session_state["itens_por_pagina_total"] = 15
+                
+                # Controle de itens por página
                 itens_por_pagina_total = st.slider(
                     "Itens por página",
                     min_value=5,
                     max_value=50,
-                    value=15,
+                    value=st.session_state["itens_por_pagina_total"],
                     step=5,
-                    key="itens_por_pagina"
+                    key="itens_por_pagina_slider"
                 )
+                
+                # Atualizar se o usuário mudou
+                if itens_por_pagina_total != st.session_state["itens_por_pagina_total"]:
+                    st.session_state["itens_por_pagina_total"] = itens_por_pagina_total
+                    st.session_state["pagina_total_atual"] = 1  # Resetar para primeira página
+                    st.rerun()
                 
                 total_paginas_total = (len(df_filtrado) - 1) // itens_por_pagina_total + 1
                 
-                # Selecionar página
-                pagina_atual_total = st.number_input(
+                # Ajustar página atual se necessário
+                if st.session_state["pagina_total_atual"] > total_paginas_total:
+                    st.session_state["pagina_total_atual"] = 1
+                
+                # Exibir seleção de página
+                pagina_selecionada = st.number_input(
                     "Página",
                     min_value=1,
                     max_value=total_paginas_total,
-                    value=1,
-                    key="pagina_total"
+                    value=st.session_state["pagina_total_atual"],
+                    key="pagina_total_input"
                 )
                 
-                inicio_total = (pagina_atual_total - 1) * itens_por_pagina_total
+                # Atualizar se o usuário mudou manualmente
+                if pagina_selecionada != st.session_state["pagina_total_atual"]:
+                    st.session_state["pagina_total_atual"] = pagina_selecionada
+                    st.rerun()
+                
+                inicio_total = (st.session_state["pagina_total_atual"] - 1) * itens_por_pagina_total
                 fim_total = inicio_total + itens_por_pagina_total
                 
                 # Mostrar resultados
@@ -2666,38 +2743,18 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 for i, (idx, row) in enumerate(df_filtrado_pagina.iterrows()):
                     # Encontrar o índice original correspondente
                     idx_original = df_filtrado.iloc[inicio_total:fim_total].index[i]
-                    mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"todos_{pagina_atual_total}_{i}")
+                    mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"todos_{st.session_state['pagina_total_atual']}_{i}")
                 
-                # Controles de paginação
-                if total_paginas_total > 1:
-                    col_nav1, col_nav2, col_nav3, col_nav4, col_nav5 = st.columns(5)
-                    
-                    with col_nav1:
-                        if pagina_atual_total > 1:
-                            if st.button("⏮️ Primeira", use_container_width=True):
-                                st.session_state["pagina_total"] = 1
-                                st.rerun()
-                    
-                    with col_nav2:
-                        if pagina_atual_total > 1:
-                            if st.button("◀️ Anterior", use_container_width=True):
-                                st.session_state["pagina_total"] = pagina_atual_total - 1
-                                st.rerun()
-                    
-                    with col_nav3:
-                        st.markdown(f"**{pagina_atual_total} / {total_paginas_total}**", unsafe_allow_html=True)
-                    
-                    with col_nav4:
-                        if pagina_atual_total < total_paginas_total:
-                            if st.button("Próxima ▶️", use_container_width=True):
-                                st.session_state["pagina_total"] = pagina_atual_total + 1
-                                st.rerun()
-                    
-                    with col_nav5:
-                        if pagina_atual_total < total_paginas_total:
-                            if st.button("Última ⏭️", use_container_width=True):
-                                st.session_state["pagina_total"] = total_paginas_total
-                                st.rerun()
+                # Controles de paginação usando a função auxiliar
+                nova_pagina = criar_controles_paginacao(
+                    pagina_atual=st.session_state["pagina_total_atual"],
+                    total_paginas=total_paginas_total,
+                    key_prefix="todos_gastos"
+                )
+                
+                if nova_pagina != st.session_state["pagina_total_atual"]:
+                    st.session_state["pagina_total_atual"] = nova_pagina
+                    st.rerun()
         
         with tab4:
             # Análise por categorias
