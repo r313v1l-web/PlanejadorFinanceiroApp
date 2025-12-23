@@ -500,7 +500,7 @@ if "msg_tipo" not in st.session_state:
 
 
 # =========================================================
-# CALCULOS GERAIS (BLOCO 3)
+# CALCULOS GERAIS (BLOCO 3) - CORREÇÃO
 # =========================================================
 
 hoje = date.today()
@@ -546,15 +546,19 @@ if not dados["fluxo_fixo"].empty:
 else:
     receitas_fixas = despesas_fixas = saldo_fixo = 0
 
-# ---------------- SONHOS ----------------
+# ---------------- SONHOS - CORREÇÃO: FILTRAR APENAS SONHOS ATIVOS ----------------
 if not dados["sonhos_projetos"].empty:
-    total_sonhos = dados["sonhos_projetos"]["valor_alvo"].sum()
-    total_atual = dados["sonhos_projetos"]["valor_atual"].sum()
-    progresso_sonhos = (total_atual / total_sonhos * 100) if total_sonhos > 0 else 0
+    # 🔥 FILTRAR: considerar apenas sonhos com status diferente de "Desistido"
+    sonhos_ativos = dados["sonhos_projetos"][dados["sonhos_projetos"]["status"] != "Desistido"]
+    
+    if not sonhos_ativos.empty:
+        total_sonhos = sonhos_ativos["valor_alvo"].sum()
+        total_atual = sonhos_ativos["valor_atual"].sum()
+        progresso_sonhos = (total_atual / total_sonhos * 100) if total_sonhos > 0 else 0
+    else:
+        total_sonhos = total_atual = progresso_sonhos = 0
 else:
     total_sonhos = total_atual = progresso_sonhos = 0
-
-
 
 # =========================================================
 # CONFIGURAÇÕES (BLOCO 4)
@@ -1130,7 +1134,7 @@ elif menu == "💰 INVESTIMENTOS":
 
 
 # =========================================================
-# 🎯 SONHOS & METAS - VERSÃO MELHORADA (COM EXPLICAÇÕES)
+# 🎯 SONHOS & METAS - VERSÃO CORRIGIDA (COM VALOR NEGATIVO)
 # =========================================================
 
 elif menu == "🎯 SONHOS & METAS":
@@ -1146,18 +1150,34 @@ elif menu == "🎯 SONHOS & METAS":
 
         st.session_state["msg"] = None
 
-    # ---------------- RESUMO ----------------
+    # ---------------- RESUMO (APENAS SONHOS ATIVOS) ----------------
     if not dados["sonhos_projetos"].empty:
-        total_alvo = dados["sonhos_projetos"]["valor_alvo"].sum()
-        total_atual = dados["sonhos_projetos"]["valor_atual"].sum()
-        progresso = (total_atual / total_alvo * 100) if total_alvo > 0 else 0
+        # Filtrar apenas sonhos ativos para o resumo
+        sonhos_ativos = dados["sonhos_projetos"][dados["sonhos_projetos"]["status"] != "Desistido"]
+        
+        if not sonhos_ativos.empty:
+            total_alvo = sonhos_ativos["valor_alvo"].sum()
+            total_atual = sonhos_ativos["valor_atual"].sum()
+            progresso = (total_atual / total_alvo * 100) if total_alvo > 0 else 0
+            
+            # Contar sonhos ativos vs desistidos
+            total_sonhos = len(dados["sonhos_projetos"])
+            sonhos_desistidos = len(dados["sonhos_projetos"][dados["sonhos_projetos"]["status"] == "Desistido"])
+            sonhos_ativos_count = total_sonhos - sonhos_desistidos
+        else:
+            total_alvo = total_atual = progresso = 0
+            sonhos_ativos_count = 0
+            sonhos_desistidos = len(dados["sonhos_projetos"])
     else:
-        total_alvo = total_atual = progresso = 0
+        total_alvo = total_atual = progresso = sonhos_ativos_count = sonhos_desistidos = 0
 
     col1, col2, col3 = st.columns(3, gap="large")
     col1.metric("Total em Metas", f"R$ {total_alvo:,.2f}")
     col2.metric("Economizado", f"R$ {total_atual:,.2f}")
     col3.metric("Progresso Geral", f"{progresso:.1f}%")
+    
+    # Status dos sonhos
+    st.caption(f"📊 {sonhos_ativos_count} sonhos ativos | {sonhos_desistidos} desistidos")
 
     st.divider()
 
@@ -1177,7 +1197,12 @@ elif menu == "🎯 SONHOS & METAS":
             st.caption(sonho.get("descricao", ""))
 
             progresso = sonho["valor_atual"] / sonho["valor_alvo"] if sonho["valor_alvo"] > 0 else 0
-            st.progress(progresso, text=f"R$ {sonho['valor_atual']:,.0f} / R$ {sonho['valor_alvo']:,.0f}")
+            
+            # Barra de progresso (desativada para sonhos desistidos)
+            if sonho.get("status") != "Desistido":
+                st.progress(progresso, text=f"R$ {sonho['valor_atual']:,.0f} / R$ {sonho['valor_alvo']:,.0f}")
+            else:
+                st.markdown(f"**Valor atual: R$ {sonho['valor_atual']:,.0f}** *(desistido)*")
 
             col_s1, col_s2, col_s3, col_s4 = st.columns(4)
             col_s1.caption(f"📅 {sonho['data_alvo']}")
@@ -1187,7 +1212,7 @@ elif menu == "🎯 SONHOS & METAS":
             with col_s4:
                 # Se o sonho já está desistido, mostrar opção de reativar
                 if sonho.get("status") == "Desistido":
-                    if st.button("🔄 Reativar Sonho", key=f"reativar_{i}"):
+                    if st.button("🔄 Reativar", key=f"reativar_{i}", help="Reativar este sonho"):
                         dados["sonhos_projetos"].loc[i, "status"] = "Em Andamento"
                         st.session_state["dados"] = dados
                         DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
@@ -1195,61 +1220,115 @@ elif menu == "🎯 SONHOS & METAS":
                         st.rerun()
                 else:
                     # BOTÃO "DESISTIR DO SONHO" 😢
-                    if st.button("😢 Desistir do Sonho", key=f"desistir_{i}"):
-                        # Atualizar status para "Desistido"
+                    if st.button("😢 Desistir", key=f"desistir_{i}", help="Marcar como desistido (mantém histórico)"):
                         dados["sonhos_projetos"].loc[i, "status"] = "Desistido"
                         st.session_state["dados"] = dados
                         DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
                         st.success("Sonho marcado como desistido. 😢")
                         st.rerun()
 
-            # --- adicionar valor ---
+            # --- ADICIONAR OU RETIRAR VALOR ---
             with st.form(f"form_add_{i}", clear_on_submit=True):
-                valor_add = st.number_input("Adicionar valor", min_value=0.0, step=100.0, key=f"add_val_{i}")
+                st.markdown("**Movimentar caixinha:**")
                 
-                col_btn1, col_btn2 = st.columns(2)
+                # Campo para valor (pode ser positivo ou negativo)
+                valor_mov = st.number_input(
+                    "Valor (positivo = adicionar, negativo = retirar)",
+                    min_value=-999999.0,  # Permite valores negativos
+                    max_value=999999.0,
+                    value=0.0,
+                    step=100.0,
+                    key=f"mov_val_{i}"
+                )
+                
+                col_btn1, col_btn2, col_btn3 = st.columns(3)
+                
                 with col_btn1:
-                    if st.form_submit_button("💸 Adicionar"):
-                        dados["sonhos_projetos"].loc[i, "valor_atual"] += valor_add
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                        st.session_state["msg"] = "Salvo"
-                        st.session_state["msg_tipo"] = "success"
-                        st.rerun()
-                
-                with col_btn2:
-                    # Botão para EXCLUIR completamente o sonho
-                    delete_key = f"delete_sonho_{i}"
-                    if delete_key not in st.session_state:
-                        st.session_state[delete_key] = False
-                    
-                    if not st.session_state[delete_key]:
-                        if st.form_submit_button("🗑️ Excluir Permanentemente", type="secondary"):
-                            st.session_state[delete_key] = True
-                            st.warning("⚠️ CUIDADO: Esta ação não pode ser desfeita!")
-                            st.info("Clique novamente no botão para confirmar a exclusão permanente")
-                    else:
-                        if st.form_submit_button("✅ CONFIRMAR EXCLUSÃO", type="primary"):
-                            # Excluir permanentemente
-                            dados["sonhos_projetos"] = dados["sonhos_projetos"].drop(i).reset_index(drop=True)
+                    if st.form_submit_button("💸 Aplicar"):
+                        # Validar se pode retirar (não pode ficar negativo)
+                        novo_valor = sonho["valor_atual"] + valor_mov
+                        
+                        if novo_valor < 0:
+                            st.error("❌ Valor não pode ficar negativo!")
+                        else:
+                            dados["sonhos_projetos"].loc[i, "valor_atual"] = novo_valor
                             st.session_state["dados"] = dados
                             DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                            st.session_state[delete_key] = False
-                            st.error("Sonho excluído permanentemente! 🗑️")
+                            
+                            if valor_mov > 0:
+                                st.success(f"✅ Adicionado R$ {valor_mov:,.2f}")
+                            elif valor_mov < 0:
+                                st.warning(f"⚠️ Retirado R$ {abs(valor_mov):,.2f}")
+                            else:
+                                st.info("Nenhuma alteração")
+                            st.rerun()
+                
+                with col_btn2:
+                    # Botões de ação rápida
+                    if st.form_submit_button("➕ R$ 100"):
+                        dados["sonhos_projetos"].loc[i, "valor_atual"] += 100
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                        st.success("+R$ 100 adicionados")
+                        st.rerun()
+                
+                with col_btn3:
+                    if st.form_submit_button("➖ R$ 100"):
+                        novo_valor = sonho["valor_atual"] - 100
+                        if novo_valor < 0:
+                            st.error("❌ Valor não pode ficar negativo!")
+                        else:
+                            dados["sonhos_projetos"].loc[i, "valor_atual"] = novo_valor
+                            st.session_state["dados"] = dados
+                            DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                            st.warning("-R$ 100 retirados")
                             st.rerun()
 
+            # --- EXCLUSÃO PERMANENTE ---
+            st.markdown("---")
+            st.markdown("**⚠️ Ações irreversíveis:**")
+            
+            delete_key = f"delete_sonho_{i}"
+            if delete_key not in st.session_state:
+                st.session_state[delete_key] = False
+            
+            if not st.session_state[delete_key]:
+                if st.button("🗑️ Excluir Permanentemente", key=f"btn_delete_{i}", type="secondary"):
+                    st.session_state[delete_key] = True
+                    st.warning("⚠️ CUIDADO: Esta ação não pode ser desfeita!")
+                    st.info("Clique novamente no botão para confirmar a exclusão permanente")
+            else:
+                col_confirm1, col_confirm2 = st.columns(2)
+                with col_confirm1:
+                    if st.button("✅ CONFIRMAR EXCLUSÃO", key=f"confirm_delete_{i}", type="primary"):
+                        # Excluir permanentemente
+                        dados["sonhos_projetos"] = dados["sonhos_projetos"].drop(i).reset_index(drop=True)
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                        st.session_state[delete_key] = False
+                        st.error("Sonho excluído permanentemente! 🗑️")
+                        st.rerun()
+                with col_confirm2:
+                    if st.button("❌ Cancelar", key=f"cancel_delete_{i}"):
+                        st.session_state[delete_key] = False
+                        st.rerun()
+
             # Tooltip explicativo
-            with st.expander("ℹ️ Diferença entre as ações"):
+            with st.expander("ℹ️ Como usar esta seção"):
                 st.markdown("""
+                **💸 Movimentar caixinha:**
+                - **Valor positivo**: Adiciona dinheiro à caixinha do sonho
+                - **Valor negativo**: Retira dinheiro da caixinha (útil para emergências)
+                - **Não pode ficar negativo**: O valor atual nunca pode ser menor que zero
+                
                 **😢 Desistir do Sonho:**
-                - Mantém o sonho na lista, mas muda o status para "Desistido"
-                - Pode ser reativado depois
-                - Mantém o histórico e aprendizado
+                - Mantém o sonho na lista, mas marca como "Desistido"
+                - Sonhos desistidos **NÃO CONTAM** para o cálculo das metas totais
+                - Pode ser reativado depois com o botão "🔄 Reativar"
                 
                 **🗑️ Excluir Permanentemente:**
-                - Remove completamente do sistema
-                - Não pode ser recuperado
-                - Use apenas se criou por engano ou não quer mais nenhum registro
+                - Remove completamente do sistema (sem histórico)
+                - Use apenas se criou por engano
                 """)
 
             st.divider()
@@ -1295,7 +1374,7 @@ elif menu == "🎯 SONHOS & METAS":
                 st.session_state["msg"] = "Salvo"
                 st.session_state["msg_tipo"] = "success"
                 st.rerun()
-
+                
 # =========================================================
 # 🏢 FLUXOS FIXOS - CORREÇÃO (Adicionar exclusão de linhas)
 # =========================================================
