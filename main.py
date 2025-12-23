@@ -1044,39 +1044,6 @@ elif menu == "💰 INVESTIMENTOS":
 
     st.divider()
 
-    # ---------------- TABELA ----------------
-    if not dados["investimentos"].empty:
-        st.dataframe(
-            dados["investimentos"].style.format({
-                "valor_atual": "R$ {:,.2f}",
-                "Rendimento_Mensal": "{:.2%}"
-            }),
-            use_container_width=True,
-            height=400
-        )
-    else:
-        st.caption("Nenhum investimento cadastrado.")
-
-    # ---------------- GRÁFICO ----------------
-    if not dados["investimentos"].empty:
-        fig = px.pie(
-            dados["investimentos"],
-            values="valor_atual",
-            names="categoria",
-            hole=0.4,
-            title="Distribuição por Perfil"
-        )
-        fig.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="#0e1117",
-            plot_bgcolor="#0e1117",
-            font=dict(color="#e5e7eb"),
-            hovermode="x unified"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-    st.divider()
-
     # ---------------- FORM ----------------
     with st.expander("➕ Adicionar Investimento"):
         with st.form("form_investimento", clear_on_submit=True):
@@ -1131,6 +1098,41 @@ elif menu == "💰 INVESTIMENTOS":
                 st.session_state["msg"] = "Salvo"
                 st.session_state["msg_tipo"] = "success"
                 st.rerun()
+
+
+    # ---------------- TABELA ----------------
+    if not dados["investimentos"].empty:
+        st.dataframe(
+            dados["investimentos"].style.format({
+                "valor_atual": "R$ {:,.2f}",
+                "Rendimento_Mensal": "{:.2%}"
+            }),
+            use_container_width=True,
+            height=400
+        )
+    else:
+        st.caption("Nenhum investimento cadastrado.")
+
+    # ---------------- GRÁFICO ----------------
+    if not dados["investimentos"].empty:
+        fig = px.pie(
+            dados["investimentos"],
+            values="valor_atual",
+            names="categoria",
+            hole=0.4,
+            title="Distribuição por Perfil"
+        )
+        fig.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="#0e1117",
+            plot_bgcolor="#0e1117",
+            font=dict(color="#e5e7eb"),
+            hovermode="x unified"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
+
 
 
 # =========================================================
