@@ -915,6 +915,121 @@ df_projecao = projetar_patrimonio(
     meses=120
 )
 
+
+# =========================================================
+# FUNÇÕES AUXILIARES (colocar ANTES do menu)
+# =========================================================
+
+def mostrar_gasto_card(idx, row, df_original):
+    """Função auxiliar para mostrar um card de gasto"""
+    # Formatar data
+    if isinstance(row['data'], pd.Timestamp):
+        data_str = row['data'].strftime("%d/%m")
+        dia_semana = row['data'].strftime("%a")
+        data_completa = row['data'].strftime("%d/%m/%Y %H:%M")
+    else:
+        data_str = str(row['data'])[:10]
+        dia_semana = ""
+        data_completa = data_str
+    
+    # Determinar categoria
+    desc_lower = row['descricao'].lower()
+    if any(word in desc_lower for word in ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café']):
+        categoria = "🍔 Alimentação"
+        cor_categoria = "#f87171"
+    elif any(word in desc_lower for word in ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro']):
+        categoria = "🚗 Transporte"
+        cor_categoria = "#60a5fa"
+    elif any(word in desc_lower for word in ['mercado', 'supermercado', 'feira', 'padaria']):
+        categoria = "🛒 Compras"
+        cor_categoria = "#34d399"
+    elif any(word in desc_lower for word in ['cinema', 'shopping', 'parque', 'lazer', 'bar']):
+        categoria = "🎯 Lazer"
+        cor_categoria = "#a78bfa"
+    else:
+        categoria = "📝 Outros"
+        cor_categoria = "#9ca3af"
+    
+    # Card para cada gasto
+    with st.container():
+        st.markdown(f"""
+        <div style="
+            background: #1f2937;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid {cor_categoria};
+            border: 1px solid #374151;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <div style="
+                            background: {cor_categoria}20;
+                            color: {cor_categoria};
+                            padding: 4px 12px;
+                            border-radius: 20px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            margin-right: 12px;
+                        ">
+                            {categoria}
+                        </div>
+                        <div style="
+                            background: #374151;
+                            color: #d1d5db;
+                            padding: 4px 10px;
+                            border-radius: 6px;
+                            font-size: 12px;
+                            font-weight: bold;
+                        ">
+                            {data_str} • {dia_semana}
+                        </div>
+                    </div>
+                    <div style="font-size: 16px; font-weight: bold; color: #f9fafb; margin-bottom: 4px;">
+                        {row['descricao']}
+                    </div>
+                    <div style="font-size: 12px; color: #9ca3af;">
+                        {data_completa}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 20px; font-weight: bold; color: #f87171; margin-bottom: 8px;">
+                        R$ {row['valor']:,.2f}
+                    </div>
+        """, unsafe_allow_html=True)
+        
+        # Botão de exclusão
+        if st.button("🗑️", key=f"del_btn_{idx}", help="Excluir este gasto"):
+            st.session_state[f"confirm_delete_{idx}"] = True
+            st.rerun()
+        
+        st.markdown("""
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Confirmação de exclusão
+        if st.session_state.get(f"confirm_delete_{idx}", False):
+            with st.container():
+                st.warning(f"Excluir '{row['descricao'][:30]}...'?")
+                col_conf1, col_conf2 = st.columns(2)
+                with col_conf1:
+                    if st.button("✅ Sim", key=f"confirm_yes_{idx}", use_container_width=True):
+                        df_novo = df_original.drop(idx).reset_index(drop=True)
+                        dados["controle_gastos"] = df_novo
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("controle_gastos", df_novo, usuario)
+                        st.session_state[f"confirm_delete_{idx}"] = False
+                        st.success("Gasto excluído!")
+                        st.rerun()
+                with col_conf2:
+                    if st.button("❌ Não", key=f"confirm_no_{idx}", use_container_width=True):
+                        st.session_state[f"confirm_delete_{idx}"] = False
+                        st.rerun()
+
+
 # =========================================================
 # SIDEBAR (MENU ÚNICO DO SISTEMA)
 # =========================================================
@@ -2018,115 +2133,7 @@ elif menu == "🏢 FLUXOS FIXOS":
             st.caption("Nenhuma despesa fixa")
        
 
-# ---------- FUNÇÃO AUXILIAR PARA MOSTRAR CARD DE GASTO ----------
-def mostrar_gasto_card(idx, row, df_original):
-    """Função auxiliar para mostrar um card de gasto"""
-    # Formatar data
-    if isinstance(row['data'], pd.Timestamp):
-        data_str = row['data'].strftime("%d/%m")
-        dia_semana = row['data'].strftime("%a")
-        data_completa = row['data'].strftime("%d/%m/%Y %H:%M")
-    else:
-        data_str = str(row['data'])[:10]
-        dia_semana = ""
-        data_completa = data_str
-    
-    # Determinar categoria
-    desc_lower = row['descricao'].lower()
-    if any(word in desc_lower for word in ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café']):
-        categoria = "🍔 Alimentação"
-        cor_categoria = "#f87171"
-    elif any(word in desc_lower for word in ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro']):
-        categoria = "🚗 Transporte"
-        cor_categoria = "#60a5fa"
-    elif any(word in desc_lower for word in ['mercado', 'supermercado', 'feira', 'padaria']):
-        categoria = "🛒 Compras"
-        cor_categoria = "#34d399"
-    elif any(word in desc_lower for word in ['cinema', 'shopping', 'parque', 'lazer', 'bar']):
-        categoria = "🎯 Lazer"
-        cor_categoria = "#a78bfa"
-    else:
-        categoria = "📝 Outros"
-        cor_categoria = "#9ca3af"
-    
-    # Card para cada gasto
-    with st.container():
-        st.markdown(f"""
-        <div style="
-            background: #1f2937;
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border-left: 4px solid {cor_categoria};
-            border: 1px solid #374151;
-        ">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div style="flex: 1;">
-                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                        <div style="
-                            background: {cor_categoria}20;
-                            color: {cor_categoria};
-                            padding: 4px 12px;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: bold;
-                            margin-right: 12px;
-                        ">
-                            {categoria}
-                        </div>
-                        <div style="
-                            background: #374151;
-                            color: #d1d5db;
-                            padding: 4px 10px;
-                            border-radius: 6px;
-                            font-size: 12px;
-                            font-weight: bold;
-                        ">
-                            {data_str} • {dia_semana}
-                        </div>
-                    </div>
-                    <div style="font-size: 16px; font-weight: bold; color: #f9fafb; margin-bottom: 4px;">
-                        {row['descricao']}
-                    </div>
-                    <div style="font-size: 12px; color: #9ca3af;">
-                        {data_completa}
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 20px; font-weight: bold; color: #f87171; margin-bottom: 8px;">
-                        R$ {row['valor']:,.2f}
-                    </div>
-        """, unsafe_allow_html=True)
-        
-        # Botão de exclusão
-        if st.button("🗑️", key=f"del_btn_{idx}", help="Excluir este gasto"):
-            st.session_state[f"confirm_delete_{idx}"] = True
-            st.rerun()
-        
-        st.markdown("""
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Confirmação de exclusão
-        if st.session_state.get(f"confirm_delete_{idx}", False):
-            with st.container():
-                st.warning(f"Excluir '{row['descricao'][:30]}...'?")
-                col_conf1, col_conf2 = st.columns(2)
-                with col_conf1:
-                    if st.button("✅ Sim", key=f"confirm_yes_{idx}", use_container_width=True):
-                        df_novo = df_original.drop(idx).reset_index(drop=True)
-                        dados["controle_gastos"] = df_novo
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("controle_gastos", df_novo, usuario)
-                        st.session_state[f"confirm_delete_{idx}"] = False
-                        st.success("Gasto excluído!")
-                        st.rerun()
-                with col_conf2:
-                    if st.button("❌ Não", key=f"confirm_no_{idx}", use_container_width=True):
-                        st.session_state[f"confirm_delete_{idx}"] = False
-                        st.rerun()
+
 
 # =========================================================
 # 💸 CONTROLE DE GASTOS - VERSÃO COM CARDS
