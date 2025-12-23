@@ -1043,38 +1043,7 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
                         st.rerun()
 
 
-# =========================================================
-# FUNÇÕES AUXILIARES PARA PAGINAÇÃO
-# =========================================================
 
-def criar_controles_paginacao(pagina_atual, total_paginas, key_prefix):
-    """Cria controles de paginação que não causam conflitos com session_state"""
-    col_nav1, col_nav2, col_nav3, col_nav4, col_nav5 = st.columns(5)
-    
-    with col_nav1:
-        if pagina_atual > 1:
-            if st.button("⏮️", key=f"{key_prefix}_primeira", help="Primeira página", use_container_width=True):
-                return 1
-    
-    with col_nav2:
-        if pagina_atual > 1:
-            if st.button("◀️", key=f"{key_prefix}_anterior", help="Página anterior", use_container_width=True):
-                return pagina_atual - 1
-    
-    with col_nav3:
-        st.markdown(f"**{pagina_atual} / {total_paginas}**", unsafe_allow_html=True)
-    
-    with col_nav4:
-        if pagina_atual < total_paginas:
-            if st.button("▶️", key=f"{key_prefix}_proxima", help="Próxima página", use_container_width=True):
-                return pagina_atual + 1
-    
-    with col_nav5:
-        if pagina_atual < total_paginas:
-            if st.button("⏭️", key=f"{key_prefix}_ultima", help="Última página", use_container_width=True):
-                return total_paginas
-    
-    return pagina_atual
 
 
 # =========================================================
