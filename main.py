@@ -2020,12 +2020,14 @@ elif menu == "🏢 FLUXOS FIXOS":
 
 
 # =========================================================
-# 💸 CONTROLE DE GASTOS - CORREÇÃO (TypeError e exclusão)
+# 💸 CONTROLE DE GASTOS - VERSÃO COMPACTA
 # =========================================================
 
 elif menu == "💸 CONTROLE DE GASTOS":
 
     st.markdown("💸 Controle de Gastos Mensais")
+    
+    # Mensagens de feedback
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -2033,8 +2035,8 @@ elif menu == "💸 CONTROLE DE GASTOS":
             st.warning(st.session_state["msg"])
         else:
             st.success(st.session_state["msg"])
-
         st.session_state["msg"] = None
+    
     st.caption("Reserva mensal para gastos do dia a dia")
 
     # ---------- RESERVA ----------
@@ -2050,41 +2052,80 @@ elif menu == "💸 CONTROLE DE GASTOS":
     else:
         df_gastos = dados["controle_gastos"].copy()
         
-        # 🔥 CORREÇÃO DO TypeError: Converter 'data' para datetime
+        # Converter 'data' para datetime
         if "data" in df_gastos.columns and not df_gastos.empty:
-            # Converter coluna 'data' para datetime
             df_gastos["data"] = pd.to_datetime(df_gastos["data"], errors='coerce')
-            # Remover datas inválidas
             df_gastos = df_gastos.dropna(subset=["data"])
 
+    # Cálculos
     gasto_total = df_gastos["valor"].sum() if not df_gastos.empty else 0
     saldo_restante = reserva_mensal - gasto_total
+    percentual_gasto = (gasto_total / reserva_mensal * 100) if reserva_mensal > 0 else 0
 
-    col1, col2, col3 = st.columns(3, gap="large")
-    col1.metric("💰 Reserva Mensal", f"R$ {reserva_mensal:,.2f}")
-    col2.metric("🧾 Total Gasto", f"R$ {gasto_total:,.2f}")
-    col3.metric(
-        "🟢 Saldo Disponível" if saldo_restante >= 0 else "🔴 Estouro",
-        f"R$ {saldo_restante:,.2f}"
-    )
+    # ---------- RESUMO COMPACTO ----------
+    st.markdown("### 📊 Resumo do Mês")
+    
+    # Container para métricas
+    with st.container():
+        col1, col2, col3, col4 = st.columns(4, gap="small")
+        
+        with col1:
+            st.markdown("**💰 Reserva**")
+            st.markdown(f"<h3 style='color: #60a5fa; margin: 0;'>R$ {reserva_mensal:,.2f}</h3>", unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("**🧾 Gasto Total**")
+            st.markdown(f"<h3 style='color: #f87171; margin: 0;'>R$ {gasto_total:,.2f}</h3>", unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("**📊 Utilizado**")
+            st.markdown(f"<h3 style='color: #fbbf24; margin: 0;'>{percentual_gasto:.1f}%</h3>", unsafe_allow_html=True)
+            st.progress(min(percentual_gasto / 100, 1.0))
+        
+        with col4:
+            st.markdown("**🟢 Saldo**")
+            if saldo_restante >= 0:
+                st.markdown(f"<h3 style='color: #34d399; margin: 0;'>R$ {saldo_restante:,.2f}</h3>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<h3 style='color: #f87171; margin: 0;'>-R$ {abs(saldo_restante):,.2f}</h3>", unsafe_allow_html=True)
 
     st.divider()
 
-    # ---------- NOVO GASTO ----------
-    st.subheader("➕ Registrar Gasto Rápido")
-
+    # ---------- NOVO GASTO RÁPIDO ----------
+    st.markdown("### ➕ Novo Gasto")
+    
     with st.form("form_gasto_rapido", clear_on_submit=True):
-        col1, col2 = st.columns(2, gap="large")
-
+        col1, col2, col3 = st.columns([2, 1, 1], gap="small")
+        
         with col1:
-            descricao = st.text_input("descrição", placeholder="Padaria, café, lanche...")
+            descricao = st.text_input(
+                "Descrição",
+                placeholder="Ex: Padaria, Uber, Lanche...",
+                help="Descreva brevemente o gasto"
+            )
+        
         with col2:
-            valor = st.number_input("Valor (R$)", min_value=0.01, step=1.0)
+            valor = st.number_input(
+                "Valor (R$)",
+                min_value=0.01,
+                step=1.0,
+                value=10.0,
+                format="%.2f"
+            )
+        
+        with col3:
+            # Botão alinhado na altura do campo
+            st.markdown("<br>", unsafe_allow_html=True)  # Espaçamento para alinhar
+            submitted = st.form_submit_button(
+                "💸 Registrar",
+                type="primary",
+                use_container_width=True
+            )
 
-        if st.form_submit_button("💸 Registrar Gasto"):
+        if submitted and descricao.strip():
             novo = pd.DataFrame([{
                 "data": date.today(),
-                "descricao": descricao,
+                "descricao": descricao.strip(),
                 "valor": valor
             }])
 
@@ -2092,53 +2133,214 @@ elif menu == "💸 CONTROLE DE GASTOS":
             dados["controle_gastos"] = df_gastos
             st.session_state["dados"] = dados
             DatabaseManager.save("controle_gastos", df_gastos, usuario)
-
-            st.success("Gasto registrado com sucesso.")
+            
+            st.success(f"✅ Gasto de R$ {valor:,.2f} registrado!")
             st.rerun()
+        elif submitted:
+            st.error("❌ Informe uma descrição para o gasto")
 
     st.divider()
 
-    # ---------- HISTÓRICO COM EXCLUSÃO ----------
-    st.subheader("📋 Gastos Registrados")
-
+    # ---------- HISTÓRICO COMPACTO ----------
+    st.markdown("### 📋 Histórico de Gastos")
+    
     if not df_gastos.empty:
         # Ordenar por data (mais recente primeiro)
         df_gastos = df_gastos.sort_values("data", ascending=False)
         
-        # Criar uma tabela interativa com botões de exclusão
+        # Estatísticas rápidas
+        total_gastos = len(df_gastos)
+        media_gasto = df_gastos["valor"].mean()
+        
+        col_stats1, col_stats2, col_stats3 = st.columns(3, gap="small")
+        with col_stats1:
+            st.caption(f"**Total:** {total_gastos} gastos")
+        with col_stats2:
+            st.caption(f"**Média:** R$ {media_gasto:,.2f}")
+        with col_stats3:
+            st.caption(f"**Mês:** {date.today().strftime('%B')}")
+        
+        # Lista compacta de gastos
+        st.markdown("---")
+        
         for idx, row in df_gastos.iterrows():
-            col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+            # Formatar data
+            if isinstance(row['data'], pd.Timestamp):
+                data_str = row['data'].strftime("%d/%m")
+                dia_semana = row['data'].strftime("%a")
+            elif hasattr(row['data'], 'strftime'):
+                data_str = row['data'].strftime("%d/%m")
+                dia_semana = row['data'].strftime("%a")
+            else:
+                data_str = str(row['data'])[:10]
+                dia_semana = ""
             
-            with col1:
-                st.write(f"**{row['descricao']}**")
+            # Container para cada gasto
+            with st.container():
+                col1, col2, col3, col4 = st.columns([1, 3, 2, 1], gap="small")
+                
+                with col1:
+                    # Data compacta
+                    st.markdown(f"**{data_str}**")
+                    if dia_semana:
+                        st.caption(dia_semana)
+                
+                with col2:
+                    # Descrição
+                    desc = row['descricao'][:25] + "..." if len(row['descricao']) > 25 else row['descricao']
+                    st.markdown(f"**{desc}**")
+                
+                with col3:
+                    # Valor com cor baseado no saldo
+                    if saldo_restante < 0:
+                        valor_color = "#ef4444"  # Vermelho para estouro
+                    elif percentual_gasto > 80:
+                        valor_color = "#f59e0b"  # Laranja para alto uso
+                    else:
+                        valor_color = "#6b7280"  # Cinza para normal
+                    
+                    st.markdown(
+                        f"<div style='text-align: right; color: {valor_color}; font-weight: bold;'>"
+                        f"R$ {row['valor']:,.2f}"
+                        f"</div>",
+                        unsafe_allow_html=True
+                    )
+                
+                with col4:
+                    # Botão de exclusão compacto
+                    if st.button("🗑️", key=f"del_gasto_{idx}", help="Excluir este gasto"):
+                        # Confirmação rápida
+                        confirm = st.checkbox(f"Confirmar exclusão?", key=f"confirm_del_{idx}")
+                        if confirm:
+                            df_gastos = df_gastos.drop(idx).reset_index(drop=True)
+                            dados["controle_gastos"] = df_gastos
+                            st.session_state["dados"] = dados
+                            DatabaseManager.save("controle_gastos", df_gastos, usuario)
+                            st.success("Gasto excluído!")
+                            st.rerun()
+                
+                # Linha divisória fina entre itens
+                st.markdown("<hr style='margin: 4px 0; border-color: #374151;'>", unsafe_allow_html=True)
+        
+        # Resumo do dia (opcional)
+        hoje = date.today()
+        gastos_hoje = df_gastos[df_gastos["data"].dt.date == hoje]["valor"].sum()
+        if gastos_hoje > 0:
+            st.markdown("---")
+            col_today1, col_today2 = st.columns([3, 1])
+            with col_today1:
+                st.caption(f"💰 **Hoje:** {len(df_gastos[df_gastos['data'].dt.date == hoje])} gastos")
+            with col_today2:
+                st.caption(f"**R$ {gastos_hoje:,.2f}**")
+        
+        # Exportar dados (opcional)
+        with st.expander("📤 Exportar Dados"):
+            col_exp1, col_exp2 = st.columns(2)
+            with col_exp1:
+                if st.button("📋 Copiar Resumo"):
+                    resumo = f"""Resumo de Gastos - {date.today().strftime('%d/%m/%Y')}
+                    
+Reserva Mensal: R$ {reserva_mensal:,.2f}
+Total Gasto: R$ {gasto_total:,.2f}
+Saldo Disponível: R$ {saldo_restante:,.2f}
+Percentual Utilizado: {percentual_gasto:.1f}%
+Total de Gastos: {total_gastos}
+Média por Gasto: R$ {media_gasto:,.2f}
+"""
+                    st.code(resumo)
             
-            with col2:
-                st.write(f"R$ {row['valor']:,.2f}")
-            
-            with col3:
-                # Formatar data corretamente
-                if isinstance(row['data'], pd.Timestamp):
-                    data_str = row['data'].strftime("%d/%m/%Y")
-                elif hasattr(row['data'], 'strftime'):
-                    data_str = row['data'].strftime("%d/%m/%Y")
-                else:
-                    data_str = str(row['data'])
-                st.caption(f"Data: {data_str}")
-            
-            with col4:
-                # Botão para excluir
-                if st.button("❌", key=f"del_gasto_{idx}"):
-                    # Remover da lista
-                    df_gastos = df_gastos.drop(idx).reset_index(drop=True)
-                    dados["controle_gastos"] = df_gastos
-                    st.session_state["dados"] = dados
-                    DatabaseManager.save("controle_gastos", df_gastos, usuario)
-                    st.success("Gasto excluído!")
-                    st.rerun()
-            
-            st.divider()
+            with col_exp2:
+                # Download CSV
+                csv = df_gastos.to_csv(index=False)
+                st.download_button(
+                    label="📥 Baixar CSV",
+                    data=csv,
+                    file_name=f"gastos_{date.today().strftime('%Y_%m')}.csv",
+                    mime="text/csv"
+                )
+    
     else:
-        st.caption("Nenhum gasto registrado neste mês.")
+        # Estado vazio
+        st.markdown("---")
+        col_empty1, col_empty2, col_empty3 = st.columns([1, 2, 1])
+        with col_empty2:
+            st.markdown("""
+            <div style="text-align: center; padding: 40px 0;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                <h4 style="color: #9ca3af; margin-bottom: 8px;">Nenhum gasto registrado</h4>
+                <p style="color: #6b7280; font-size: 14px;">
+                    Use o formulário acima para registrar seus primeiros gastos
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Dicas rápidas
+        with st.expander("💡 Dicas para controle de gastos"):
+            st.markdown("""
+            **Melhores práticas:**
+            1. **Registre imediatamente** após cada gasto
+            2. **Seja específico** nas descrições
+            3. **Revise diariamente** seus gastos
+            4. **Ajuste conforme necessário** sua reserva mensal
+            
+            **Categorias sugeridas:**
+            - 🍔 Alimentação
+            - 🚗 Transporte
+            - 🛒 Compras
+            - 🎯 Lazer
+            - 🏠 Casa
+            - 📱 Serviços
+            """)
+
+    # ---------- VISUALIZAÇÃO GRÁFICA ----------
+    if not df_gastos.empty and len(df_gastos) > 1:
+        st.divider()
+        st.markdown("### 📈 Visualização")
+        
+        tab1, tab2 = st.tabs(["📊 Por Dia", "📋 Top Gastos"])
+        
+        with tab1:
+            # Gráfico de gastos por dia
+            df_diario = df_gastos.copy()
+            df_diario['data_dia'] = df_diario['data'].dt.date
+            gastos_diarios = df_diario.groupby('data_dia')['valor'].sum().reset_index()
+            gastos_diarios = gastos_diarios.sort_values('data_dia')
+            
+            if len(gastos_diarios) > 1:
+                fig = px.bar(
+                    gastos_diarios,
+                    x='data_dia',
+                    y='valor',
+                    title='Gastos por Dia',
+                    labels={'data_dia': 'Data', 'valor': 'Valor (R$)'}
+                )
+                fig.update_layout(
+                    height=300,
+                    plot_bgcolor='#0e1117',
+                    paper_bgcolor='#0e1117',
+                    font=dict(color='#e5e7eb'),
+                    xaxis=dict(tickformat='%d/%m'),
+                    showlegend=False
+                )
+                fig.update_traces(marker_color='#3b82f6')
+                st.plotly_chart(fig, use_container_width=True)
+        
+        with tab2:
+            # Top 10 maiores gastos
+            top_gastos = df_gastos.nlargest(10, 'valor')
+            
+            for _, row in top_gastos.iterrows():
+                col_t1, col_t2 = st.columns([3, 1])
+                with col_t1:
+                    desc = row['descricao'][:30] + "..." if len(row['descricao']) > 30 else row['descricao']
+                    st.markdown(f"**{desc}**")
+                    if isinstance(row['data'], pd.Timestamp):
+                        st.caption(row['data'].strftime("%d/%m"))
+                
+                with col_t2:
+                    st.markdown(f"<div style='text-align: right; color: #ef4444; font-weight: bold;'>R$ {row['valor']:,.2f}</div>", unsafe_allow_html=True)
+                
+                st.markdown("<hr style='margin: 4px 0; border-color: #374151;'>", unsafe_allow_html=True)
 
 
 
