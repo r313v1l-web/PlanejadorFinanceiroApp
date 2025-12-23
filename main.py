@@ -1432,52 +1432,7 @@ elif menu == "🏢 FLUXOS FIXOS":
                 st.rerun()
 
     st.divider()
-    st.subheader("🗑️ Excluir Fluxo Fixo")
-
-    if not df_fluxo.empty:
-        df_fluxo_excluir = df_fluxo.copy()
-        
-        if "nome" not in df_fluxo_excluir.columns:
-            df_fluxo_excluir["nome"] = ""
-        if "tipo" not in df_fluxo_excluir.columns:
-            df_fluxo_excluir["tipo"] = ""
-        if "valor" not in df_fluxo_excluir.columns:
-            df_fluxo_excluir["valor"] = 0
-        
-        df_fluxo_excluir["Label"] = (
-            df_fluxo_excluir["nome"].fillna("Sem nome") + " | " +
-            df_fluxo_excluir["tipo"].fillna("Sem tipo") + " | R$ " +
-            df_fluxo_excluir["valor"].astype(str)
-        )
-
-        fluxo_sel = st.selectbox(
-            "Selecione o fluxo para excluir",
-            df_fluxo_excluir["Label"].tolist()
-        )
-
-        if st.button("❌ Excluir Fluxo Selecionado"):
-            idx = df_fluxo_excluir[df_fluxo_excluir["Label"] == fluxo_sel].index[0]
-            df_fluxo_excluir = df_fluxo_excluir.drop(idx).reset_index(drop=True)
-            
-            if "Label" in df_fluxo_excluir.columns:
-                df_fluxo_excluir = df_fluxo_excluir.drop(columns=["Label"])
-            
-            # 🔥 Converter datas para string antes de salvar
-            for date_col in ["data_inicio", "data_fim"]:
-                if date_col in df_fluxo_excluir.columns:
-                    df_fluxo_excluir[date_col] = df_fluxo_excluir[date_col].apply(
-                        lambda x: x.isoformat() if hasattr(x, 'isoformat') else x
-                    )
-            
-            dados["fluxo_fixo"] = df_fluxo_excluir
-            st.session_state["dados"] = dados
-            DatabaseManager.save("fluxo_fixo", df_fluxo_excluir, usuario)
-
-            st.success("Fluxo fixo excluído com sucesso.")
-            st.rerun()
-    else:
-        st.caption("Nenhum fluxo fixo cadastrado.")            
-
+       
 
 
 # =========================================================
