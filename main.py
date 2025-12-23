@@ -1375,7 +1375,7 @@ elif menu == "💰 INVESTIMENTOS":
 
 
 # =========================================================
-# 🎯 SONHOS & METAS - VERSÃO COMPACTA
+# 🎯 SONHOS & METAS - CORREÇÃO DA EXCLUSÃO
 # =========================================================
 
 elif menu == "🎯 SONHOS & METAS":
@@ -1447,15 +1447,19 @@ elif menu == "🎯 SONHOS & METAS":
                 dados["sonhos_projetos"] = df
                 st.session_state["dados"] = dados
                 DatabaseManager.save("sonhos_projetos", df, usuario)
-                st.session_state["msg"] = "Salvo"
-                st.session_state["msg_tipo"] = "success"
-                st.rerun()    
+                st.success("Sonho criado com sucesso!")
+                st.rerun()
 
     # ---------------- LISTA COMPACTA ----------------
     st.subheader("📋 Meus Sonhos")
     
     if not dados["sonhos_projetos"].empty:
         for i, sonho in dados["sonhos_projetos"].iterrows():
+            # Inicializar estado para exclusão
+            delete_key = f"delete_sonho_{i}"
+            if delete_key not in st.session_state:
+                st.session_state[delete_key] = False
+            
             # Container para cada sonho
             is_desistido = sonho.get("status") == "Desistido"
             
@@ -1487,14 +1491,19 @@ elif menu == "🎯 SONHOS & METAS":
             with col_a1:
                 # Adicionar/retirar valor rápido
                 with st.popover("💰 Movimentar", use_container_width=True):
-                    valor = st.number_input("Valor", min_value=-sonho["valor_atual"], value=0.0, step=100.0, key=f"mov_{i}")
-                    if st.button("Aplicar", key=f"apply_{i}"):
-                        novo_valor = sonho["valor_atual"] + valor
+                    valor_mov = st.number_input(
+                        "Valor (+ para adicionar, - para retirar)", 
+                        value=0.0, 
+                        step=100.0,
+                        key=f"mov_{i}"
+                    )
+                    if st.button("Aplicar", key=f"apply_{i}", use_container_width=True):
+                        novo_valor = sonho["valor_atual"] + valor_mov
                         if novo_valor >= 0:
                             dados["sonhos_projetos"].loc[i, "valor_atual"] = novo_valor
                             st.session_state["dados"] = dados
                             DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                            st.success("Atualizado!")
+                            st.success(f"{'Adicionado' if valor_mov > 0 else 'Retirado'} R$ {abs(valor_mov):,.2f}")
                             st.rerun()
                         else:
                             st.error("Valor não pode ser negativo!")
@@ -1517,19 +1526,32 @@ elif menu == "🎯 SONHOS & METAS":
             
             with col_a3:
                 if st.button("✏️ Editar", key=f"edit_sonho_{i}", use_container_width=True):
-                    st.session_state[f"editing_sonho_{i}"] = True
+                    st.session_state[f"editing_sonho_{i}"] = not st.session_state.get(f"editing_sonho_{i}", False)
                     st.rerun()
             
             with col_a4:
-                if st.button("🗑️", key=f"del_sonho_{i}", use_container_width=True):
-                    # Confirmação rápida
-                    confirm = st.checkbox("Confirmar exclusão", key=f"confirm_del_{i}")
-                    if confirm:
-                        dados["sonhos_projetos"] = dados["sonhos_projetos"].drop(i).reset_index(drop=True)
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                        st.success("Excluído!")
+                # CORREÇÃO: Sistema de exclusão em duas etapas
+                if not st.session_state[delete_key]:
+                    if st.button("🗑️ Excluir", key=f"del_btn_{i}", use_container_width=True, type="secondary"):
+                        st.session_state[delete_key] = True
                         st.rerun()
+                else:
+                    # Modo de confirmação
+                    st.warning(f"Excluir '{sonho['nome']}'?")
+                    col_confirm1, col_confirm2 = st.columns(2)
+                    with col_confirm1:
+                        if st.button("✅ Sim", key=f"confirm_yes_{i}", use_container_width=True):
+                            # Excluir permanentemente
+                            dados["sonhos_projetos"] = dados["sonhos_projetos"].drop(i).reset_index(drop=True)
+                            st.session_state["dados"] = dados
+                            DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                            st.session_state[delete_key] = False
+                            st.error("Sonho excluído permanentemente!")
+                            st.rerun()
+                    with col_confirm2:
+                        if st.button("❌ Não", key=f"confirm_no_{i}", use_container_width=True):
+                            st.session_state[delete_key] = False
+                            st.rerun()
             
             # Formulário de edição
             if st.session_state.get(f"editing_sonho_{i}", False):
@@ -1601,7 +1623,7 @@ elif menu == "🎯 SONHOS & METAS":
 
 
 # =========================================================
-# 🏢 FLUXOS FIXOS - VERSÃO COMPACTA
+# 🏢 FLUXOS FIXOS - CORREÇÃO DA EDIÇÃO
 # =========================================================
 elif menu == "🏢 FLUXOS FIXOS":
 
@@ -1670,14 +1692,21 @@ elif menu == "🏢 FLUXOS FIXOS":
                 categoria = st.selectbox("Categoria", categorias_disponiveis)
                 recorrencia = st.selectbox("Recorrência", ["Mensal", "Anual", "Trimestral", "Semestral"])
 
+            data_inicio = st.date_input("Data de Início", date.today())
+            data_fim = st.date_input("Data de Fim (opcional)", value=None)
             observacao = st.text_area("Observações", height=60)
 
             if st.form_submit_button("💾 Salvar"):
+                data_inicio_str = data_inicio.isoformat() if data_inicio else None
+                data_fim_str = data_fim.isoformat() if data_fim else None
+                
                 novo = pd.DataFrame([{
                     "nome": nome.strip(),
                     "valor": float(valor),
                     "tipo": tipo.strip().title(),
                     "categoria": categoria,
+                    "data_inicio": data_inicio_str,
+                    "data_fim": data_fim_str,
                     "recorrencia": recorrencia,
                     "observacao": observacao.strip()
                 }])
@@ -1699,6 +1728,12 @@ elif menu == "🏢 FLUXOS FIXOS":
     with tab1:
         if not receitas.empty:
             for idx, row in receitas.iterrows():
+                # Inicializar estado para edição
+                edit_key = f"editing_rec_{idx}"
+                if edit_key not in st.session_state:
+                    st.session_state[edit_key] = False
+                
+                # Linha principal
                 col1, col2, col3, col4 = st.columns([3, 2, 1, 1], gap="small")
                 
                 with col1:
@@ -1711,18 +1746,126 @@ elif menu == "🏢 FLUXOS FIXOS":
                         st.caption(f"{row.get('observacao', '')[:30]}...")
                 
                 with col3:
-                    if st.button("✏️", key=f"edit_rec_{idx}", help="Editar"):
-                        st.session_state[f"editing_rec_{idx}"] = True
+                    if st.button("✏️", key=f"btn_edit_rec_{idx}", help="Editar"):
+                        st.session_state[edit_key] = True
                         st.rerun()
                 
                 with col4:
-                    if st.button("🗑️", key=f"del_rec_{idx}", help="Excluir"):
+                    if st.button("🗑️", key=f"btn_del_rec_{idx}", help="Excluir"):
                         df_fluxo = df_fluxo.drop(idx).reset_index(drop=True)
                         dados["fluxo_fixo"] = df_fluxo
                         st.session_state["dados"] = dados
                         DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
                         st.success("Excluído!")
                         st.rerun()
+                
+                # Formulário de edição (aparece apenas quando ativado)
+                if st.session_state[edit_key]:
+                    with st.expander(f"✏️ Editar {row.get('nome', 'Receita')}", expanded=True):
+                        with st.form(f"form_edit_rec_{idx}"):
+                            col_e1, col_e2 = st.columns(2, gap="small")
+                            
+                            with col_e1:
+                                edit_nome = st.text_input("Nome", value=row.get('nome', ''), key=f"edit_nome_rec_{idx}")
+                                edit_valor = st.number_input(
+                                    "Valor (R$)", 
+                                    min_value=0.0, 
+                                    step=10.0, 
+                                    value=float(row.get('valor', 0)),
+                                    key=f"edit_valor_rec_{idx}"
+                                )
+                                edit_tipo = st.selectbox(
+                                    "Tipo", 
+                                    ["Receita", "Despesa"],
+                                    index=0 if row.get('tipo') == "Receita" else 1,
+                                    key=f"edit_tipo_rec_{idx}"
+                                )
+                            
+                            with col_e2:
+                                # Categorias disponíveis
+                                categorias_disponiveis = []
+                                if not dados["categorias"].empty:
+                                    df_categorias = dados["categorias"].copy()
+                                    df_categorias.columns = df_categorias.columns.str.lower()
+                                    
+                                    if "ativa" in df_categorias.columns:
+                                        df_categorias["ativa"] = pd.to_numeric(df_categorias["ativa"], errors='coerce').fillna(1).astype(bool)
+                                        categorias_ativas = df_categorias[df_categorias["ativa"] == True]
+                                    else:
+                                        categorias_ativas = df_categorias
+                                    
+                                    if "nome" in categorias_ativas.columns:
+                                        categorias_disponiveis = categorias_ativas["nome"].dropna().unique().tolist()
+                                
+                                if not categorias_disponiveis:
+                                    categorias_disponiveis = ["Outros"]
+                                
+                                # Encontrar índice da categoria atual
+                                categoria_atual = row.get('categoria', 'Outros')
+                                categoria_index = categorias_disponiveis.index(categoria_atual) if categoria_atual in categorias_disponiveis else 0
+                                
+                                edit_categoria = st.selectbox(
+                                    "Categoria",
+                                    categorias_disponiveis,
+                                    index=categoria_index,
+                                    key=f"edit_cat_rec_{idx}"
+                                )
+                                
+                                edit_recorrencia = st.selectbox(
+                                    "Recorrência",
+                                    ["Mensal", "Anual", "Trimestral", "Semestral"],
+                                    index=["Mensal", "Anual", "Trimestral", "Semestral"].index(row.get('recorrencia', 'Mensal')),
+                                    key=f"edit_rec_rec_{idx}"
+                                )
+                            
+                            # Datas
+                            edit_data_inicio = st.date_input(
+                                "Data de Início", 
+                                value=pd.to_datetime(row.get('data_inicio', date.today())),
+                                key=f"edit_inicio_rec_{idx}"
+                            )
+                            
+                            edit_data_fim = st.date_input(
+                                "Data de Fim (opcional)", 
+                                value=pd.to_datetime(row.get('data_fim')) if row.get('data_fim') else None,
+                                key=f"edit_fim_rec_{idx}"
+                            )
+                            
+                            edit_observacao = st.text_area(
+                                "Observações", 
+                                value=row.get('observacao', ''),
+                                height=60,
+                                key=f"edit_obs_rec_{idx}"
+                            )
+                            
+                            col_save, col_cancel = st.columns(2)
+                            with col_save:
+                                if st.form_submit_button("💾 Salvar Alterações"):
+                                    # Atualizar os dados
+                                    data_inicio_str = edit_data_inicio.isoformat() if edit_data_inicio else None
+                                    data_fim_str = edit_data_fim.isoformat() if edit_data_fim else None
+                                    
+                                    df_fluxo.at[idx, 'nome'] = edit_nome
+                                    df_fluxo.at[idx, 'valor'] = float(edit_valor)
+                                    df_fluxo.at[idx, 'tipo'] = edit_tipo
+                                    df_fluxo.at[idx, 'categoria'] = edit_categoria
+                                    df_fluxo.at[idx, 'data_inicio'] = data_inicio_str
+                                    df_fluxo.at[idx, 'data_fim'] = data_fim_str
+                                    df_fluxo.at[idx, 'recorrencia'] = edit_recorrencia
+                                    df_fluxo.at[idx, 'observacao'] = edit_observacao
+                                    
+                                    dados["fluxo_fixo"] = df_fluxo
+                                    st.session_state["dados"] = dados
+                                    DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+                                    
+                                    st.session_state[edit_key] = False
+                                    st.success("Receita atualizada!")
+                                    st.rerun()
+                            
+                            with col_cancel:
+                                if st.form_submit_button("❌ Cancelar"):
+                                    st.session_state[edit_key] = False
+                                    st.rerun()
                 
                 st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
         else:
@@ -1731,6 +1874,12 @@ elif menu == "🏢 FLUXOS FIXOS":
     with tab2:
         if not despesas.empty:
             for idx, row in despesas.iterrows():
+                # Inicializar estado para edição
+                edit_key = f"editing_desp_{idx}"
+                if edit_key not in st.session_state:
+                    st.session_state[edit_key] = False
+                
+                # Linha principal
                 col1, col2, col3, col4 = st.columns([3, 2, 1, 1], gap="small")
                 
                 with col1:
@@ -1743,18 +1892,126 @@ elif menu == "🏢 FLUXOS FIXOS":
                         st.caption(f"{row.get('observacao', '')[:30]}...")
                 
                 with col3:
-                    if st.button("✏️", key=f"edit_desp_{idx}", help="Editar"):
-                        st.session_state[f"editing_desp_{idx}"] = True
+                    if st.button("✏️", key=f"btn_edit_desp_{idx}", help="Editar"):
+                        st.session_state[edit_key] = True
                         st.rerun()
                 
                 with col4:
-                    if st.button("🗑️", key=f"del_desp_{idx}", help="Excluir"):
+                    if st.button("🗑️", key=f"btn_del_desp_{idx}", help="Excluir"):
                         df_fluxo = df_fluxo.drop(idx).reset_index(drop=True)
                         dados["fluxo_fixo"] = df_fluxo
                         st.session_state["dados"] = dados
                         DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
                         st.success("Excluído!")
                         st.rerun()
+                
+                # Formulário de edição (aparece apenas quando ativado)
+                if st.session_state[edit_key]:
+                    with st.expander(f"✏️ Editar {row.get('nome', 'Despesa')}", expanded=True):
+                        with st.form(f"form_edit_desp_{idx}"):
+                            col_e1, col_e2 = st.columns(2, gap="small")
+                            
+                            with col_e1:
+                                edit_nome = st.text_input("Nome", value=row.get('nome', ''), key=f"edit_nome_desp_{idx}")
+                                edit_valor = st.number_input(
+                                    "Valor (R$)", 
+                                    min_value=0.0, 
+                                    step=10.0, 
+                                    value=float(row.get('valor', 0)),
+                                    key=f"edit_valor_desp_{idx}"
+                                )
+                                edit_tipo = st.selectbox(
+                                    "Tipo", 
+                                    ["Receita", "Despesa"],
+                                    index=0 if row.get('tipo') == "Receita" else 1,
+                                    key=f"edit_tipo_desp_{idx}"
+                                )
+                            
+                            with col_e2:
+                                # Categorias disponíveis
+                                categorias_disponiveis = []
+                                if not dados["categorias"].empty:
+                                    df_categorias = dados["categorias"].copy()
+                                    df_categorias.columns = df_categorias.columns.str.lower()
+                                    
+                                    if "ativa" in df_categorias.columns:
+                                        df_categorias["ativa"] = pd.to_numeric(df_categorias["ativa"], errors='coerce').fillna(1).astype(bool)
+                                        categorias_ativas = df_categorias[df_categorias["ativa"] == True]
+                                    else:
+                                        categorias_ativas = df_categorias
+                                    
+                                    if "nome" in categorias_ativas.columns:
+                                        categorias_disponiveis = categorias_ativas["nome"].dropna().unique().tolist()
+                                
+                                if not categorias_disponiveis:
+                                    categorias_disponiveis = ["Outros"]
+                                
+                                # Encontrar índice da categoria atual
+                                categoria_atual = row.get('categoria', 'Outros')
+                                categoria_index = categorias_disponiveis.index(categoria_atual) if categoria_atual in categorias_disponiveis else 0
+                                
+                                edit_categoria = st.selectbox(
+                                    "Categoria",
+                                    categorias_disponiveis,
+                                    index=categoria_index,
+                                    key=f"edit_cat_desp_{idx}"
+                                )
+                                
+                                edit_recorrencia = st.selectbox(
+                                    "Recorrência",
+                                    ["Mensal", "Anual", "Trimestral", "Semestral"],
+                                    index=["Mensal", "Anual", "Trimestral", "Semestral"].index(row.get('recorrencia', 'Mensal')),
+                                    key=f"edit_rec_desp_{idx}"
+                                )
+                            
+                            # Datas
+                            edit_data_inicio = st.date_input(
+                                "Data de Início", 
+                                value=pd.to_datetime(row.get('data_inicio', date.today())),
+                                key=f"edit_inicio_desp_{idx}"
+                            )
+                            
+                            edit_data_fim = st.date_input(
+                                "Data de Fim (opcional)", 
+                                value=pd.to_datetime(row.get('data_fim')) if row.get('data_fim') else None,
+                                key=f"edit_fim_desp_{idx}"
+                            )
+                            
+                            edit_observacao = st.text_area(
+                                "Observações", 
+                                value=row.get('observacao', ''),
+                                height=60,
+                                key=f"edit_obs_desp_{idx}"
+                            )
+                            
+                            col_save, col_cancel = st.columns(2)
+                            with col_save:
+                                if st.form_submit_button("💾 Salvar Alterações"):
+                                    # Atualizar os dados
+                                    data_inicio_str = edit_data_inicio.isoformat() if edit_data_inicio else None
+                                    data_fim_str = edit_data_fim.isoformat() if edit_data_fim else None
+                                    
+                                    df_fluxo.at[idx, 'nome'] = edit_nome
+                                    df_fluxo.at[idx, 'valor'] = float(edit_valor)
+                                    df_fluxo.at[idx, 'tipo'] = edit_tipo
+                                    df_fluxo.at[idx, 'categoria'] = edit_categoria
+                                    df_fluxo.at[idx, 'data_inicio'] = data_inicio_str
+                                    df_fluxo.at[idx, 'data_fim'] = data_fim_str
+                                    df_fluxo.at[idx, 'recorrencia'] = edit_recorrencia
+                                    df_fluxo.at[idx, 'observacao'] = edit_observacao
+                                    
+                                    dados["fluxo_fixo"] = df_fluxo
+                                    st.session_state["dados"] = dados
+                                    DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+                                    
+                                    st.session_state[edit_key] = False
+                                    st.success("Despesa atualizada!")
+                                    st.rerun()
+                            
+                            with col_cancel:
+                                if st.form_submit_button("❌ Cancelar"):
+                                    st.session_state[edit_key] = False
+                                    st.rerun()
                 
                 st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
         else:
