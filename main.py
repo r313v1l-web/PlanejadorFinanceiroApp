@@ -1130,8 +1130,9 @@ elif menu == "💰 INVESTIMENTOS":
 
 
 # =========================================================
-# 🎯 SONHOS & METAS - CORREÇÃO (Adicionar botão "Desistir do Sonho")
+# 🎯 SONHOS & METAS - VERSÃO MELHORADA (COM EXPLICAÇÕES)
 # =========================================================
+
 elif menu == "🎯 SONHOS & METAS":
 
     st.markdown("🎯 Sonhos & Metas")
@@ -1164,6 +1165,14 @@ elif menu == "🎯 SONHOS & METAS":
     if not dados["sonhos_projetos"].empty:
         for i, sonho in dados["sonhos_projetos"].iterrows():
 
+            # Indicador visual para sonhos desistidos
+            if sonho.get("status") == "Desistido":
+                st.markdown(f"""
+                <div style="background-color: #fef3c7; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+                    <span style="color: #92400e;">😢 SONHO DESISTIDO</span>
+                </div>
+                """, unsafe_allow_html=True)
+
             st.subheader(sonho["nome"])
             st.caption(sonho.get("descricao", ""))
 
@@ -1176,18 +1185,28 @@ elif menu == "🎯 SONHOS & METAS":
             col_s3.caption(f"📊 {sonho['status']}")
             
             with col_s4:
-                # BOTÃO "DESISTIR DO SONHO" 😢
-                if st.button("😢 Desistir do Sonho", key=f"desistir_{i}"):
-                    # Atualizar status para "Desistido"
-                    dados["sonhos_projetos"].loc[i, "status"] = "Desistido"
-                    st.session_state["dados"] = dados
-                    DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                    st.success("Sonho marcado como desistido. 😢")
-                    st.rerun()
+                # Se o sonho já está desistido, mostrar opção de reativar
+                if sonho.get("status") == "Desistido":
+                    if st.button("🔄 Reativar Sonho", key=f"reativar_{i}"):
+                        dados["sonhos_projetos"].loc[i, "status"] = "Em Andamento"
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                        st.success("Sonho reativado! 🎉")
+                        st.rerun()
+                else:
+                    # BOTÃO "DESISTIR DO SONHO" 😢
+                    if st.button("😢 Desistir do Sonho", key=f"desistir_{i}"):
+                        # Atualizar status para "Desistido"
+                        dados["sonhos_projetos"].loc[i, "status"] = "Desistido"
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                        st.success("Sonho marcado como desistido. 😢")
+                        st.rerun()
 
             # --- adicionar valor ---
             with st.form(f"form_add_{i}", clear_on_submit=True):
                 valor_add = st.number_input("Adicionar valor", min_value=0.0, step=100.0, key=f"add_val_{i}")
+                
                 col_btn1, col_btn2 = st.columns(2)
                 with col_btn1:
                     if st.form_submit_button("💸 Adicionar"):
@@ -1197,19 +1216,41 @@ elif menu == "🎯 SONHOS & METAS":
                         st.session_state["msg"] = "Salvo"
                         st.session_state["msg_tipo"] = "success"
                         st.rerun()
+                
                 with col_btn2:
                     # Botão para EXCLUIR completamente o sonho
-                    if st.form_submit_button("🗑️ Excluir Sonho"):
-                        # Confirmar exclusão
-                        if st.session_state.get(f"confirm_delete_{i}", False):
+                    delete_key = f"delete_sonho_{i}"
+                    if delete_key not in st.session_state:
+                        st.session_state[delete_key] = False
+                    
+                    if not st.session_state[delete_key]:
+                        if st.form_submit_button("🗑️ Excluir Permanentemente", type="secondary"):
+                            st.session_state[delete_key] = True
+                            st.warning("⚠️ CUIDADO: Esta ação não pode ser desfeita!")
+                            st.info("Clique novamente no botão para confirmar a exclusão permanente")
+                    else:
+                        if st.form_submit_button("✅ CONFIRMAR EXCLUSÃO", type="primary"):
+                            # Excluir permanentemente
                             dados["sonhos_projetos"] = dados["sonhos_projetos"].drop(i).reset_index(drop=True)
                             st.session_state["dados"] = dados
                             DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                            st.success("Sonho excluído permanentemente!")
+                            st.session_state[delete_key] = False
+                            st.error("Sonho excluído permanentemente! 🗑️")
                             st.rerun()
-                        else:
-                            st.session_state[f"confirm_delete_{i}"] = True
-                            st.warning("Clique novamente para confirmar a exclusão permanente")
+
+            # Tooltip explicativo
+            with st.expander("ℹ️ Diferença entre as ações"):
+                st.markdown("""
+                **😢 Desistir do Sonho:**
+                - Mantém o sonho na lista, mas muda o status para "Desistido"
+                - Pode ser reativado depois
+                - Mantém o histórico e aprendizado
+                
+                **🗑️ Excluir Permanentemente:**
+                - Remove completamente do sistema
+                - Não pode ser recuperado
+                - Use apenas se criou por engano ou não quer mais nenhum registro
+                """)
 
             st.divider()
     else:
