@@ -920,8 +920,11 @@ df_projecao = projetar_patrimonio(
 # FUNÇÕES AUXILIARES (colocar ANTES do menu)
 # =========================================================
 
-def mostrar_gasto_card(idx, row, df_original):
+def mostrar_gasto_card(idx, row, df_original, unique_counter):
     """Função auxiliar para mostrar um card de gasto"""
+    # Usar um contador único em vez do índice do DataFrame
+    unique_key = f"del_btn_{unique_counter}"
+    
     # Formatar data
     if isinstance(row['data'], pd.Timestamp):
         data_str = row['data'].strftime("%d/%m")
@@ -999,9 +1002,9 @@ def mostrar_gasto_card(idx, row, df_original):
                     </div>
         """, unsafe_allow_html=True)
         
-        # Botão de exclusão
-        if st.button("🗑️", key=f"del_btn_{idx}", help="Excluir este gasto"):
-            st.session_state[f"confirm_delete_{idx}"] = True
+        # Botão de exclusão - usar chave única
+        if st.button("🗑️", key=unique_key, help="Excluir este gasto"):
+            st.session_state[f"confirm_delete_{unique_key}"] = True
             st.rerun()
         
         st.markdown("""
@@ -1010,25 +1013,34 @@ def mostrar_gasto_card(idx, row, df_original):
         </div>
         """, unsafe_allow_html=True)
         
-        # Confirmação de exclusão
-        if st.session_state.get(f"confirm_delete_{idx}", False):
+        # Confirmação de exclusão - usar chave única
+        if st.session_state.get(f"confirm_delete_{unique_key}", False):
             with st.container():
                 st.warning(f"Excluir '{row['descricao'][:30]}...'?")
                 col_conf1, col_conf2 = st.columns(2)
                 with col_conf1:
-                    if st.button("✅ Sim", key=f"confirm_yes_{idx}", use_container_width=True):
-                        df_novo = df_original.drop(idx).reset_index(drop=True)
-                        dados["controle_gastos"] = df_novo
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("controle_gastos", df_novo, usuario)
-                        st.session_state[f"confirm_delete_{idx}"] = False
+                    if st.button("✅ Sim", key=f"confirm_yes_{unique_key}", use_container_width=True):
+                        # Encontrar o índice real no DataFrame original usando todas as colunas para precisão
+                        mask = (
+                            (df_original['data'].astype(str) == str(row['data'])) & 
+                            (df_original['descricao'] == row['descricao']) & 
+                            (df_original['valor'] == row['valor'])
+                        )
+                        
+                        if mask.any():
+                            idx_to_delete = df_original[mask].index[0]
+                            df_novo = df_original.drop(idx_to_delete).reset_index(drop=True)
+                            dados["controle_gastos"] = df_novo
+                            st.session_state["dados"] = dados
+                            DatabaseManager.save("controle_gastos", df_novo, usuario)
+                        
+                        st.session_state[f"confirm_delete_{unique_key}"] = False
                         st.success("Gasto excluído!")
                         st.rerun()
                 with col_conf2:
-                    if st.button("❌ Não", key=f"confirm_no_{idx}", use_container_width=True):
-                        st.session_state[f"confirm_delete_{idx}"] = False
+                    if st.button("❌ Não", key=f"confirm_no_{unique_key}", use_container_width=True):
+                        st.session_state[f"confirm_delete_{unique_key}"] = False
                         st.rerun()
-
 
 # =========================================================
 # SIDEBAR (MENU ÚNICO DO SISTEMA)
@@ -2476,9 +2488,9 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Mostrar gastos de hoje
-                for idx, row in df_hoje.iterrows():
-                    mostrar_gasto_card(idx, row, df_gastos)
+                # Mostrar gastos de hoje - usar enumerate para obter um contador único
+                for i, (idx, row) in enumerate(df_hoje.iterrows()):
+                    mostrar_gasto_card(idx, row, df_gastos, unique_counter=i)
             else:
                 st.info("Nenhum gasto registrado hoje.")
         
@@ -2526,9 +2538,12 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 inicio = (pagina_atual - 1) * itens_por_pagina
                 fim = inicio + itens_por_pagina
                 
-                # Mostrar gastos da página atual
-                for idx in df_mes.iloc[inicio:fim].index:
-                    mostrar_gasto_card(idx, df_mes.loc[idx], df_gastos)
+                # Mostrar gastos da página atual - resetar índices para garantir unicidade
+                df_mes_pagina = df_mes.iloc[inicio:fim].reset_index(drop=True)
+                for i, (idx, row) in enumerate(df_mes_pagina.iterrows()):
+                    # Encontrar o índice original correspondente
+                    idx_original = df_mes.iloc[inicio:fim].index[i]
+                    mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"mes_{pagina_atual}_{i}")
                 
                 # Controles de paginação
                 if total_paginas > 1:
@@ -2646,8 +2661,12 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 # Mostrar resultados
                 st.caption(f"Mostrando {min(len(df_filtrado), itens_por_pagina_total)} de {len(df_filtrado)} gastos")
                 
-                for idx in df_filtrado.iloc[inicio_total:fim_total].index:
-                    mostrar_gasto_card(idx, df_filtrado.loc[idx], df_gastos)
+                # Resetar índices para garantir unicidade
+                df_filtrado_pagina = df_filtrado.iloc[inicio_total:fim_total].reset_index(drop=True)
+                for i, (idx, row) in enumerate(df_filtrado_pagina.iterrows()):
+                    # Encontrar o índice original correspondente
+                    idx_original = df_filtrado.iloc[inicio_total:fim_total].index[i]
+                    mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"todos_{pagina_atual_total}_{i}")
                 
                 # Controles de paginação
                 if total_paginas_total > 1:
@@ -2804,8 +2823,8 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 
                 if gastos_categoria:
                     st.markdown(f"### Gastos em {categoria_selecionada}")
-                    for idx, row in gastos_categoria:
-                        mostrar_gasto_card(idx, row, df_gastos)
+                    for i, (idx, row) in enumerate(gastos_categoria):
+                        mostrar_gasto_card(idx, row, df_gastos, unique_counter=f"cat_{categoria_selecionada}_{i}")
                 else:
                     st.info(f"Nenhum gasto encontrado na categoria {categoria_selecionada}")
 
