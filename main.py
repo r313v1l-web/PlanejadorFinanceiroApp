@@ -1295,40 +1295,6 @@ elif menu == "💰 INVESTIMENTOS":
         )
         st.plotly_chart(fig2, use_container_width=True)
 
-    # ---------------- TABELA RESUMO (opcional) ----------------
-    with st.expander("📋 Tabela Resumo"):
-        if not dados["investimentos"].empty:
-            # Criar uma cópia para exibição
-            df_display = dados["investimentos"].copy()
-            
-            # Renomear colunas para exibição
-            df_display = df_display.rename(columns={
-                'instituicao': 'Instituição',
-                'ativo': 'Ativo',
-                'tipo': 'Tipo',
-                'valor_atual': 'Valor Atual',
-                'data_entrada': 'Data Entrada',
-                'rendimento_mensal': 'Rendimento Mensal',
-                'categoria': 'Perfil',
-                'observacao': 'Observações'
-            })
-            
-            # Formatar valores
-            def format_row(row):
-                if 'Valor Atual' in row:
-                    row['Valor Atual'] = f"R$ {row['Valor Atual']:,.2f}"
-                if 'Rendimento Mensal' in row and isinstance(row['Rendimento Mensal'], (int, float)):
-                    row['Rendimento Mensal'] = f"{row['Rendimento Mensal']:.2%}"
-                return row
-            
-            df_display = df_display.apply(format_row, axis=1)
-            
-            st.dataframe(
-                df_display,
-                use_container_width=True,
-                height=300
-            )
-
 
 
 # =========================================================
