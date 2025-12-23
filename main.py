@@ -925,13 +925,14 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
     # Usar um contador único em vez do índice do DataFrame
     unique_key = f"del_btn_{unique_counter}"
     
-    # Formatar data
+    # Formatar data - APENAS DATA, SEM HORA
     if isinstance(row['data'], pd.Timestamp):
         data_str = row['data'].strftime("%d/%m")
         dia_semana = row['data'].strftime("%a")
-        data_completa = row['data'].strftime("%d/%m/%Y %H:%M")
+        data_completa = row['data'].strftime("%d/%m/%Y")  # REMOVI A HORA
     else:
-        data_str = str(row['data'])[:10]
+        # Se for string, extrair apenas a parte da data
+        data_str = str(row['data'])[:10] if row['data'] else ""
         dia_semana = ""
         data_completa = data_str
     
@@ -1020,30 +1021,85 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
                 col_conf1, col_conf2 = st.columns(2)
                 with col_conf1:
                     if st.button("✅ Sim", key=f"confirm_yes_{unique_key}", use_container_width=True):
-                        # Encontrar o índice real no DataFrame original usando todas as colunas para precisão
-                        mask = (
-                            (df_original['data'].astype(str) == str(row['data'])) & 
-                            (df_original['descricao'] == row['descricao']) & 
-                            (df_original['valor'] == row['valor'])
-                        )
+                        # CORREÇÃO: Comparar datas corretamente (apenas a parte da data)
+                        row_data = row['data']
                         
-                        if mask.any():
-                            idx_to_delete = df_original[mask].index[0]
-                            df_novo = df_original.drop(idx_to_delete).reset_index(drop=True)
-                            dados["controle_gastos"] = df_novo
-                            st.session_state["dados"] = dados
-                            DatabaseManager.save("controle_gastos", df_novo, usuario)
+                        if isinstance(row_data, pd.Timestamp):
+                            row_data_date = row_data.date()
+                        elif isinstance(row_data, str):
+                            row_data_date = pd.to_datetime(row_data).date()
+                        else:
+                            row_data_date = row_data
+                        
+                        # Encontrar o índice real no DataFrame original
+                        for df_idx, df_row in df_original.iterrows():
+                            df_row_data = df_row['data']
+                            
+                            if isinstance(df_row_data, pd.Timestamp):
+                                df_row_data_date = df_row_data.date()
+                            elif isinstance(df_row_data, str):
+                                df_row_data_date = pd.to_datetime(df_row_data).date()
+                            else:
+                                df_row_data_date = df_row_data
+                            
+                            # Comparar datas, descrição e valor
+                            if (df_row_data_date == row_data_date and 
+                                df_row['descricao'] == row['descricao'] and 
+                                df_row['valor'] == row['valor']):
+                                
+                                # Encontrou o registro, excluir
+                                df_novo = df_original.drop(df_idx).reset_index(drop=True)
+                                dados["controle_gastos"] = df_novo
+                                st.session_state["dados"] = dados
+                                DatabaseManager.save("controle_gastos", df_novo, usuario)
+                                
+                                st.session_state[f"confirm_delete_{unique_key}"] = False
+                                st.success("Gasto excluído!")
+                                st.rerun()
+                                break
                         
                         st.session_state[f"confirm_delete_{unique_key}"] = False
-                        st.success("Gasto excluído!")
+                        st.error("Não foi possível encontrar o gasto para exclusão.")
                         st.rerun()
+                        
                 with col_conf2:
                     if st.button("❌ Não", key=f"confirm_no_{unique_key}", use_container_width=True):
                         st.session_state[f"confirm_delete_{unique_key}"] = False
                         st.rerun()
 
 
+# =========================================================
+# FUNÇÕES AUXILIARES PARA PAGINAÇÃO
+# =========================================================
 
+def criar_controles_paginacao(pagina_atual, total_paginas, key_prefix):
+    """Cria controles de paginação que não causam conflitos com session_state"""
+    col_nav1, col_nav2, col_nav3, col_nav4, col_nav5 = st.columns(5)
+    
+    with col_nav1:
+        if pagina_atual > 1:
+            if st.button("⏮️", key=f"{key_prefix}_primeira", help="Primeira página", use_container_width=True):
+                return 1
+    
+    with col_nav2:
+        if pagina_atual > 1:
+            if st.button("◀️", key=f"{key_prefix}_anterior", help="Página anterior", use_container_width=True):
+                return pagina_atual - 1
+    
+    with col_nav3:
+        st.markdown(f"**{pagina_atual} / {total_paginas}**", unsafe_allow_html=True)
+    
+    with col_nav4:
+        if pagina_atual < total_paginas:
+            if st.button("▶️", key=f"{key_prefix}_proxima", help="Próxima página", use_container_width=True):
+                return pagina_atual + 1
+    
+    with col_nav5:
+        if pagina_atual < total_paginas:
+            if st.button("⏭️", key=f"{key_prefix}_ultima", help="Última página", use_container_width=True):
+                return total_paginas
+    
+    return pagina_atual
 
 
 # =========================================================
@@ -2552,7 +2608,16 @@ elif menu == "💸 CONTROLE DE GASTOS":
                     idx_original = df_mes.iloc[inicio:fim].index[i]
                     mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"mes_{st.session_state['pagina_mes_atual']}_{i}")
                 
-
+                # Controles de paginação usando a função auxiliar
+                nova_pagina_mes = criar_controles_paginacao(
+                    pagina_atual=st.session_state["pagina_mes_atual"],
+                    total_paginas=total_paginas,
+                    key_prefix="mes_gastos"
+                )
+                
+                if nova_pagina_mes != st.session_state["pagina_mes_atual"]:
+                    st.session_state["pagina_mes_atual"] = nova_pagina_mes
+                    st.rerun()
                 
                 # Informação sobre total de páginas
                 st.caption(f"Página {st.session_state['pagina_mes_atual']} de {total_paginas} • {len(df_mes)} gastos no total")
@@ -2696,6 +2761,17 @@ elif menu == "💸 CONTROLE DE GASTOS":
                     idx_original = df_filtrado.iloc[inicio_total:fim_total].index[i]
                     mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"todos_{st.session_state['pagina_total_atual']}_{i}")
                 
+                # Controles de paginação usando a função auxiliar
+                nova_pagina = criar_controles_paginacao(
+                    pagina_atual=st.session_state["pagina_total_atual"],
+                    total_paginas=total_paginas_total,
+                    key_prefix="todos_gastos"
+                )
+                
+                if nova_pagina != st.session_state["pagina_total_atual"]:
+                    st.session_state["pagina_total_atual"] = nova_pagina
+                    st.rerun()
+                        
 
         
         with tab4:
