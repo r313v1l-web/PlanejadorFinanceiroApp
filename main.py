@@ -2457,9 +2457,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
 
     st.divider()
 
-    st.subheader("⚠️ Alertas & Recomendações")
 
-    st.divider()
     st.subheader("📝 Análise Executiva Consolidada")
 
     texto_exec = gerar_texto_executivo(
