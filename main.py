@@ -1072,56 +1072,290 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
 
 
 # =========================================================
-# SIDEBAR (MENU ÚNICO DO SISTEMA)
+# SIDEBAR (MENU ÚNICO DO SISTEMA) - VERSÃO ESTILIZADA
 # =========================================================
 with st.sidebar:
-
-    st.markdown(
-        """
-        <h1 style="text-align:center; font-size:80px;">💸</h1>
-        <h2 style="text-align:center; letter-spacing:1px;">
-        GESTÃO FINANCEIRA
+    # Cabeçalho estilizado com gradiente
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        border-radius: 16px;
+        padding: 24px 16px;
+        text-align: center;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    ">
+        <div style="
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        ">
+            <span style="font-size: 40px;">💸</span>
+        </div>
+        <h2 style="
+            text-align: center; 
+            letter-spacing: 1px;
+            color: white;
+            margin: 0 0 8px;
+            font-size: 1.8em;
+        ">
+            GESTÃO FINANCEIRA
         </h2>
-        <p style="text-align:center; color:#9ca3af;">
+        <p style="
+            text-align: center; 
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+            font-size: 0.9em;
+            font-weight: 300;
+        ">
         Visão • Controle • Estratégia
         </p>
-        """,
-        unsafe_allow_html=True
-    )
+    </div>
+    """, unsafe_allow_html=True)
 
     st.divider()
 
     # ===============================
-    # MENU BASE
+    # MENU BASE ESTILIZADO
     # ===============================
-    menu_itens = [
-        "💸 CONTROLE DE GASTOS",
-        "📊 DASHBOARD",
-        "📝 LANÇAMENTOS",        
-        "💰 INVESTIMENTOS",
-        "🎯 SONHOS & METAS",
-        "🏢 FLUXOS FIXOS",
-        "🏷️ CATEGORIAS",
-        "📄 RELATÓRIO EXECUTIVO",
-        "⚙️ CONFIGURAÇÕES",
-        
+    menu_data = [
+        {
+            "emoji": "💸",
+            "label": "CONTROLE DE GASTOS",
+            "color": "#3b82f6",
+            "bg_color": "rgba(59, 130, 246, 0.1)"
+        },
+        {
+            "emoji": "📊",
+            "label": "DASHBOARD",
+            "color": "#8b5cf6",
+            "bg_color": "rgba(139, 92, 246, 0.1)"
+        },
+        {
+            "emoji": "📝",
+            "label": "LANÇAMENTOS",
+            "color": "#10b981",
+            "bg_color": "rgba(16, 185, 129, 0.1)"
+        },
+        {
+            "emoji": "💰",
+            "label": "INVESTIMENTOS",
+            "color": "#f59e0b",
+            "bg_color": "rgba(245, 158, 11, 0.1)"
+        },
+        {
+            "emoji": "🎯",
+            "label": "SONHOS & METAS",
+            "color": "#ef4444",
+            "bg_color": "rgba(239, 68, 68, 0.1)"
+        },
+        {
+            "emoji": "🏢",
+            "label": "FLUXOS FIXOS",
+            "color": "#ec4899",
+            "bg_color": "rgba(236, 72, 153, 0.1)"
+        },
+        {
+            "emoji": "🏷️",
+            "label": "CATEGORIAS",
+            "color": "#14b8a6",
+            "bg_color": "rgba(20, 184, 166, 0.1)"
+        },
+        {
+            "emoji": "📄",
+            "label": "RELATÓRIO EXECUTIVO",
+            "color": "#6366f1",
+            "bg_color": "rgba(99, 102, 241, 0.1)"
+        },
+        {
+            "emoji": "⚙️",
+            "label": "CONFIGURAÇÕES",
+            "color": "#6b7280",
+            "bg_color": "rgba(107, 114, 128, 0.1)"
+        }
     ]
 
-    # ===============================
-    # MENU ADMIN
-    # ===============================
+    # Adicionar menu ADMIN se necessário
     if st.session_state.get("perfil") == "admin":
-        menu_itens.append("👥 USUÁRIOS")
+        menu_data.append({
+            "emoji": "👥",
+            "label": "USUÁRIOS",
+            "color": "#0ea5e9",
+            "bg_color": "rgba(14, 165, 233, 0.1)"
+        })
 
-    # ===============================
-    # RADIO DE NAVEGAÇÃO
-    # ===============================
-    menu = st.radio(
-        "NAVEGAÇÃO",
-        menu_itens
-    )
+    # Criar seleção de menu com estilo personalizado
+    st.markdown("""
+    <style>
+    /* Estilizar os radio buttons para parecerem cards */
+    div[data-testid="stRadio"] > div {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    div[data-testid="stRadio"] > div > label {
+        background: #1f2937 !important;
+        border-radius: 12px !important;
+        padding: 16px !important;
+        border: 1px solid #374151 !important;
+        transition: all 0.3s ease !important;
+        margin: 0 !important;
+    }
+    
+    div[data-testid="stRadio"] > div > label:hover {
+        background: #374151 !important;
+        border-color: #4b5563 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    div[data-testid="stRadio"] > div > label[data-checked="true"] {
+        background: linear-gradient(135deg, var(--selected-bg) 0%, rgba(0, 0, 0, 0.1) 100%) !important;
+        border: 1px solid var(--selected-color) !important;
+        box-shadow: 0 4px 12px var(--selected-shadow) !important;
+    }
+    
+    /* Esconder o radio button original */
+    div[data-testid="stRadio"] > div > label > div:first-child {
+        display: none !important;
+    }
+    
+    /* Estilizar o texto */
+    div[data-testid="stRadio"] > div > label > div:nth-child(2) {
+        font-weight: 500 !important;
+        font-size: 14px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        color: #f9fafb !important;
+    }
+    
+    /* Ícones */
+    .menu-icon {
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Criar opções de menu dinamicamente
+    menu_options = []
+    for item in menu_data:
+        menu_options.append(f"{item['emoji']} {item['label']}")
+
+    # Container para o menu
+    with st.container():
+        st.markdown("""
+        <div style="margin-bottom: 16px; color: #d1d5db; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
+            NAVEGAÇÃO
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Inserir estilo dinâmico para cada opção
+        css_vars = []
+        for i, item in enumerate(menu_data):
+            css_vars.append(f"""
+            div[data-testid="stRadio"] > div > label:nth-child({i + 1}) {{
+                --selected-color: {item['color']} !important;
+                --selected-bg: {item['bg_color']} !important;
+                --selected-shadow: rgba({int(item['color'][1:3], 16)}, {int(item['color'][3:5], 16)}, {int(item['color'][5:7], 16)}, 0.2) !important;
+            }}
+            
+            div[data-testid="stRadio"] > div > label:nth-child({i + 1})[data-checked="true"] .menu-icon {{
+                background: {item['color']} !important;
+                color: white !important;
+            }}
+            """)
+        
+        st.markdown(f"<style>{''.join(css_vars)}</style>", unsafe_allow_html=True)
+        
+        # Radio button com as opções
+        menu = st.radio(
+            "Menu de Navegação",
+            menu_options,
+            label_visibility="collapsed",
+            key="styled_menu"
+        )
 
     st.divider()
+
+    # ===============================
+    # CARD DE STATUS DO USUÁRIO
+    # ===============================
+    with st.container():
+        st.markdown("""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #374151;
+            margin-top: 24px;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <div style="
+                    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+                    border-radius: 10px;
+                    width: 40px;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <span style="font-size: 20px;">👤</span>
+                </div>
+                <div>
+                    <div style="font-size: 14px; color: #d1d5db; font-weight: 500;">
+                        {usuario}
+                    </div>
+                    <div style="font-size: 12px; color: #9ca3af;">
+                        {perfil}
+                    </div>
+                </div>
+            </div>
+            <div style="
+                background: #111827;
+                border-radius: 8px;
+                padding: 8px 12px;
+                font-size: 12px;
+                color: #9ca3af;
+                border: 1px solid #374151;
+            ">
+                📅 {data_hoje}
+            </div>
+        </div>
+        """.format(
+            usuario=usuario,
+            perfil=st.session_state.get("perfil", "Usuário").capitalize(),
+            data_hoje=date.today().strftime("%d/%m/%Y")
+        ), unsafe_allow_html=True)
+
+    # ===============================
+    # BOTÃO DE LOGOUT ESTILIZADO
+    # ===============================
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    col_logout1, col_logout2, col_logout3 = st.columns([1, 2, 1])
+    with col_logout2:
+        if st.button(
+            "🚪 Sair",
+            use_container_width=True,
+            type="secondary"
+        ):
+            st.session_state.clear()
+            st.rerun()
 
     # ===============================
     # USUÁRIO LOGADO
