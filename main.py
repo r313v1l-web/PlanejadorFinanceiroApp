@@ -902,7 +902,7 @@ with st.sidebar:
         st.rerun()
 
 # =========================================================
-# 📝 LANÇAMENTOS
+# 📝 LANÇAMENTOS - CORREÇÃO
 # =========================================================
 if menu == "📝 LANÇAMENTOS":
 
@@ -938,7 +938,6 @@ if menu == "📝 LANÇAMENTOS":
 
         descricao = st.text_input("descrição")
         
-        
         submitted = st.form_submit_button("💾 SALVAR")
         
         if submitted:
@@ -965,6 +964,57 @@ if menu == "📝 LANÇAMENTOS":
             st.rerun()
 
     st.divider()
+    
+    # ================= NOVA SEÇÃO: LISTA DE LANÇAMENTOS COM EXCLUSÃO =================
+    st.subheader("📋 Lançamentos Registrados")
+    
+    if not dados["historico"].empty:
+        df_historico = dados["historico"].copy()
+        
+        # Ordenar por data (mais recente primeiro)
+        df_historico = df_historico.sort_values("data", ascending=False)
+        
+        # Mostrar a tabela
+        for idx, row in df_historico.iterrows():
+            col1, col2, col3, col4, col5 = st.columns([2, 1, 2, 2, 1])
+            
+            with col1:
+                st.write(f"**{row['descricao']}**")
+                st.caption(f"{row['categoria']} | {row['responsavel']}")
+            
+            with col2:
+                # Definir cor baseada no tipo
+                if row['tipo'] == "Despesa":
+                    st.markdown(f"<span style='color: red; font-weight: bold;'>-R$ {row['valor']:,.2f}</span>", unsafe_allow_html=True)
+                elif row['tipo'] == "Receita":
+                    st.markdown(f"<span style='color: green; font-weight: bold;'>+R$ {row['valor']:,.2f}</span>", unsafe_allow_html=True)
+                else:
+                    st.write(f"R$ {row['valor']:,.2f}")
+            
+            with col3:
+                st.caption(f"Tipo: {row['tipo']}")
+            
+            with col4:
+                if isinstance(row['data'], str):
+                    data_str = row['data']
+                else:
+                    data_str = row['data'].strftime("%d/%m/%Y")
+                st.caption(f"Data: {data_str}")
+            
+            with col5:
+                # Botão para excluir
+                if st.button("❌", key=f"del_hist_{idx}"):
+                    # Remover da lista
+                    df_historico = df_historico.drop(idx).reset_index(drop=True)
+                    dados["historico"] = df_historico
+                    st.session_state["dados"] = dados
+                    DatabaseManager.save("historico", df_historico, usuario)
+                    st.success("Lançamento excluído!")
+                    st.rerun()
+            
+            st.divider()
+    else:
+        st.caption("Nenhum lançamento registrado.")
 
 
 
@@ -1080,7 +1130,7 @@ elif menu == "💰 INVESTIMENTOS":
 
 
 # =========================================================
-# 🎯 SONHOS & METAS
+# 🎯 SONHOS & METAS - CORREÇÃO (Adicionar botão "Desistir do Sonho")
 # =========================================================
 elif menu == "🎯 SONHOS & METAS":
 
@@ -1120,21 +1170,46 @@ elif menu == "🎯 SONHOS & METAS":
             progresso = sonho["valor_atual"] / sonho["valor_alvo"] if sonho["valor_alvo"] > 0 else 0
             st.progress(progresso, text=f"R$ {sonho['valor_atual']:,.0f} / R$ {sonho['valor_alvo']:,.0f}")
 
-            col_s1, col_s2, col_s3 = st.columns(3)
+            col_s1, col_s2, col_s3, col_s4 = st.columns(4)
             col_s1.caption(f"📅 {sonho['data_alvo']}")
             col_s2.caption(f"🔸 {sonho['prioridade']}")
             col_s3.caption(f"📊 {sonho['status']}")
+            
+            with col_s4:
+                # BOTÃO "DESISTIR DO SONHO" 😢
+                if st.button("😢 Desistir do Sonho", key=f"desistir_{i}"):
+                    # Atualizar status para "Desistido"
+                    dados["sonhos_projetos"].loc[i, "status"] = "Desistido"
+                    st.session_state["dados"] = dados
+                    DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                    st.success("Sonho marcado como desistido. 😢")
+                    st.rerun()
 
             # --- adicionar valor ---
             with st.form(f"form_add_{i}", clear_on_submit=True):
-                valor_add = st.number_input("Adicionar valor", min_value=0.0, step=100.0)
-                if st.form_submit_button("💸 Adicionar"):
-                    dados["sonhos_projetos"].loc[i, "valor_atual"] += valor_add
-                    st.session_state["dados"] = dados
-                    DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                    st.session_state["msg"] = "Salvo"
-                    st.session_state["msg_tipo"] = "success"
-                    st.rerun()
+                valor_add = st.number_input("Adicionar valor", min_value=0.0, step=100.0, key=f"add_val_{i}")
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    if st.form_submit_button("💸 Adicionar"):
+                        dados["sonhos_projetos"].loc[i, "valor_atual"] += valor_add
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                        st.session_state["msg"] = "Salvo"
+                        st.session_state["msg_tipo"] = "success"
+                        st.rerun()
+                with col_btn2:
+                    # Botão para EXCLUIR completamente o sonho
+                    if st.form_submit_button("🗑️ Excluir Sonho"):
+                        # Confirmar exclusão
+                        if st.session_state.get(f"confirm_delete_{i}", False):
+                            dados["sonhos_projetos"] = dados["sonhos_projetos"].drop(i).reset_index(drop=True)
+                            st.session_state["dados"] = dados
+                            DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                            st.success("Sonho excluído permanentemente!")
+                            st.rerun()
+                        else:
+                            st.session_state[f"confirm_delete_{i}"] = True
+                            st.warning("Clique novamente para confirmar a exclusão permanente")
 
             st.divider()
     else:
@@ -1181,7 +1256,7 @@ elif menu == "🎯 SONHOS & METAS":
                 st.rerun()
 
 # =========================================================
-# 🏢 FLUXOS FIXOS
+# 🏢 FLUXOS FIXOS - CORREÇÃO (Adicionar exclusão de linhas)
 # =========================================================
 elif menu == "🏢 FLUXOS FIXOS":
 
@@ -1228,19 +1303,47 @@ elif menu == "🏢 FLUXOS FIXOS":
 
     with tab1:
         if not receitas.empty:
-            st.dataframe(
-                receitas.style.format({"valor": "R$ {:,.2f}"}),
-                use_container_width=True
-            )
+            # Criar uma tabela interativa com botões de exclusão
+            for idx, row in receitas.iterrows():
+                col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+                with col1:
+                    st.write(f"**{row.get('nome', 'Sem nome')}**")
+                with col2:
+                    st.write(f"R$ {row.get('valor', 0):,.2f}")
+                with col3:
+                    st.caption(row.get('categoria', ''))
+                with col4:
+                    if st.button("❌", key=f"del_rec_{idx}"):
+                        df_fluxo = df_fluxo.drop(idx).reset_index(drop=True)
+                        dados["fluxo_fixo"] = df_fluxo
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+                        st.success("Receita excluída!")
+                        st.rerun()
+                st.divider()
         else:
             st.caption("Nenhuma receita fixa cadastrada.")
 
     with tab2:
         if not despesas.empty:
-            st.dataframe(
-                despesas.style.format({"valor": "R$ {:,.2f}"}),
-                use_container_width=True
-            )
+            # Criar uma tabela interativa com botões de exclusão
+            for idx, row in despesas.iterrows():
+                col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+                with col1:
+                    st.write(f"**{row.get('nome', 'Sem nome')}**")
+                with col2:
+                    st.write(f"R$ {row.get('valor', 0):,.2f}")
+                with col3:
+                    st.caption(row.get('categoria', ''))
+                with col4:
+                    if st.button("❌", key=f"del_desp_{idx}"):
+                        df_fluxo = df_fluxo.drop(idx).reset_index(drop=True)
+                        dados["fluxo_fixo"] = df_fluxo
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+                        st.success("Despesa excluída!")
+                        st.rerun()
+                st.divider()
         else:
             st.caption("Nenhuma despesa fixa cadastrada.")
 
@@ -1255,15 +1358,12 @@ elif menu == "🏢 FLUXOS FIXOS":
                 tipo = st.selectbox("tipo", ["Receita", "Despesa"])
 
             with col2:
-                # 🔥 FILTRAR: Mostrar apenas categorias ATIVAS
                 categorias_disponiveis = []
                 if not dados["categorias"].empty:
                     df_categorias = dados["categorias"].copy()
                     df_categorias.columns = df_categorias.columns.str.lower()
                     
-                    # Filtrar apenas categorias ativas
                     if "ativa" in df_categorias.columns:
-                        # Converter para booleano se necessário
                         df_categorias["ativa"] = pd.to_numeric(df_categorias["ativa"], errors='coerce').fillna(1).astype(bool)
                         categorias_ativas = df_categorias[df_categorias["ativa"] == True]
                     else:
@@ -1272,7 +1372,6 @@ elif menu == "🏢 FLUXOS FIXOS":
                     if "nome" in categorias_ativas.columns:
                         categorias_disponiveis = categorias_ativas["nome"].dropna().unique().tolist()
                 
-                # Adicionar opção padrão se não houver categorias
                 if not categorias_disponiveis:
                     categorias_disponiveis = ["Outros"]
                 
@@ -1293,25 +1392,22 @@ elif menu == "🏢 FLUXOS FIXOS":
             submitted = st.form_submit_button("💾 Salvar Fluxo")
 
             if submitted:
-                # 🔥 CONVERTER DATAS PARA STRING (resolver TypeError)
                 data_inicio_str = data_inicio.isoformat() if data_inicio else None
                 data_fim_str = data_fim.isoformat() if data_fim else None
                 
                 novo = pd.DataFrame([{
                     "nome": nome.strip(),
-                    "valor": float(valor),  # Garantir que é float
+                    "valor": float(valor),
                     "tipo": tipo.strip().title(),
                     "categoria": categoria,
-                    "data_inicio": data_inicio_str,  # 🔥 STRING, não date
-                    "data_fim": data_fim_str,        # 🔥 STRING, não date
+                    "data_inicio": data_inicio_str,
+                    "data_fim": data_fim_str,
                     "recorrencia": recorrencia,
                     "observacao": observacao.strip()
                 }])
 
-                # Preparar DataFrame para salvar
                 df_novo_fluxo = df_fluxo.copy() if not df_fluxo.empty else pd.DataFrame()
                 
-                # Garantir colunas
                 colunas_base = ["nome", "valor", "tipo", "categoria", "data_inicio", 
                                "data_fim", "recorrencia", "observacao"]
                 for col in colunas_base:
@@ -1321,14 +1417,12 @@ elif menu == "🏢 FLUXOS FIXOS":
                 df_novo_fluxo = pd.concat([df_novo_fluxo, novo], ignore_index=True)
                 df_novo_fluxo.columns = df_novo_fluxo.columns.str.lower()
 
-                # 🔥 Converter quaisquer datas restantes para string
                 for date_col in ["data_inicio", "data_fim"]:
                     if date_col in df_novo_fluxo.columns:
                         df_novo_fluxo[date_col] = df_novo_fluxo[date_col].apply(
                             lambda x: x.isoformat() if hasattr(x, 'isoformat') else x
                         )
 
-                # Salvar
                 dados["fluxo_fixo"] = df_novo_fluxo
                 st.session_state["dados"] = dados
                 DatabaseManager.save("fluxo_fixo", df_novo_fluxo, usuario)
@@ -1387,7 +1481,7 @@ elif menu == "🏢 FLUXOS FIXOS":
 
 
 # =========================================================
-# 💸 CONTROLE DE GASTOS
+# 💸 CONTROLE DE GASTOS - CORREÇÃO (TypeError e exclusão)
 # =========================================================
 
 elif menu == "💸 CONTROLE DE GASTOS":
@@ -1416,6 +1510,13 @@ elif menu == "💸 CONTROLE DE GASTOS":
         df_gastos = pd.DataFrame(columns=["data", "descricao", "valor"])
     else:
         df_gastos = dados["controle_gastos"].copy()
+        
+        # 🔥 CORREÇÃO DO TypeError: Converter 'data' para datetime
+        if "data" in df_gastos.columns and not df_gastos.empty:
+            # Converter coluna 'data' para datetime
+            df_gastos["data"] = pd.to_datetime(df_gastos["data"], errors='coerce')
+            # Remover datas inválidas
+            df_gastos = df_gastos.dropna(subset=["data"])
 
     gasto_total = df_gastos["valor"].sum() if not df_gastos.empty else 0
     saldo_restante = reserva_mensal - gasto_total
@@ -1458,17 +1559,45 @@ elif menu == "💸 CONTROLE DE GASTOS":
 
     st.divider()
 
-    # ---------- HISTÓRICO ----------
+    # ---------- HISTÓRICO COM EXCLUSÃO ----------
     st.subheader("📋 Gastos Registrados")
 
     if not df_gastos.empty:
-        st.dataframe(
-            df_gastos.sort_values("data", ascending=False).style.format({
-                "valor": "R$ {:,.2f}"
-            }),
-            use_container_width=True,
-            height=350
-        )
+        # Ordenar por data (mais recente primeiro)
+        df_gastos = df_gastos.sort_values("data", ascending=False)
+        
+        # Criar uma tabela interativa com botões de exclusão
+        for idx, row in df_gastos.iterrows():
+            col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+            
+            with col1:
+                st.write(f"**{row['descricao']}**")
+            
+            with col2:
+                st.write(f"R$ {row['valor']:,.2f}")
+            
+            with col3:
+                # Formatar data corretamente
+                if isinstance(row['data'], pd.Timestamp):
+                    data_str = row['data'].strftime("%d/%m/%Y")
+                elif hasattr(row['data'], 'strftime'):
+                    data_str = row['data'].strftime("%d/%m/%Y")
+                else:
+                    data_str = str(row['data'])
+                st.caption(f"Data: {data_str}")
+            
+            with col4:
+                # Botão para excluir
+                if st.button("❌", key=f"del_gasto_{idx}"):
+                    # Remover da lista
+                    df_gastos = df_gastos.drop(idx).reset_index(drop=True)
+                    dados["controle_gastos"] = df_gastos
+                    st.session_state["dados"] = dados
+                    DatabaseManager.save("controle_gastos", df_gastos, usuario)
+                    st.success("Gasto excluído!")
+                    st.rerun()
+            
+            st.divider()
     else:
         st.caption("Nenhum gasto registrado neste mês.")
 
