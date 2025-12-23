@@ -1023,8 +1023,9 @@ if menu == "📝 LANÇAMENTOS":
 
 
 # =========================================================
-# 💰 INVESTIMENTOS
+# 💰 INVESTIMENTOS - COM EDIÇÃO E EXCLUSÃO
 # =========================================================
+
 elif menu == "💰 INVESTIMENTOS":
 
     st.markdown("💰 Carteira de Investimentos")
@@ -1044,7 +1045,7 @@ elif menu == "💰 INVESTIMENTOS":
 
     st.divider()
 
-    # ---------------- FORM ----------------
+    # ---------------- FORM ADICIONAR ----------------
     with st.expander("➕ Adicionar Investimento"):
         with st.form("form_investimento", clear_on_submit=True):
             col1, col2 = st.columns(2, gap="large")
@@ -1099,10 +1100,169 @@ elif menu == "💰 INVESTIMENTOS":
                 st.session_state["msg_tipo"] = "success"
                 st.rerun()
 
+    st.divider()
 
+    # ---------------- LISTA DE INVESTIMENTOS COM EDIÇÃO/EXCLUSÃO ----------------
+    st.subheader("📋 Meus Investimentos")
+    
+    if not dados["investimentos"].empty:
+        df_investimentos = dados["investimentos"].copy()
+        
+        # Normalizar nomes das colunas
+        df_investimentos.columns = df_investimentos.columns.str.lower()
+        
+        for idx, row in df_investimentos.iterrows():
+            # Container para cada investimento
+            with st.container():
+                col1, col2, col3 = st.columns([3, 2, 1])
+                
+                with col1:
+                    st.markdown(f"**{row.get('ativo', 'Sem nome')}**")
+                    st.caption(f"🏛️ {row.get('instituicao', '')} | {row.get('tipo', '')} | {row.get('categoria', '')}")
+                
+                with col2:
+                    st.markdown(f"**R$ {row.get('valor_atual', 0):,.2f}**")
+                    rendimento = row.get('rendimento_mensal', 0)
+                    if isinstance(rendimento, (int, float)):
+                        st.caption(f"📈 Rendimento: {rendimento:.2%} ao mês")
+                    
+                    # Mostrar data de entrada se existir
+                    if 'data_entrada' in row and row['data_entrada']:
+                        if hasattr(row['data_entrada'], 'strftime'):
+                            data_str = row['data_entrada'].strftime("%d/%m/%Y")
+                        else:
+                            data_str = str(row['data_entrada'])
+                        st.caption(f"📅 Entrada: {data_str}")
+                
+                with col3:
+                    # Botões de ação
+                    col_btn1, col_btn2 = st.columns(2)
+                    
+                    with col_btn1:
+                        # Botão para editar
+                        if st.button("✏️", key=f"edit_{idx}", help="Editar este investimento"):
+                            st.session_state[f"editing_{idx}"] = True
+                    
+                    with col_btn2:
+                        # Botão para excluir
+                        delete_key = f"delete_invest_{idx}"
+                        if delete_key not in st.session_state:
+                            st.session_state[delete_key] = False
+                        
+                        if not st.session_state[delete_key]:
+                            if st.button("❌", key=f"del_{idx}", help="Excluir este investimento"):
+                                st.session_state[delete_key] = True
+                                st.warning(f"Tem certeza que deseja excluir {row.get('ativo', 'este investimento')}?")
+                        else:
+                            col_confirm1, col_confirm2 = st.columns(2)
+                            with col_confirm1:
+                                if st.button("✅ Sim", key=f"confirm_del_{idx}"):
+                                    # Excluir investimento
+                                    df_investimentos = df_investimentos.drop(idx).reset_index(drop=True)
+                                    dados["investimentos"] = df_investimentos
+                                    st.session_state["dados"] = dados
+                                    DatabaseManager.save("investimentos", df_investimentos, usuario)
+                                    st.success("Investimento excluído!")
+                                    st.rerun()
+                            with col_confirm2:
+                                if st.button("❌ Não", key=f"cancel_del_{idx}"):
+                                    st.session_state[delete_key] = False
+                                    st.rerun()
+                
+                # Se estiver editando, mostrar formulário de edição
+                if st.session_state.get(f"editing_{idx}", False):
+                    st.markdown("---")
+                    st.markdown("**✏️ Editar Investimento**")
+                    
+                    with st.form(f"form_edit_{idx}"):
+                        col_e1, col_e2 = st.columns(2, gap="large")
+                        
+                        with col_e1:
+                            edit_instituicao = st.text_input("Instituição", value=row.get('instituicao', ''), key=f"edit_inst_{idx}")
+                            edit_ativo = st.text_input("Ativo", value=row.get('ativo', ''), key=f"edit_ativo_{idx}")
+                            edit_tipo = st.selectbox(
+                                "tipo",
+                                ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"],
+                                index=["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"].index(row.get('tipo', 'Renda Fixa')) 
+                                if row.get('tipo') in ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"] else 0,
+                                key=f"edit_tipo_{idx}"
+                            )
+                        
+                        with col_e2:
+                            edit_valor = st.number_input(
+                                "Valor Atual (R$)", 
+                                min_value=0.0, 
+                                step=100.0, 
+                                value=float(row.get('valor_atual', 0)),
+                                key=f"edit_valor_{idx}"
+                            )
+                            edit_rendimento = st.number_input(
+                                "Rendimento Mensal (%)",
+                                min_value=0.0,
+                                max_value=100.0,
+                                value=float(row.get('rendimento_mensal', 0.8) * 100),
+                                step=0.1,
+                                key=f"edit_rend_{idx}"
+                            ) / 100
+                            edit_categoria = st.selectbox(
+                                "Perfil",
+                                ["Conservador", "Moderado", "Arrojado", "Especulativo"],
+                                index=["Conservador", "Moderado", "Arrojado", "Especulativo"].index(row.get('categoria', 'Conservador')) 
+                                if row.get('categoria') in ["Conservador", "Moderado", "Arrojado", "Especulativo"] else 0,
+                                key=f"edit_cat_{idx}"
+                            )
+                        
+                        # Tratar data de entrada
+                        edit_data_entrada = st.date_input(
+                            "Data de Entrada", 
+                            value=pd.to_datetime(row.get('data_entrada', date.today())),
+                            key=f"edit_data_{idx}"
+                        )
+                        
+                        edit_observacao = st.text_area(
+                            "Observações", 
+                            value=row.get('observacao', ''),
+                            key=f"edit_obs_{idx}"
+                        )
+                        
+                        col_save, col_cancel = st.columns(2)
+                        with col_save:
+                            if st.form_submit_button("💾 Salvar Alterações"):
+                                # Atualizar os dados
+                                df_investimentos.at[idx, 'instituicao'] = edit_instituicao
+                                df_investimentos.at[idx, 'ativo'] = edit_ativo
+                                df_investimentos.at[idx, 'tipo'] = edit_tipo
+                                df_investimentos.at[idx, 'valor_atual'] = edit_valor
+                                df_investimentos.at[idx, 'data_entrada'] = edit_data_entrada
+                                df_investimentos.at[idx, 'rendimento_mensal'] = edit_rendimento
+                                df_investimentos.at[idx, 'categoria'] = edit_categoria
+                                df_investimentos.at[idx, 'observacao'] = edit_observacao
+                                
+                                dados["investimentos"] = df_investimentos
+                                st.session_state["dados"] = dados
+                                DatabaseManager.save("investimentos", df_investimentos, usuario)
+                                
+                                st.session_state[f"editing_{idx}"] = False
+                                st.success("Investimento atualizado!")
+                                st.rerun()
+                        
+                        with col_cancel:
+                            if st.form_submit_button("❌ Cancelar"):
+                                st.session_state[f"editing_{idx}"] = False
+                                st.rerun()
+                
+                # Mostrar observações se existirem
+                if row.get('observacao') and str(row.get('observacao')).strip():
+                    with st.expander("📝 Observações"):
+                        st.write(row.get('observacao'))
+                
+                st.divider()
+    else:
+        st.caption("Nenhum investimento cadastrado.")
 
     # ---------------- GRÁFICO ----------------
     if not dados["investimentos"].empty:
+        st.subheader("📊 Distribuição da Carteira")
         fig = px.pie(
             dados["investimentos"],
             values="valor_atual",
@@ -1118,21 +1278,56 @@ elif menu == "💰 INVESTIMENTOS":
             hovermode="x unified"
         )
         st.plotly_chart(fig, use_container_width=True)
-
-    # ---------------- TABELA ----------------
-    if not dados["investimentos"].empty:
-        st.dataframe(
-            dados["investimentos"].style.format({
-                "valor_atual": "R$ {:,.2f}",
-                "Rendimento_Mensal": "{:.2%}"
-            }),
-            use_container_width=True,
-            height=400
+        
+        # Gráfico adicional por tipo
+        fig2 = px.pie(
+            dados["investimentos"],
+            values="valor_atual",
+            names="tipo",
+            hole=0.4,
+            title="Distribuição por Tipo"
         )
-    else:
-        st.caption("Nenhum investimento cadastrado.")
+        fig2.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="#0e1117",
+            plot_bgcolor="#0e1117",
+            font=dict(color="#e5e7eb")
+        )
+        st.plotly_chart(fig2, use_container_width=True)
 
-    st.divider()
+    # ---------------- TABELA RESUMO (opcional) ----------------
+    with st.expander("📋 Tabela Resumo"):
+        if not dados["investimentos"].empty:
+            # Criar uma cópia para exibição
+            df_display = dados["investimentos"].copy()
+            
+            # Renomear colunas para exibição
+            df_display = df_display.rename(columns={
+                'instituicao': 'Instituição',
+                'ativo': 'Ativo',
+                'tipo': 'Tipo',
+                'valor_atual': 'Valor Atual',
+                'data_entrada': 'Data Entrada',
+                'rendimento_mensal': 'Rendimento Mensal',
+                'categoria': 'Perfil',
+                'observacao': 'Observações'
+            })
+            
+            # Formatar valores
+            def format_row(row):
+                if 'Valor Atual' in row:
+                    row['Valor Atual'] = f"R$ {row['Valor Atual']:,.2f}"
+                if 'Rendimento Mensal' in row and isinstance(row['Rendimento Mensal'], (int, float)):
+                    row['Rendimento Mensal'] = f"{row['Rendimento Mensal']:.2%}"
+                return row
+            
+            df_display = df_display.apply(format_row, axis=1)
+            
+            st.dataframe(
+                df_display,
+                use_container_width=True,
+                height=300
+            )
 
 
 
