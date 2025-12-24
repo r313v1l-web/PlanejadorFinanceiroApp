@@ -3978,49 +3978,7 @@ elif menu == "🏷️ CATEGORIAS":
             if col not in df_cat.columns:
                 df_cat[col] = True if col == "ativa" else ""
 
-    # ---------------- LISTA ----------------
-    st.subheader("📋 Categorias Cadastradas")
 
-    if not df_cat.empty:
-        # 🔥 SOLUÇÃO: Criar uma cópia com índice resetado e remover colunas duplicadas
-        df_display = df_cat.copy()
-        
-        # 1. Remover colunas duplicadas
-        df_display = df_display.loc[:, ~df_display.columns.duplicated()]
-        
-        # 2. Resetar índice para garantir unicidade
-        df_display = df_display.reset_index(drop=True)
-        
-        # 3. Garantir que 'ativa' é booleana para a formatação
-        if "ativa" in df_display.columns:
-            df_display["ativa"] = df_display["ativa"].astype(bool)
-        
-        # 4. Aplicar estilo CORRETAMENTE
-        def highlight_inactive(row):
-            styles = [''] * len(row)
-            if 'ativa' in df_display.columns and not row['ativa']:
-                styles[df_display.columns.get_loc('ativa')] = 'color: gray;'
-            return styles
-        
-        # Usar apply (não applymap) para estilo condicional por linha
-        styled_df = df_display.style.apply(
-            highlight_inactive, 
-            axis=1,  # Aplicar por linha
-            subset=None
-        )
-        
-        # Adicionar formatação básica
-        styled_df = styled_df.format(None)  # Formatação padrão
-        
-        st.dataframe(
-            styled_df,
-            use_container_width=True,
-            height=350
-        )
-    else:
-        st.caption("Nenhuma categoria cadastrada.")
-
-    st.divider()
 
     # ---------------- CRIAR CATEGORIA ----------------
     st.subheader("➕ Nova Categoria")
@@ -4147,6 +4105,50 @@ elif menu == "🏷️ CATEGORIAS":
             st.caption("Nenhuma categoria disponível para alteração.")
     else:
         st.caption("Nenhuma categoria cadastrada.")
+
+    # ---------------- LISTA ----------------
+    st.subheader("📋 Categorias Cadastradas")
+
+    if not df_cat.empty:
+        # 🔥 SOLUÇÃO: Criar uma cópia com índice resetado e remover colunas duplicadas
+        df_display = df_cat.copy()
+        
+        # 1. Remover colunas duplicadas
+        df_display = df_display.loc[:, ~df_display.columns.duplicated()]
+        
+        # 2. Resetar índice para garantir unicidade
+        df_display = df_display.reset_index(drop=True)
+        
+        # 3. Garantir que 'ativa' é booleana para a formatação
+        if "ativa" in df_display.columns:
+            df_display["ativa"] = df_display["ativa"].astype(bool)
+        
+        # 4. Aplicar estilo CORRETAMENTE
+        def highlight_inactive(row):
+            styles = [''] * len(row)
+            if 'ativa' in df_display.columns and not row['ativa']:
+                styles[df_display.columns.get_loc('ativa')] = 'color: gray;'
+            return styles
+        
+        # Usar apply (não applymap) para estilo condicional por linha
+        styled_df = df_display.style.apply(
+            highlight_inactive, 
+            axis=1,  # Aplicar por linha
+            subset=None
+        )
+        
+        # Adicionar formatação básica
+        styled_df = styled_df.format(None)  # Formatação padrão
+        
+        st.dataframe(
+            styled_df,
+            use_container_width=True,
+            height=350
+        )
+    else:
+        st.caption("Nenhuma categoria cadastrada.")
+
+    st.divider()
 
 # =========================================================
 # ⚙️ CONFIGURAÇÕES
