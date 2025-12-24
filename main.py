@@ -5041,13 +5041,13 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
         alertas = []
         
         if saldo_variavel < 0:
-            alertas.append("⚠️ Despesas variáveis superaram receitas no mês.")
+            alertas.append("Despesas variáveis superaram receitas no mês.")
         
         if saldo_fixo < 0:
-            alertas.append("⚠️ Estrutura fixa está consumindo patrimônio.")
+            alertas.append("Estrutura fixa está consumindo patrimônio.")
         
         if perc_meta < 50:
-            alertas.append("⚠️ Patrimônio distante da meta definida.")
+            alertas.append("Patrimônio distante da meta definida.")
         
         if not alertas:
             st.markdown("""
