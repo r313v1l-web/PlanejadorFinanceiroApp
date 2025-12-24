@@ -1594,15 +1594,7 @@ elif menu == "💰 INVESTIMENTOS":
     # ---------------- FORM ADICIONAR ESTILIZADO ----------------
     with st.expander("➕ Adicionar Novo Investimento", expanded=False):
         with st.container():
-            st.markdown("""
-            <div style="
-                background: #1f2937;
-                border-radius: 12px;
-                padding: 24px;
-                border: 1px solid #374151;
-                margin-bottom: 20px;
-            ">
-            """, unsafe_allow_html=True)
+
             
             with st.form("form_investimento", clear_on_submit=True):
                 col1, col2 = st.columns(2, gap="large")
@@ -2029,14 +2021,7 @@ elif menu == "💰 INVESTIMENTOS":
         st.markdown("### 📊 Análise da Carteira")
         
         with st.container():
-            st.markdown("""
-            <div style="
-                background: #1f2937;
-                border-radius: 12px;
-                padding: 24px;
-                border: 1px solid #374151;
-            ">
-            """, unsafe_allow_html=True)
+
             
             # Preparar dados para gráficos
             # Garantir que temos as colunas necessárias
