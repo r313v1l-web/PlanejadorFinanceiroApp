@@ -1488,7 +1488,7 @@ if menu == "📝 LANÇAMENTOS":
 
 
 # =========================================================
-# 💰 INVESTIMENTOS - VERSÃO ESTILIZADA
+# 💰 INVESTIMENTOS - VERSÃO ESTILIZADA CORRIGIDA
 # =========================================================
 
 elif menu == "💰 INVESTIMENTOS":
@@ -1561,7 +1561,14 @@ elif menu == "💰 INVESTIMENTOS":
         st.session_state["msg"] = None
 
     # ---------------- RESUMO ESTILIZADO ----------------
-    total = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
+    # Criar uma cópia segura dos dados
+    df_investimentos = dados["investimentos"].copy() if not dados["investimentos"].empty else pd.DataFrame()
+    
+    # Normalizar nomes das colunas para minúsculas
+    if not df_investimentos.empty:
+        df_investimentos.columns = df_investimentos.columns.str.lower()
+    
+    total = df_investimentos["valor_atual"].sum() if not df_investimentos.empty and "valor_atual" in df_investimentos.columns else 0
     total_formatado = f"R$ {total:,.2f}"
     
     st.markdown(f"""
@@ -1649,24 +1656,43 @@ elif menu == "💰 INVESTIMENTOS":
                 )
 
                 if submitted:
+                    # Criar novo registro com nomes de colunas consistentes
                     novo = pd.DataFrame([{
-                        "Instituicao": instituicao,
-                        "Ativo": ativo,
+                        "instituicao": instituicao,
+                        "ativo": ativo,
                         "tipo": tipo,
                         "valor_atual": valor_atual,
-                        "Data_Entrada": data_entrada,
-                        "Rendimento_Mensal": rendimento,
+                        "data_entrada": data_entrada,
+                        "rendimento_mensal": rendimento,
                         "categoria": categoria,
-                        "Observacao": observacao
+                        "observacao": observacao
                     }])
                     
-
-                    df = dados["investimentos"].copy()
-                    df = pd.concat([df, novo], ignore_index=True)
-
-                    dados["investimentos"] = df
+                    # Concatenar com os dados existentes
+                    if df_investimentos.empty:
+                        df_atualizado = novo
+                    else:
+                        # Garantir que todas as colunas existam
+                        for col in novo.columns:
+                            if col not in df_investimentos.columns:
+                                df_investimentos[col] = None
+                        
+                        # Converter tipos para evitar problemas
+                        df_investimentos = df_investimentos.astype({
+                            'valor_atual': 'float64',
+                            'rendimento_mensal': 'float64'
+                        }, errors='ignore')
+                        
+                        df_atualizado = pd.concat([df_investimentos, novo], ignore_index=True)
+                    
+                    # Atualizar dados na sessão
+                    dados["investimentos"] = df_atualizado
                     st.session_state["dados"] = dados
-                    DatabaseManager.save("investimentos", df, usuario)
+                    
+                    # Salvar no banco de dados
+                    DatabaseManager.save("investimentos", df_atualizado, usuario)
+                    
+                    # Mensagem de sucesso
                     st.session_state["msg"] = "✅ Investimento salvo com sucesso!"
                     st.session_state["msg_tipo"] = "success"
                     st.rerun()
@@ -1678,22 +1704,33 @@ elif menu == "💰 INVESTIMENTOS":
     # ---------------- LISTA DE INVESTIMENTOS ESTILIZADA ----------------
     st.markdown("### 📋 Meus Investimentos")
     
-    if not dados["investimentos"].empty:
-        df_investimentos = dados["investimentos"].copy()
-        
-        # Normalizar nomes das colunas
-        df_investimentos.columns = df_investimentos.columns.str.lower()
-        
+    if not df_investimentos.empty:
         # Container para lista
         with st.container():
             for idx, row in df_investimentos.iterrows():
-                # Formatar data de entrada
+                # Formatar data de entrada com segurança
                 data_str = ""
-                if 'data_entrada' in row and row['data_entrada']:
-                    if hasattr(row['data_entrada'], 'strftime'):
-                        data_str = row['data_entrada'].strftime("%d/%m/%Y")
-                    else:
+                if 'data_entrada' in row and pd.notna(row['data_entrada']):
+                    try:
+                        if hasattr(row['data_entrada'], 'strftime'):
+                            data_str = row['data_entrada'].strftime("%d/%m/%Y")
+                        else:
+                            # Tentar converter para datetime
+                            data_dt = pd.to_datetime(row['data_entrada'], errors='coerce')
+                            if pd.notna(data_dt):
+                                data_str = data_dt.strftime("%d/%m/%Y")
+                    except:
                         data_str = str(row['data_entrada'])
+                
+                # Obter valores com valores padrão
+                ativo_nome = row.get('ativo', 'Sem nome') if pd.notna(row.get('ativo')) else 'Sem nome'
+                instituicao_nome = row.get('instituicao', 'N/A') if pd.notna(row.get('instituicao')) else 'N/A'
+                tipo_nome = row.get('tipo', 'N/A') if pd.notna(row.get('tipo')) else 'N/A'
+                categoria_nome = row.get('categoria', 'Conservador') if pd.notna(row.get('categoria')) else 'Conservador'
+                
+                # Converter valores numéricos
+                valor_atual_val = float(row.get('valor_atual', 0)) if pd.notna(row.get('valor_atual')) else 0
+                rendimento_val = float(row.get('rendimento_mensal', 0)) if pd.notna(row.get('rendimento_mensal')) else 0
                 
                 # Definir cores baseadas no perfil
                 cor_perfil = {
@@ -1701,7 +1738,7 @@ elif menu == "💰 INVESTIMENTOS":
                     "Moderado": "#3b82f6",
                     "Arrojado": "#f59e0b",
                     "Especulativo": "#ef4444"
-                }.get(row.get('categoria', 'Conservador'), "#6b7280")
+                }.get(categoria_nome, "#6b7280")
                 
                 # Criar card para cada investimento
                 with st.container():
@@ -1726,18 +1763,17 @@ elif menu == "💰 INVESTIMENTOS":
                             font-weight: bold;
                             color: white;
                             margin-bottom: 4px;
-                        ">{row.get('ativo', 'Sem nome')}</div>
+                        ">{ativo_nome}</div>
                         <div style="
                             font-size: 12px;
                             color: #9ca3af;
-                        ">🏦 {row.get('instituicao', 'N/A')} • 📊 {row.get('tipo', 'N/A')}</div>
+                        ">🏦 {instituicao_nome} • 📊 {tipo_nome}</div>
                         """, unsafe_allow_html=True)
                     
                     with col2:
                         # Valor e rendimento
-                        valor_formatado = f"R$ {row.get('valor_atual', 0):,.2f}"
-                        rendimento = row.get('rendimento_mensal', 0)
-                        rend_formatado = f"{rendimento:.2%} ao mês" if isinstance(rendimento, (int, float)) else "N/A"
+                        valor_formatado = f"R$ {valor_atual_val:,.2f}"
+                        rend_formatado = f"{rendimento_val:.2%} ao mês" if rendimento_val != 0 else "N/A"
                         
                         st.markdown(f"""
                         <div style="
@@ -1759,7 +1795,7 @@ elif menu == "💰 INVESTIMENTOS":
                             "Moderado": "⚖️",
                             "Arrojado": "🚀",
                             "Especulativo": "🎲"
-                        }.get(row.get('categoria', 'Conservador'), "📊")
+                        }.get(categoria_nome, "📊")
                         
                         st.markdown(f"""
                         <div style="
@@ -1770,12 +1806,12 @@ elif menu == "💰 INVESTIMENTOS":
                             align-items: center;
                             gap: 4px;
                         ">
-                            {perfil_emoji} <strong>{row.get('categoria', '')}</strong>
+                            {perfil_emoji} <strong>{categoria_nome}</strong>
                         </div>
                         <div style="
                             font-size: 11px;
                             color: #6b7280;
-                        ">📅 Entrada: {data_str}</div>
+                        ">📅 Entrada: {data_str if data_str else 'N/A'}</div>
                         """, unsafe_allow_html=True)
                     
                     with col4:
@@ -1818,16 +1854,17 @@ elif menu == "💰 INVESTIMENTOS":
                         
                         col_confirm1, col_confirm2 = st.columns([3, 1])
                         with col_confirm1:
-                            st.warning(f"⚠️ **Confirmar exclusão de {row.get('ativo', 'este investimento')}?**")
+                            st.warning(f"⚠️ **Confirmar exclusão de {ativo_nome}?**")
                         
                         with col_confirm2:
                             col_yes, col_no = st.columns(2)
                             with col_yes:
                                 if st.button("✅ Sim", key=f"yes_{idx}", use_container_width=True):
-                                    df_investimentos = df_investimentos.drop(idx).reset_index(drop=True)
-                                    dados["investimentos"] = df_investimentos
+                                    # Remover o investimento
+                                    df_atualizado = df_investimentos.drop(idx).reset_index(drop=True)
+                                    dados["investimentos"] = df_atualizado
                                     st.session_state["dados"] = dados
-                                    DatabaseManager.save("investimentos", df_investimentos, usuario)
+                                    DatabaseManager.save("investimentos", df_atualizado, usuario)
                                     st.session_state["msg"] = "✅ Investimento excluído com sucesso!"
                                     st.session_state["msg_tipo"] = "success"
                                     st.session_state[f"delete_confirm_{idx}"] = False
@@ -1852,26 +1889,32 @@ elif menu == "💰 INVESTIMENTOS":
                         """, unsafe_allow_html=True)
                         
                         with st.form(f"form_edit_{idx}"):
-                            st.markdown(f"### ✏️ Editando: {row.get('ativo', 'Investimento')}")
+                            st.markdown(f"### ✏️ Editando: {ativo_nome}")
                             
                             col_e1, col_e2 = st.columns(2, gap="small")
                             
                             with col_e1:
                                 edit_instituicao = st.text_input(
                                     "🏦 Instituição", 
-                                    value=row.get('instituicao', ''), 
+                                    value=instituicao_name,
                                     key=f"edit_inst_{idx}"
                                 )
                                 edit_ativo = st.text_input(
                                     "📈 Ativo", 
-                                    value=row.get('ativo', ''), 
+                                    value=ativo_nome,
                                     key=f"edit_ativo_{idx}"
                                 )
+                                
+                                # Tipo com valor padrão seguro
+                                tipo_options = ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"]
+                                tipo_index = 0
+                                if tipo_nome in tipo_options:
+                                    tipo_index = tipo_options.index(tipo_nome)
+                                
                                 edit_tipo = st.selectbox(
                                     "📊 Tipo",
-                                    ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"],
-                                    index=["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"].index(row.get('tipo', 'Renda Fixa')) 
-                                    if row.get('tipo') in ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"] else 0,
+                                    tipo_options,
+                                    index=tipo_index,
                                     key=f"edit_tipo_{idx}"
                                 )
                             
@@ -1880,34 +1923,48 @@ elif menu == "💰 INVESTIMENTOS":
                                     "💰 Valor Atual (R$)", 
                                     min_value=0.0, 
                                     step=100.0, 
-                                    value=float(row.get('valor_atual', 0)),
+                                    value=valor_atual_val,
                                     key=f"edit_valor_{idx}"
                                 )
                                 edit_rendimento = st.number_input(
                                     "📈 Rendimento Mensal (%)",
                                     min_value=0.0,
                                     max_value=100.0,
-                                    value=float(row.get('rendimento_mensal', 0.8) * 100),
+                                    value=rendimento_val * 100,
                                     step=0.1,
                                     key=f"edit_rend_{idx}"
                                 ) / 100
+                                
+                                # Categoria com valor padrão seguro
+                                cat_options = ["Conservador", "Moderado", "Arrojado", "Especulativo"]
+                                cat_index = 0
+                                if categoria_nome in cat_options:
+                                    cat_index = cat_options.index(categoria_nome)
+                                
                                 edit_categoria = st.selectbox(
                                     "🎯 Perfil",
-                                    ["Conservador", "Moderado", "Arrojado", "Especulativo"],
-                                    index=["Conservador", "Moderado", "Arrojado", "Especulativo"].index(row.get('categoria', 'Conservador')) 
-                                    if row.get('categoria') in ["Conservador", "Moderado", "Arrojado", "Especulativo"] else 0,
+                                    cat_options,
+                                    index=cat_index,
                                     key=f"edit_cat_{idx}"
                                 )
                             
+                            # Data com tratamento de erro
+                            edit_data_entrada = date.today()
+                            try:
+                                if 'data_entrada' in row and pd.notna(row['data_entrada']):
+                                    edit_data_entrada = pd.to_datetime(row['data_entrada']).date()
+                            except:
+                                pass
+                            
                             edit_data_entrada = st.date_input(
                                 "📅 Data de Entrada", 
-                                value=pd.to_datetime(row.get('data_entrada', date.today())),
+                                value=edit_data_entrada,
                                 key=f"edit_data_{idx}"
                             )
                             
                             edit_observacao = st.text_area(
                                 "📝 Observações", 
-                                value=row.get('observacao', ''),
+                                value=row.get('observacao', '') if pd.notna(row.get('observacao')) else '',
                                 key=f"edit_obs_{idx}",
                                 height=80
                             )
@@ -1919,7 +1976,7 @@ elif menu == "💰 INVESTIMENTOS":
                                     use_container_width=True,
                                     type="primary"
                                 ):
-                                    # Atualizar os dados
+                                    # Atualizar os dados na cópia
                                     df_investimentos.at[idx, 'instituicao'] = edit_instituicao
                                     df_investimentos.at[idx, 'ativo'] = edit_ativo
                                     df_investimentos.at[idx, 'tipo'] = edit_tipo
@@ -1929,10 +1986,14 @@ elif menu == "💰 INVESTIMENTOS":
                                     df_investimentos.at[idx, 'categoria'] = edit_categoria
                                     df_investimentos.at[idx, 'observacao'] = edit_observacao
                                     
+                                    # Atualizar dados na sessão
                                     dados["investimentos"] = df_investimentos
                                     st.session_state["dados"] = dados
+                                    
+                                    # Salvar no banco
                                     DatabaseManager.save("investimentos", df_investimentos, usuario)
                                     
+                                    # Limpar estado e mostrar mensagem
                                     st.session_state[f"editing_{idx}"] = False
                                     st.session_state["msg"] = "✅ Investimento atualizado com sucesso!"
                                     st.session_state["msg_tipo"] = "success"
@@ -1972,7 +2033,7 @@ elif menu == "💰 INVESTIMENTOS":
         """, unsafe_allow_html=True)
 
     # ---------------- GRÁFICOS ESTILIZADOS ----------------
-    if not dados["investimentos"].empty:
+    if not df_investimentos.empty and not df_investimentos.empty:
         st.divider()
         st.markdown("### 📊 Análise da Carteira")
         
@@ -1986,83 +2047,105 @@ elif menu == "💰 INVESTIMENTOS":
             ">
             """, unsafe_allow_html=True)
             
+            # Preparar dados para gráficos
+            # Garantir que temos as colunas necessárias
+            for col in ['categoria', 'tipo', 'valor_atual', 'rendimento_mensal']:
+                if col not in df_investimentos.columns:
+                    df_investimentos[col] = None if col == 'categoria' or col == 'tipo' else 0
+            
             col1, col2 = st.columns(2, gap="medium")
             
             with col1:
                 st.markdown("#### 🎯 Distribuição por Perfil")
-                fig = px.pie(
-                    dados["investimentos"],
-                    values="valor_atual",
-                    names="categoria",
-                    hole=0.4,
-                    color_discrete_sequence=["#10b981", "#3b82f6", "#f59e0b", "#ef4444"]
-                )
-                fig.update_traces(
-                    textposition='inside',
-                    textinfo='percent+label',
-                    hovertemplate="<b>%{label}</b><br>R$ %{value:,.2f}<br>%{percent}<extra></extra>"
-                )
-                fig.update_layout(
-                    template="plotly_dark",
-                    paper_bgcolor="#0e1117",
-                    plot_bgcolor="#0e1117",
-                    font=dict(color="#e5e7eb"),
-                    showlegend=True,
-                    height=350,
-                    margin=dict(t=30, b=30, l=30, r=30),
-                    legend=dict(
-                        orientation="v",
-                        yanchor="middle",
-                        y=0.5,
-                        xanchor="right",
-                        x=1.2,
-                        font=dict(size=11)
+                if 'categoria' in df_investimentos.columns and df_investimentos['categoria'].notna().any():
+                    fig = px.pie(
+                        df_investimentos,
+                        values="valor_atual",
+                        names="categoria",
+                        hole=0.4,
+                        color_discrete_sequence=["#10b981", "#3b82f6", "#f59e0b", "#ef4444"]
                     )
-                )
-                st.plotly_chart(fig, use_container_width=True)
+                    fig.update_traces(
+                        textposition='inside',
+                        textinfo='percent+label',
+                        hovertemplate="<b>%{label}</b><br>R$ %{value:,.2f}<br>%{percent}<extra></extra>"
+                    )
+                    fig.update_layout(
+                        template="plotly_dark",
+                        paper_bgcolor="#0e1117",
+                        plot_bgcolor="#0e1117",
+                        font=dict(color="#e5e7eb"),
+                        showlegend=True,
+                        height=350,
+                        margin=dict(t=30, b=30, l=30, r=30),
+                        legend=dict(
+                            orientation="v",
+                            yanchor="middle",
+                            y=0.5,
+                            xanchor="right",
+                            x=1.2,
+                            font=dict(size=11)
+                        )
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("⚠️ Sem dados de perfil disponíveis")
             
             with col2:
                 st.markdown("#### 📊 Distribuição por Tipo")
-                fig2 = px.pie(
-                    dados["investimentos"],
-                    values="valor_atual",
-                    names="tipo",
-                    hole=0.4,
-                    color_discrete_sequence=px.colors.qualitative.Set3
-                )
-                fig2.update_traces(
-                    textposition='inside',
-                    textinfo='percent+label',
-                    hovertemplate="<b>%{label}</b><br>R$ %{value:,.2f}<br>%{percent}<extra></extra>"
-                )
-                fig2.update_layout(
-                    template="plotly_dark",
-                    paper_bgcolor="#0e1117",
-                    plot_bgcolor="#0e1117",
-                    font=dict(color="#e5e7eb"),
-                    showlegend=True,
-                    height=350,
-                    margin=dict(t=30, b=30, l=30, r=30),
-                    legend=dict(
-                        orientation="v",
-                        yanchor="middle",
-                        y=0.5,
-                        xanchor="right",
-                        x=1.2,
-                        font=dict(size=11)
+                if 'tipo' in df_investimentos.columns and df_investimentos['tipo'].notna().any():
+                    fig2 = px.pie(
+                        df_investimentos,
+                        values="valor_atual",
+                        names="tipo",
+                        hole=0.4,
+                        color_discrete_sequence=px.colors.qualitative.Set3
                     )
-                )
-                st.plotly_chart(fig2, use_container_width=True)
+                    fig2.update_traces(
+                        textposition='inside',
+                        textinfo='percent+label',
+                        hovertemplate="<b>%{label}</b><br>R$ %{value:,.2f}<br>%{percent}<extra></extra>"
+                    )
+                    fig2.update_layout(
+                        template="plotly_dark",
+                        paper_bgcolor="#0e1117",
+                        plot_bgcolor="#0e1117",
+                        font=dict(color="#e5e7eb"),
+                        showlegend=True,
+                        height=350,
+                        margin=dict(t=30, b=30, l=30, r=30),
+                        legend=dict(
+                            orientation="v",
+                            yanchor="middle",
+                            y=0.5,
+                            xanchor="right",
+                            x=1.2,
+                            font=dict(size=11)
+                        )
+                    )
+                    st.plotly_chart(fig2, use_container_width=True)
+                else:
+                    st.info("⚠️ Sem dados de tipo disponíveis")
             
             st.markdown("</div>", unsafe_allow_html=True)
             
-            # Cards de estatísticas
+            # Cards de estatísticas com tratamento de erros
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Calcular algumas estatísticas
-            num_investimentos = len(dados["investimentos"])
-            avg_rendimento = dados["investimentos"]["Rendimento_Mensal"].mean() * 100
-            maior_investimento = dados["investimentos"]["valor_atual"].max()
+            # Calcular estatísticas com segurança
+            num_investimentos = len(df_investimentos)
+            
+            avg_rendimento = 0
+            if 'rendimento_mensal' in df_investimentos.columns:
+                rendimentos = pd.to_numeric(df_investimentos['rendimento_mensal'], errors='coerce')
+                if rendimentos.notna().any():
+                    avg_rendimento = rendimentos.mean() * 100
+            
+            maior_investimento = 0
+            if 'valor_atual' in df_investimentos.columns:
+                valores = pd.to_numeric(df_investimentos['valor_atual'], errors='coerce')
+                if valores.notna().any():
+                    maior_investimento = valores.max()
             
             col_stats1, col_stats2, col_stats3 = st.columns(3, gap="medium")
             
