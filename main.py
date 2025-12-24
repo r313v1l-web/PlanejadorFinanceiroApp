@@ -3259,206 +3259,692 @@ elif menu == "💸 CONTROLE DE GASTOS":
 
 
 # =========================================================
-# 📊 DASHBOARD
+# 📊 DASHBOARD - VERSÃO ESTILIZADA
 # =========================================================
 
 elif menu == "📊 DASHBOARD":
 
-    st.markdown("📊 Dashboard Financeiro")
-    if st.session_state.get("msg"):
-        if st.session_state.get("msg_tipo") == "error":
-            st.error(st.session_state["msg"])
-        elif st.session_state.get("msg_tipo") == "warning":
-            st.warning(st.session_state["msg"])
-        else:
-            st.success(st.session_state["msg"])
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        border: 1px solid #334155;
+    ">
+        <h1 style="
+            color: white;
+            margin: 0 0 8px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        ">
+            <span style="
+                background: #3b82f6;
+                border-radius: 10px;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">📊</span>
+            Dashboard Financeiro
+        </h1>
+        <p style="color: #94a3b8; margin: 0;">
+            Visão completa da sua saúde financeira em tempo real
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
+    # Mensagens de feedback estilizadas
+    if st.session_state.get("msg"):
+        msg_tipo = st.session_state.get("msg_tipo", "info")
+        msg_icon = {
+            "error": "❌",
+            "warning": "⚠️",
+            "success": "✅",
+            "info": "ℹ️"
+        }.get(msg_tipo, "ℹ️")
+        
+        msg_color = {
+            "error": "#ef4444",
+            "warning": "#f59e0b",
+            "success": "#10b981",
+            "info": "#3b82f6"
+        }.get(msg_tipo, "#3b82f6")
+        
+        st.markdown(f"""
+        <div style="
+            background: {msg_color}15;
+            border: 1px solid {msg_color}30;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #e5e7eb;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 20px;">{msg_icon}</span>
+                <div>{st.session_state["msg"]}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         st.session_state["msg"] = None
 
-    col1, col2, col3, col4 = st.columns(4, gap="large")
-
-    col1.metric("💰 Patrimônio", f"R$ {patrimonio:,.2f}")
-
-    col2.metric(
-        "📈 Saldo Variável (Mês)",
-        f"R$ {saldo_variavel:,.2f}",
-        delta_color="inverse" if saldo_variavel < 0 else "normal"
-    )
-
-    col3.metric(
-        "🏢 Saldo Fixo Mensal",
-        f"R$ {saldo_fixo:,.2f}",
-        delta_color="inverse" if saldo_fixo < 0 else "normal"
-    )
-
-    col4.metric("🎯 Progresso Sonhos", f"{progresso_sonhos:.1f}%")
+    # ================= CARDS DE MÉTRICAS PRINCIPAIS =================
+    st.markdown("### 📈 Métricas Principais")
+    
+    with st.container():
+        col1, col2, col3, col4 = st.columns(4, gap="medium")
+        
+        with col1:
+            # Card 1: Patrimônio
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+                border-radius: 16px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 10px;
+                        width: 48px;
+                        height: 48px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 12px;
+                    ">
+                        <span style="font-size: 24px;">💰</span>
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">Patrimônio Total</div>
+                    <div style="font-size: 28px; font-weight: bold; margin: 8px 0;">
+                        R$ {patrimonio:,.0f}
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>Seu patrimônio atual consolidado</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            # Card 2: Saldo Variável
+            cor_saldo_var = "#f87171" if saldo_variavel < 0 else "#34d399"
+            icone_saldo_var = "🔴" if saldo_variavel < 0 else "🟢"
+            texto_var = "Deficit" if saldo_variavel < 0 else "Superavit"
+            
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+                border-radius: 16px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="
+                        background: {cor_saldo_var};
+                        border-radius: 10px;
+                        width: 48px;
+                        height: 48px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 12px;
+                    ">
+                        <span style="font-size: 24px;">{icone_saldo_var}</span>
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">Saldo Variável (Mês)</div>
+                    <div style="font-size: 28px; font-weight: bold; margin: 8px 0;">
+                        R$ {abs(saldo_variavel):,.0f}
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>{texto_var} mensal do orçamento</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            # Card 3: Saldo Fixo
+            cor_saldo_fixo = "#f87171" if saldo_fixo < 0 else "#60a5fa"
+            
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                border-radius: 16px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 10px;
+                        width: 48px;
+                        height: 48px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 12px;
+                    ">
+                        <span style="font-size: 24px;">🏢</span>
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">Saldo Fixo Mensal</div>
+                    <div style="font-size: 28px; font-weight: bold; margin: 8px 0;">
+                        R$ {saldo_fixo:,.0f}
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>Para investimentos e metas</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            # Card 4: Progresso Sonhos
+            cor_progresso = "#fbbf24" if progresso_sonhos < 50 else "#34d399" if progresso_sonhos < 90 else "#10b981"
+            
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+                border-radius: 16px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="
+                        background: {cor_progresso};
+                        border-radius: 10px;
+                        width: 48px;
+                        height: 48px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 12px;
+                    ">
+                        <span style="font-size: 24px;">🎯</span>
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">Progresso Sonhos</div>
+                    <div style="font-size: 28px; font-weight: bold; margin: 8px 0;">
+                        {progresso_sonhos:.1f}%
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>Conclusão das suas metas</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
     st.divider()
 
-    # ================= COMPOSIÇÃO =================
-    st.subheader("📊 Composição Financeira do Mês")
+    # ================= COMPOSIÇÃO FINANCEIRA =================
+    st.markdown("### 📊 Composição Financeira do Mês")
+    
+    with st.container():
+        st.markdown("""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #374151;
+            margin-bottom: 20px;
+        ">
+        """, unsafe_allow_html=True)
+        
+        df_comp = pd.DataFrame({
+            "tipo": ["Receitas Fixas", "Despesas Fixas", "Saldo Variável"],
+            "valor": [receitas_fixas, despesas_fixas, saldo_variavel],
+            "cor": ["#10b981", "#ef4444", "#3b82f6"]
+        })
 
-    df_comp = pd.DataFrame({
-        "tipo": ["Receitas Fixas", "Despesas Fixas", "Saldo Variável"],
-        "valor": [receitas_fixas, despesas_fixas, saldo_variavel]
-    })
-
-    fig_comp = px.bar(
-        df_comp,
-        x="tipo",
-        y="valor",
-        text="valor",
-        color="tipo"
-    )
-
-    fig_comp.update_traces(
-        texttemplate="R$ %{text:,.0f}",
-        textposition="outside"
-    )
-
-    st.plotly_chart(fig_comp, use_container_width=True)
-
-    st.divider()
-
-    # ================= PROJEÇÃO =================
-    st.subheader("🚀 Projeção de Patrimônio")
-
-    if not df_projecao.empty:
-        fig = px.line(
-            df_projecao,
-            x="data",
-            y="patrimonio",
-            title="Evolução do Patrimônio",
-            markers=True
+        fig_comp = px.bar(
+            df_comp,
+            x="tipo",
+            y="valor",
+            color="tipo",
+            color_discrete_sequence=df_comp["cor"].tolist(),
+            text="valor"
         )
 
-        fig.add_hline(
-            y=meta_patrimonio,
-            line_dash="dash",
-            line_color="red",
-            annotation_text=f"Meta: R$ {meta_patrimonio:,.0f}",
-            annotation_position="top left"
+        fig_comp.update_traces(
+            texttemplate="R$ %{text:,.0f}",
+            textposition="outside",
+            textfont=dict(size=14, color="#e5e7eb"),
+            marker=dict(
+                line=dict(width=2, color="#1f2937")
+            )
         )
 
-        meta_df = df_projecao[df_projecao["meta_atingida"]]
-
-        if not meta_df.empty:
-            data_meta = meta_df.iloc[0]["data"]
-
-            # Garantir datetime puro
-            data_meta = pd.to_datetime(data_meta)
-
-            # Linha vertical (shape)
-            fig.add_shape(
-                type="line",
-                x0=data_meta,
-                x1=data_meta,
-                y0=0,
-                y1=1,
-                xref="x",
-                yref="paper",
-                line=dict(
-                    color="green",
-                    width=2,
-                    dash="dot"
-                )
-            )
-
-            # Texto separado (annotation)
-            fig.add_annotation(
-                x=data_meta,
-                y=1,
-                xref="x",
-                yref="paper",
-                text=f"Meta atingida em {data_meta.strftime('%m/%Y')}",
-                showarrow=False,
-                yanchor="bottom",
-                font=dict(color="green")
-            )
-
-        fig.update_layout(
+        fig_comp.update_layout(
             template="plotly_dark",
             paper_bgcolor="#0e1117",
             plot_bgcolor="#0e1117",
             font=dict(color="#e5e7eb"),
-            hovermode="x unified"
+            showlegend=False,
+            xaxis=dict(
+                title="",
+                tickfont=dict(size=14),
+                gridcolor="#374151"
+            ),
+            yaxis=dict(
+                title="Valor (R$)",
+                tickfont=dict(size=12),
+                gridcolor="#374151",
+                tickprefix="R$ "
+            ),
+            height=400,
+            margin=dict(t=40, b=80, l=80, r=40)
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig_comp, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        ultimo = df_projecao.iloc[-1]
-        meses_proj = len(df_projecao)
+    st.divider()
 
-        colp1, colp2, colp3 = st.columns(3)
-
-        tempo_formatado = formatar_tempo_meses(meses_proj)
-        colp1.metric("📅 Horizonte da Projeção", tempo_formatado)
-        colp2.metric("📈 Patrimônio Projetado", f"R$ {ultimo['patrimonio']:,.2f}")
-
-        if ultimo["meta_atingida"]:
-            colp3.metric(
-                "🎯 Meta Atingida em",
-                meta_df.iloc[0]["data"].strftime("%m/%Y")
-            )
-        else:
-            colp3.metric("🎯 Meta", "Ainda não atingida")
-
-    else:
-        st.caption("Dados insuficientes para projeção.")
-
+    # ================= PROJEÇÃO DE PATRIMÔNIO =================
+    st.markdown("### 🚀 Projeção de Patrimônio")
+    
+    with st.container():
+        if not df_projecao.empty:
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid #374151;
+                margin-bottom: 20px;
+            ">
+            """, unsafe_allow_html=True)
             
-    
-    # ================= SUGESTÃO DE APORTE =================
-    st.subheader("🎯 Sugestão para Acelerar a Meta")
-    
-    col_s1, col_s2, col_s3 = st.columns(3)
-    
-    with col_s1:
-        tempo_desejado = st.number_input(
-            "Em quantos anos quer atingir a meta?",
-            min_value=1,
-            max_value=50,
-            value=10,
-            step=1
-        )
-    
-    if meta_patrimonio > patrimonio and tempo_desejado > 0:
-        aporte_sugerido, é_viável = calcular_aporte_ideal_para_meta(
-            patrimonio_atual=patrimonio,
-            meta_patrimonio=meta_patrimonio,
-            rendimento_mensal=rendimento_mensal,
-            inflacao_mensal=inflacao_mensal,
-            tempo_desejado_anos=tempo_desejado
-        )
-        
-        with col_s2:
-            st.metric(
-                "💰 Aporte Mensal Sugerido",
-                f"R$ {aporte_sugerido:,.2f}",
-                delta_color="normal" if é_viável else "inverse"
-            )
-        
-        with col_s3:
-            if é_viável:
-                st.success("✅ Meta viável com este aporte")
-            else:
-                st.warning("⚠️ Aporte muito alto - ajuste o prazo")
-        
-        # Comparação com saldo atual
-        diferenca = aporte_sugerido - saldo_fixo
-        if diferenca > 0:
-            st.info(
-                f"📊 Para atingir em **{tempo_desejado} anos**, você precisa guardar "
-                f"**R$ {diferenca:,.2f} a mais por mês** "
-                f"(atualmente guarda R$ {saldo_fixo:,.2f})"
-            )
-        else:
-            st.success(
-                f"🎉 Você já guarda o suficiente! Pode atingir a meta em "
-                f"menos de {tempo_desejado} anos."
+            fig = px.line(
+                df_projecao,
+                x="data",
+                y="patrimonio",
+                markers=True,
+                line_shape="spline"
             )
 
-            st.divider()
+            fig.update_traces(
+                line=dict(width=4, color="#3b82f6"),
+                marker=dict(size=8, color="#60a5fa"),
+                hovertemplate="<b>%{x|%b/%Y}</b><br>R$ %{y:,.0f}<extra></extra>"
+            )
+
+            # Linha da meta
+            fig.add_hline(
+                y=meta_patrimonio,
+                line_dash="dash",
+                line_color="#10b981",
+                line_width=2,
+                annotation_text=f"Meta: R$ {meta_patrimonio:,.0f}",
+                annotation_position="top left",
+                annotation_font=dict(color="#10b981", size=12)
+            )
+
+            meta_df = df_projecao[df_projecao["meta_atingida"]]
+
+            if not meta_df.empty:
+                data_meta = pd.to_datetime(meta_df.iloc[0]["data"])
+
+                # Linha vertical no ponto da meta
+                fig.add_vline(
+                    x=data_meta,
+                    line_dash="dot",
+                    line_color="#10b981",
+                    line_width=2,
+                    annotation_text=f"Meta atingida em {data_meta.strftime('%m/%Y')}",
+                    annotation_position="top left",
+                    annotation_font=dict(color="#10b981", size=10)
+                )
+
+            fig.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="#0e1117",
+                plot_bgcolor="#0e1117",
+                font=dict(color="#e5e7eb"),
+                hovermode="x unified",
+                title=dict(
+                    text="Evolução do Patrimônio",
+                    font=dict(size=20, color="white"),
+                    x=0.05
+                ),
+                xaxis=dict(
+                    title="",
+                    gridcolor="#374151",
+                    showgrid=True,
+                    tickfont=dict(size=12)
+                ),
+                yaxis=dict(
+                    title="Patrimônio (R$)",
+                    gridcolor="#374151",
+                    showgrid=True,
+                    tickfont=dict(size=12),
+                    tickprefix="R$ "
+                ),
+                height=450
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            # Cards de estatísticas da projeção
+            ultimo = df_projecao.iloc[-1]
+            meses_proj = len(df_projecao)
+            
+            col_stat1, col_stat2, col_stat3 = st.columns(3, gap="medium")
+            
+            with col_stat1:
+                tempo_formatado = formatar_tempo_meses(meses_proj)
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    text-align: center;
+                ">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📅 Horizonte da Projeção</div>
+                    <div style="font-size: 24px; font-weight: bold;">{tempo_formatado}</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                        <i>Período projetado</i>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_stat2:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    text-align: center;
+                ">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📈 Patrimônio Projetado</div>
+                    <div style="font-size: 24px; font-weight: bold;">R$ {ultimo['patrimonio']:,.0f}</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                        <i>Valor final estimado</i>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_stat3:
+                if ultimo["meta_atingida"]:
+                    data_meta = meta_df.iloc[0]["data"].strftime("%m/%Y")
+                    status_html = f"""
+                    <div style="
+                        background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                        border-radius: 12px;
+                        padding: 20px;
+                        color: white;
+                        text-align: center;
+                    ">
+                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">🎯 Meta Atingida</div>
+                        <div style="font-size: 24px; font-weight: bold;">{data_meta}</div>
+                        <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                            <i>Parabéns! 🎉</i>
+                        </div>
+                    </div>
+                    """
+                else:
+                    status_html = f"""
+                    <div style="
+                        background: linear-gradient(135deg, #78350f 0%, #f59e0b 100%);
+                        border-radius: 12px;
+                        padding: 20px;
+                        color: white;
+                        text-align: center;
+                    ">
+                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">🎯 Meta</div>
+                        <div style="font-size: 24px; font-weight: bold;">Em progresso</div>
+                        <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                            <i>Ainda não atingida</i>
+                        </div>
+                    </div>
+                    """
+                st.markdown(status_html, unsafe_allow_html=True)
+
+        else:
+            # Card para dados insuficientes
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 60px 20px;
+                text-align: center;
+                border: 2px dashed #374151;
+                margin: 20px 0;
+            ">
+                <div style="font-size: 64px; margin-bottom: 20px; color: #6b7280;">📊</div>
+                <h3 style="color: #9ca3af; margin-bottom: 12px;">Dados insuficientes para projeção</h3>
+                <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                    Continue registrando seus lançamentos para ver projeções detalhadas.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ================= SUGESTÃO DE APORTE =================
+    st.markdown("### 🎯 Sugestão para Acelerar a Meta")
+    
+    with st.container():
+        st.markdown("""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #374151;
+        ">
+        """, unsafe_allow_html=True)
+        
+        col_s1, col_s2, col_s3 = st.columns(3, gap="medium")
+        
+        with col_s1:
+            st.markdown("""
+            <div style="
+                background: #111827;
+                border-radius: 10px;
+                padding: 20px;
+                border: 1px solid #374151;
+            ">
+                <div style="font-size: 14px; color: #d1d5db; margin-bottom: 12px;">
+                    ⏳ Prazo Desejado
+                </div>
+            """, unsafe_allow_html=True)
+            
+            tempo_desejado = st.number_input(
+                "Em quantos anos quer atingir a meta?",
+                min_value=1,
+                max_value=50,
+                value=10,
+                step=1,
+                label_visibility="collapsed"
+            )
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        if meta_patrimonio > patrimonio and tempo_desejado > 0:
+            aporte_sugerido, é_viável = calcular_aporte_ideal_para_meta(
+                patrimonio_atual=patrimonio,
+                meta_patrimonio=meta_patrimonio,
+                rendimento_mensal=rendimento_mensal,
+                inflacao_mensal=inflacao_mensal,
+                tempo_desejado_anos=tempo_desejado
+            )
+            
+            with col_s2:
+                cor_aporte = "#10b981" if é_viável else "#f59e0b"
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    text-align: center;
+                    border: 2px solid {cor_aporte};
+                ">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">💰 Aporte Mensal Sugerido</div>
+                    <div style="font-size: 28px; font-weight: bold;">R$ {aporte_sugerido:,.0f}</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                        <i>Para atingir em {tempo_desejado} anos</i>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_s3:
+                if é_viável:
+                    st.markdown("""
+                    <div style="
+                        background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                        border-radius: 12px;
+                        padding: 20px;
+                        color: white;
+                        text-align: center;
+                    ">
+                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">✅ Status</div>
+                        <div style="font-size: 20px; font-weight: bold; margin-bottom: 4px;">Meta viável</div>
+                        <div style="font-size: 12px; opacity: 0.8;">
+                            Com este aporte
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown("""
+                    <div style="
+                        background: linear-gradient(135deg, #78350f 0%, #f59e0b 100%);
+                        border-radius: 12px;
+                        padding: 20px;
+                        color: white;
+                        text-align: center;
+                    ">
+                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">⚠️ Status</div>
+                        <div style="font-size: 20px; font-weight: bold; margin-bottom: 4px;">Aporte muito alto</div>
+                        <div style="font-size: 12px; opacity: 0.8;">
+                            Ajuste o prazo
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # Comparação com saldo atual
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            diferenca = aporte_sugerido - saldo_fixo
+            if diferenca > 0:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    margin-top: 16px;
+                ">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="font-size: 32px;">📊</div>
+                        <div>
+                            <div style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">
+                                Para atingir em <strong>{tempo_desejado} anos</strong>
+                            </div>
+                            <div style="font-size: 14px; opacity: 0.9;">
+                                Você precisa guardar <strong>R$ {diferenca:,.0f} a mais por mês</strong>
+                                (atualmente guarda R$ {saldo_fixo:,.0f})
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    margin-top: 16px;
+                ">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="font-size: 32px;">🎉</div>
+                        <div>
+                            <div style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">
+                                Excelente notícia!
+                            </div>
+                            <div style="font-size: 14px; opacity: 0.9;">
+                                Você já guarda o suficiente! Pode atingir a meta em menos de <strong>{tempo_desejado} anos</strong>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # ================= RESUMO RÁPIDO =================
+    st.markdown("### 📋 Resumo Rápido")
+    
+    col_r1, col_r2, col_r3 = st.columns(3, gap="medium")
+    
+    with col_r1:
+        st.markdown(f"""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #374151;
+        ">
+            <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">💼 Receitas Fixas</div>
+            <div style="font-size: 20px; font-weight: bold; color: #10b981;">R$ {receitas_fixas:,.0f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_r2:
+        st.markdown(f"""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #374151;
+        ">
+            <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">📉 Despesas Fixas</div>
+            <div style="font-size: 20px; font-weight: bold; color: #ef4444;">R$ {despesas_fixas:,.0f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_r3:
+        st.markdown(f"""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #374151;
+        ">
+            <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">📊 Margem de Segurança</div>
+            <div style="font-size: 20px; font-weight: bold; color: #3b82f6;">{((receitas_fixas - despesas_fixas) / receitas_fixas * 100):.1f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
 # =========================================================
 # 🏷️ CATEGORIAS
 # =========================================================
