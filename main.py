@@ -1140,11 +1140,12 @@ with st.sidebar:
             "bg_color": "rgba(139, 92, 246, 0.1)"
         },
         {
-            "emoji": "📝",
-            "label": "LANÇAMENTOS",
-            "color": "#10b981",
-            "bg_color": "rgba(16, 185, 129, 0.1)"
+            "emoji": "📄",
+            "label": "RELATÓRIO EXECUTIVO",
+            "color": "#6366f1",
+            "bg_color": "rgba(99, 102, 241, 0.1)"
         },
+
         {
             "emoji": "💰",
             "label": "INVESTIMENTOS",
@@ -1158,6 +1159,12 @@ with st.sidebar:
             "bg_color": "rgba(239, 68, 68, 0.1)"
         },
         {
+            "emoji": "📝",
+            "label": "LANÇAMENTOS",
+            "color": "#10b981",
+            "bg_color": "rgba(16, 185, 129, 0.1)"
+        },
+        {
             "emoji": "🏢",
             "label": "FLUXOS FIXOS",
             "color": "#ec4899",
@@ -1169,12 +1176,7 @@ with st.sidebar:
             "color": "#14b8a6",
             "bg_color": "rgba(20, 184, 166, 0.1)"
         },
-        {
-            "emoji": "📄",
-            "label": "RELATÓRIO EXECUTIVO",
-            "color": "#6366f1",
-            "bg_color": "rgba(99, 102, 241, 0.1)"
-        },
+
         {
             "emoji": "⚙️",
             "label": "CONFIGURAÇÕES",
