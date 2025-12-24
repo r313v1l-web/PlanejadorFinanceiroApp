@@ -3560,15 +3560,7 @@ elif menu == "📊 DASHBOARD":
     
     with st.container():
         if not df_projecao.empty:
-            st.markdown("""
-            <div style="
-                background: #1f2937;
-                border-radius: 12px;
-                padding: 20px;
-                border: 1px solid #374151;
-                margin-bottom: 20px;
-            ">
-            """, unsafe_allow_html=True)
+            
             
             fig = px.line(
                 df_projecao,
@@ -3760,14 +3752,7 @@ elif menu == "📊 DASHBOARD":
     st.markdown("### 🎯 Sugestão para Acelerar a Meta")
     
     with st.container():
-        st.markdown("""
-        <div style="
-            background: #1f2937;
-            border-radius: 12px;
-            padding: 24px;
-            border: 1px solid #374151;
-        ">
-        """, unsafe_allow_html=True)
+        
         
         col_s1, col_s2, col_s3 = st.columns(3, gap="medium")
         
