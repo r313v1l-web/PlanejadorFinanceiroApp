@@ -3503,15 +3503,7 @@ elif menu == "📊 DASHBOARD":
     st.markdown("### 📊 Composição Financeira do Mês")
     
     with st.container():
-        st.markdown("""
-        <div style="
-            background: #1f2937;
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #374151;
-            margin-bottom: 20px;
-        ">
-        """, unsafe_allow_html=True)
+        
         
         df_comp = pd.DataFrame({
             "tipo": ["Receitas Fixas", "Despesas Fixas", "Saldo Variável"],
