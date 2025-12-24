@@ -2178,23 +2178,80 @@ elif menu == "💰 INVESTIMENTOS":
 
 
 # =========================================================
-# 🎯 SONHOS & METAS - CORREÇÃO DA EXCLUSÃO
+# 🎯 SONHOS & METAS - VERSÃO ESTILIZADA COMPLETA
 # =========================================================
 
 elif menu == "🎯 SONHOS & METAS":
-
-    st.markdown("🎯 Sonhos & Metas")
+    
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        border: 1px solid #a78bfa;
+    ">
+        <h1 style="
+            color: white;
+            margin: 0 0 8px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        ">
+            <span style="
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 10px;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">🎯</span>
+            Sonhos & Metas
+        </h1>
+        <p style="color: #e5e7eb; margin: 0; opacity: 0.9;">
+            Transforme seus sonhos em realidade
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Mensagens de feedback estilizadas
     if st.session_state.get("msg"):
-        if st.session_state.get("msg_tipo") == "error":
-            st.error(st.session_state["msg"])
-        elif st.session_state.get("msg_tipo") == "warning":
-            st.warning(st.session_state["msg"])
-        else:
-            st.success(st.session_state["msg"])
-
+        msg_tipo = st.session_state.get("msg_tipo", "info")
+        msg_icon = {
+            "error": "❌",
+            "warning": "⚠️",
+            "success": "✅",
+            "info": "ℹ️"
+        }.get(msg_tipo, "ℹ️")
+        
+        msg_color = {
+            "error": "#ef4444",
+            "warning": "#f59e0b",
+            "success": "#10b981",
+            "info": "#8b5cf6"
+        }.get(msg_tipo, "#8b5cf6")
+        
+        st.markdown(f"""
+        <div style="
+            background: {msg_color}15;
+            border: 1px solid {msg_color}30;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #e5e7eb;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 20px;">{msg_icon}</span>
+                <div>{st.session_state["msg"]}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         st.session_state["msg"] = None
 
-    # ---------------- RESUMO ----------------
+    # ---------------- RESUMO ESTILIZADO ----------------
+    # Calcular métricas
     if not dados["sonhos_projetos"].empty:
         sonhos_ativos = dados["sonhos_projetos"][dados["sonhos_projetos"]["status"] != "Desistido"]
         
@@ -2202,59 +2259,174 @@ elif menu == "🎯 SONHOS & METAS":
             total_alvo = sonhos_ativos["valor_alvo"].sum()
             total_atual = sonhos_ativos["valor_atual"].sum()
             progresso = (total_atual / total_alvo * 100) if total_alvo > 0 else 0
+            num_sonhos = len(sonhos_ativos)
         else:
             total_alvo = total_atual = progresso = 0
+            num_sonhos = 0
     else:
         total_alvo = total_atual = progresso = 0
-
-    col1, col2, col3 = st.columns(3, gap="small")
-    col1.metric("Total em Metas", f"R$ {total_alvo:,.2f}")
-    col2.metric("Economizado", f"R$ {total_atual:,.2f}")
-    col3.metric("Progresso", f"{progresso:.1f}%")
+        num_sonhos = 0
+    
+    # Cards de métricas
+    st.markdown("### 📊 Visão Geral dos Sonhos")
+    
+    with st.container():
+        col1, col2, col3, col4 = st.columns(4, gap="medium")
+        
+        with col1:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                text-align: center;
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">🎯 Total de Sonhos</div>
+                <div style="font-size: 28px; font-weight: bold;">{num_sonhos}</div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                    <i>Ativos</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                text-align: center;
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">💰 Economizado</div>
+                <div style="font-size: 24px; font-weight: bold;">R$ {total_atual:,.0f}</div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                    <i>Valor acumulado</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #78350f 0%, #f59e0b 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                text-align: center;
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">🏆 Total em Metas</div>
+                <div style="font-size: 24px; font-weight: bold;">R$ {total_alvo:,.0f}</div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                    <i>Valor necessário</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            # Cor baseada no progresso
+            cor_progresso = "#ef4444" if progresso < 30 else "#f59e0b" if progresso < 70 else "#10b981"
+            
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                text-align: center;
+                border: 2px solid {cor_progresso};
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📈 Progresso Geral</div>
+                <div style="font-size: 28px; font-weight: bold; color: {cor_progresso};">{progresso:.1f}%</div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                    <i>Conclusão total</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
     st.divider()
 
-    # ---------------- NOVO SONHO ----------------
-    with st.expander("➕ Novo Sonho", expanded=False):
-        with st.form("form_novo_sonho", clear_on_submit=True):
-            col1, col2 = st.columns(2, gap="small")
+    # ---------------- NOVO SONHO ESTILIZADO ----------------
+    with st.expander("➕ Adicionar Novo Sonho", expanded=False):
+        with st.container():
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 24px;
+                border: 1px solid #374151;
+                margin-bottom: 20px;
+            ">
+            """, unsafe_allow_html=True)
+            
+            with st.form("form_novo_sonho", clear_on_submit=True):
+                col1, col2 = st.columns(2, gap="large")
 
-            with col1:
-                nome = st.text_input("Nome")
-                valor_alvo = st.number_input("Valor Alvo (R$)", min_value=0.0, step=1000.0)
-                categoria = st.selectbox(
-                    "categoria",
-                    ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"]
+                with col1:
+                    st.markdown("#### 📋 Informações Básicas")
+                    nome = st.text_input("🎯 Nome do Sonho", placeholder="Ex: Viagem para Europa")
+                    valor_alvo = st.number_input(
+                        "💰 Valor Alvo (R$)", 
+                        min_value=0.0, 
+                        step=1000.0,
+                        value=10000.0
+                    )
+                    categoria = st.selectbox(
+                        "📂 Categoria",
+                        ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"]
+                    )
+
+                with col2:
+                    st.markdown("#### 📅 Planejamento")
+                    data_alvo = st.date_input("📅 Data Alvo", date.today() + timedelta(days=365))
+                    prioridade = st.selectbox("⚡ Prioridade", ["Baixa", "Média", "Alta"])
+                    valor_inicial = st.number_input(
+                        "💰 Valor Inicial (R$)", 
+                        min_value=0.0, 
+                        step=500.0,
+                        value=0.0
+                    )
+
+                descricao = st.text_area(
+                    "📝 Descrição", 
+                    placeholder="Descreva seu sonho...",
+                    height=80
                 )
 
-            with col2:
-                data_alvo = st.date_input("Data Alvo", date.today() + timedelta(days=365))
-                prioridade = st.selectbox("prioridade", ["Baixa", "Média", "Alta"])
-                valor_inicial = st.number_input("Valor Inicial (R$)", min_value=0.0, step=500.0)
+                submitted = st.form_submit_button(
+                    "🎯 CRIAR SONHO",
+                    use_container_width=True,
+                    type="primary"
+                )
 
-            descricao = st.text_area("descrição", height=60)
+                if submitted:
+                    novo = pd.DataFrame([{
+                        "nome": nome,
+                        "descricao": descricao,
+                        "valor_alvo": valor_alvo,
+                        "valor_atual": valor_inicial,
+                        "data_alvo": data_alvo,
+                        "prioridade": prioridade,
+                        "status": "Em Andamento",
+                        "categoria": categoria
+                    }])
 
-            if st.form_submit_button("🎯 Criar"):
-                novo = pd.DataFrame([{
-                    "nome": nome,
-                    "descricao": descricao,
-                    "valor_alvo": valor_alvo,
-                    "valor_atual": valor_inicial,
-                    "data_alvo": data_alvo,
-                    "prioridade": prioridade,
-                    "status": "Em Andamento",
-                    "categoria": categoria
-                }])
+                    df = pd.concat([dados["sonhos_projetos"], novo], ignore_index=True)
+                    dados["sonhos_projetos"] = df
+                    st.session_state["dados"] = dados
+                    DatabaseManager.save("sonhos_projetos", df, usuario)
+                    
+                    st.session_state["msg"] = "✅ Sonho criado com sucesso!"
+                    st.session_state["msg_tipo"] = "success"
+                    st.rerun()
+            
+            st.markdown("</div>", unsafe_allow_html=True)
 
-                df = pd.concat([dados["sonhos_projetos"], novo], ignore_index=True)
-                dados["sonhos_projetos"] = df
-                st.session_state["dados"] = dados
-                DatabaseManager.save("sonhos_projetos", df, usuario)
-                st.success("Sonho criado com sucesso!")
-                st.rerun()
+    st.divider()
 
-    # ---------------- LISTA COMPACTA ----------------
-    st.subheader("📋 Meus Sonhos")
+    # ---------------- LISTA DE SONHOS ESTILIZADA ----------------
+    st.markdown("### 📋 Meus Sonhos & Metas")
     
     if not dados["sonhos_projetos"].empty:
         for i, sonho in dados["sonhos_projetos"].iterrows():
@@ -2263,169 +2435,377 @@ elif menu == "🎯 SONHOS & METAS":
             if delete_key not in st.session_state:
                 st.session_state[delete_key] = False
             
-            # Container para cada sonho
+            # Dados do sonho
             is_desistido = sonho.get("status") == "Desistido"
+            progresso_val = sonho["valor_atual"] / sonho["valor_alvo"] if sonho["valor_alvo"] > 0 else 0
+            progresso_percent = min(progresso_val * 100, 100)
             
-            # Cabeçalho do sonho
-            col1, col2, col3 = st.columns([3, 1, 1], gap="small")
+            # Cores baseadas no status
+            cor_status = {
+                "Em Andamento": "#3b82f6",
+                "Concluído": "#10b981",
+                "Desistido": "#6b7280"
+            }.get(sonho.get('status', 'Em Andamento'), "#6b7280")
             
-            with col1:
-                if is_desistido:
-                    st.markdown(f"😢 **{sonho['nome']}** *(Desistido)*")
-                else:
-                    st.markdown(f"🎯 **{sonho['nome']}**")
-                st.caption(f"{sonho.get('categoria', '')} • {sonho.get('prioridade', '')} • {sonho['data_alvo']}")
+            # Cor da barra de progresso
+            cor_barra = "#ef4444" if progresso_percent < 30 else "#f59e0b" if progresso_percent < 70 else "#10b981"
             
-            with col2:
-                progresso = sonho["valor_atual"] / sonho["valor_alvo"] if sonho["valor_alvo"] > 0 else 0
+            # Container principal do sonho
+            with st.container():
+                st.markdown(f"""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 16px;
+                    border-left: 4px solid {cor_status};
+                    border: 1px solid #374151;
+                ">
+                """, unsafe_allow_html=True)
+                
+                # Cabeçalho
+                col_title, col_status = st.columns([3, 1])
+                
+                with col_title:
+                    status_emoji = "😢" if is_desistido else "🎯"
+                    status_text = " (Desistido)" if is_desistido else ""
+                    
+                    st.markdown(f"""
+                    <div style="
+                        font-size: 20px;
+                        font-weight: bold;
+                        color: white;
+                        margin-bottom: 4px;
+                    ">{status_emoji} {sonho['nome']}<span style="color: {cor_status};">{status_text}</span></div>
+                    <div style="
+                        font-size: 14px;
+                        color: #9ca3af;
+                        margin-bottom: 8px;
+                    ">
+                        📂 {sonho.get('categoria', '')} • ⚡ {sonho.get('prioridade', '')} • 📅 {sonho['data_alvo']}
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col_status:
+                    st.markdown(f"""
+                    <div style="
+                        background: {cor_status}20;
+                        border: 1px solid {cor_status};
+                        border-radius: 20px;
+                        padding: 6px 12px;
+                        text-align: center;
+                        color: {cor_status};
+                        font-size: 12px;
+                        font-weight: bold;
+                    ">
+                        {sonho.get('status', 'Em Andamento')}
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Barra de progresso
                 if not is_desistido:
-                    st.progress(min(progresso, 1.0))
-            
-            with col3:
-                st.markdown(f"**R$ {sonho['valor_atual']:,.0f}** / R$ {sonho['valor_alvo']:,.0f}")
-            
-            # Barra de progresso fina
-            if not is_desistido:
-                st.caption(f"Progresso: {progresso:.1%}")
-            
-            # Ações rápidas
-            col_a1, col_a2, col_a3, col_a4 = st.columns(4, gap="small")
-            
-            with col_a1:
-                # Adicionar/retirar valor rápido
-                with st.popover("💰 Movimentar", use_container_width=True):
-                    valor_mov = st.number_input(
-                        "Valor (+ para adicionar, - para retirar)", 
-                        value=0.0, 
-                        step=100.0,
-                        key=f"mov_{i}"
-                    )
-                    if st.button("Aplicar", key=f"apply_{i}", use_container_width=True):
-                        novo_valor = sonho["valor_atual"] + valor_mov
-                        if novo_valor >= 0:
-                            dados["sonhos_projetos"].loc[i, "valor_atual"] = novo_valor
+                    st.markdown(f"""
+                    <div style="
+                        background: #374151;
+                        border-radius: 10px;
+                        height: 12px;
+                        margin: 12px 0;
+                        overflow: hidden;
+                    ">
+                        <div style="
+                            background: {cor_barra};
+                            width: {progresso_percent}%;
+                            height: 100%;
+                            border-radius: 10px;
+                            transition: width 0.5s ease;
+                        "></div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Métricas
+                col_met1, col_met2, col_met3 = st.columns(3, gap="small")
+                
+                with col_met1:
+                    st.markdown(f"""
+                    <div style="text-align: center;">
+                        <div style="font-size: 12px; color: #9ca3af;">💰 Economizado</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #10b981;">R$ {sonho['valor_atual']:,.0f}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col_met2:
+                    st.markdown(f"""
+                    <div style="text-align: center;">
+                        <div style="font-size: 12px; color: #9ca3af;">🏆 Meta</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #3b82f6;">R$ {sonho['valor_alvo']:,.0f}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col_met3:
+                    if not is_desistido:
+                        st.markdown(f"""
+                        <div style="text-align: center;">
+                            <div style="font-size: 12px; color: #9ca3af;">📈 Progresso</div>
+                            <div style="font-size: 18px; font-weight: bold; color: {cor_barra};">{progresso_val:.1%}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                # Ações rápidas
+                st.markdown("<div style='margin-top: 16px;'></div>", unsafe_allow_html=True)
+                
+                col_acoes1, col_acoes2, col_acoes3, col_acoes4 = st.columns(4, gap="small")
+                
+                with col_acoes1:
+                    # Movimentar valor
+                    with st.popover("💰 Movimentar", use_container_width=True):
+                        st.markdown("""
+                        <div style="
+                            background: #1f2937;
+                            border-radius: 8px;
+                            padding: 16px;
+                        ">
+                        """, unsafe_allow_html=True)
+                        
+                        valor_mov = st.number_input(
+                            "Valor (+ para adicionar, - para retirar)", 
+                            value=0.0, 
+                            step=100.0,
+                            key=f"mov_{i}"
+                        )
+                        
+                        if st.button("💾 Aplicar", key=f"apply_{i}", use_container_width=True):
+                            novo_valor = sonho["valor_atual"] + valor_mov
+                            if novo_valor >= 0:
+                                dados["sonhos_projetos"].loc[i, "valor_atual"] = novo_valor
+                                st.session_state["dados"] = dados
+                                DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                                
+                                acao = "adicionado" if valor_mov > 0 else "retirado"
+                                st.session_state["msg"] = f"✅ {acao.capitalize()} R$ {abs(valor_mov):,.2f} no sonho '{sonho['nome']}'!"
+                                st.session_state["msg_tipo"] = "success"
+                                st.rerun()
+                            else:
+                                st.error("❌ Valor não pode ser negativo!")
+                        
+                        st.markdown("</div>", unsafe_allow_html=True)
+                
+                with col_acoes2:
+                    if is_desistido:
+                        if st.button("🔄 Reativar", key=f"reat_{i}", use_container_width=True, type="secondary"):
+                            dados["sonhos_projetos"].loc[i, "status"] = "Em Andamento"
                             st.session_state["dados"] = dados
                             DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                            st.success(f"{'Adicionado' if valor_mov > 0 else 'Retirado'} R$ {abs(valor_mov):,.2f}")
+                            
+                            st.session_state["msg"] = f"✅ Sonho '{sonho['nome']}' reativado!"
+                            st.session_state["msg_tipo"] = "success"
                             st.rerun()
-                        else:
-                            st.error("Valor não pode ser negativo!")
-            
-            with col_a2:
-                if is_desistido:
-                    if st.button("🔄 Reativar", key=f"reat_{i}", use_container_width=True):
-                        dados["sonhos_projetos"].loc[i, "status"] = "Em Andamento"
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                        st.success("Reativado!")
-                        st.rerun()
-                else:
-                    if st.button("😢 Desistir", key=f"des_{i}", use_container_width=True):
-                        dados["sonhos_projetos"].loc[i, "status"] = "Desistido"
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                        st.success("Marcado como desistido")
-                        st.rerun()
-            
-            with col_a3:
-                if st.button("✏️ Editar", key=f"edit_sonho_{i}", use_container_width=True):
-                    st.session_state[f"editing_sonho_{i}"] = not st.session_state.get(f"editing_sonho_{i}", False)
-                    st.rerun()
-            
-            with col_a4:
-                # CORREÇÃO: Sistema de exclusão em duas etapas
-                if not st.session_state[delete_key]:
-                    if st.button("🗑️ Excluir", key=f"del_btn_{i}", use_container_width=True, type="secondary"):
-                        st.session_state[delete_key] = True
-                        st.rerun()
-                else:
-                    # Modo de confirmação
-                    st.warning(f"Excluir '{sonho['nome']}'?")
-                    col_confirm1, col_confirm2 = st.columns(2)
-                    with col_confirm1:
-                        if st.button("✅ Sim", key=f"confirm_yes_{i}", use_container_width=True):
-                            # Excluir permanentemente
-                            dados["sonhos_projetos"] = dados["sonhos_projetos"].drop(i).reset_index(drop=True)
+                    else:
+                        if st.button("😢 Desistir", key=f"des_{i}", use_container_width=True, type="secondary"):
+                            dados["sonhos_projetos"].loc[i, "status"] = "Desistido"
                             st.session_state["dados"] = dados
                             DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                            st.session_state[delete_key] = False
-                            st.error("Sonho excluído permanentemente!")
+                            
+                            st.session_state["msg"] = f"⚠️ Sonho '{sonho['nome']}' marcado como desistido"
+                            st.session_state["msg_tipo"] = "warning"
                             st.rerun()
-                    with col_confirm2:
-                        if st.button("❌ Não", key=f"confirm_no_{i}", use_container_width=True):
-                            st.session_state[delete_key] = False
+                
+                with col_acoes3:
+                    if st.button("✏️ Editar", key=f"edit_sonho_{i}", use_container_width=True):
+                        st.session_state[f"editing_sonho_{i}"] = not st.session_state.get(f"editing_sonho_{i}", False)
+                        st.rerun()
+                
+                with col_acoes4:
+                    # Sistema de exclusão em duas etapas
+                    if not st.session_state[delete_key]:
+                        if st.button("🗑️ Excluir", key=f"del_btn_{i}", use_container_width=True, type="secondary"):
+                            st.session_state[delete_key] = True
                             st.rerun()
-            
-            # Formulário de edição
-            if st.session_state.get(f"editing_sonho_{i}", False):
-                with st.expander("✏️ Editar Sonho", expanded=True):
+                    else:
+                        # Modo de confirmação
+                        st.markdown(f"""
+                        <div style="
+                            background: #7f1d1d;
+                            border-radius: 8px;
+                            padding: 8px;
+                            border: 1px solid #ef4444;
+                            text-align: center;
+                        ">
+                            <div style="color: #ef4444; font-size: 12px; font-weight: bold;">
+                                Excluir '{sonho['nome']}'?
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        col_confirm1, col_confirm2 = st.columns(2)
+                        with col_confirm1:
+                            if st.button("✅ Sim", key=f"confirm_yes_{i}", use_container_width=True):
+                                # Excluir permanentemente
+                                dados["sonhos_projetos"] = dados["sonhos_projetos"].drop(i).reset_index(drop=True)
+                                st.session_state["dados"] = dados
+                                DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                                st.session_state[delete_key] = False
+                                
+                                st.session_state["msg"] = f"❌ Sonho '{sonho['nome']}' excluído permanentemente!"
+                                st.session_state["msg_tipo"] = "error"
+                                st.rerun()
+                        
+                        with col_confirm2:
+                            if st.button("❌ Não", key=f"confirm_no_{i}", use_container_width=True):
+                                st.session_state[delete_key] = False
+                                st.rerun()
+                
+                # Formulário de edição
+                if st.session_state.get(f"editing_sonho_{i}", False):
+                    st.markdown("""
+                    <div style="
+                        background: #111827;
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-top: 16px;
+                        border: 2px solid #3b82f6;
+                    ">
+                    """, unsafe_allow_html=True)
+                    
                     with st.form(f"form_edit_sonho_{i}"):
+                        st.markdown(f"### ✏️ Editando: {sonho['nome']}")
+                        
                         col_e1, col_e2 = st.columns(2, gap="small")
                         
                         with col_e1:
-                            edit_nome = st.text_input("Nome", value=sonho["nome"], key=f"edit_nome_{i}")
-                            edit_valor_alvo = st.number_input("Valor Alvo", value=sonho["valor_alvo"], min_value=0.0, key=f"edit_alvo_{i}")
+                            edit_nome = st.text_input(
+                                "🎯 Nome", 
+                                value=sonho["nome"], 
+                                key=f"edit_nome_{i}"
+                            )
+                            edit_valor_alvo = st.number_input(
+                                "💰 Valor Alvo", 
+                                value=sonho["valor_alvo"], 
+                                min_value=0.0, 
+                                key=f"edit_alvo_{i}"
+                            )
+                            
+                            # Categoria com valor padrão seguro
+                            cat_options = ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"]
+                            cat_index = 0
+                            if sonho.get('categoria') in cat_options:
+                                cat_index = cat_options.index(sonho.get('categoria'))
+                            
                             edit_categoria = st.selectbox(
-                                "Categoria",
-                                ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"],
-                                index=["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"].index(sonho.get('categoria', 'Outros')) 
-                                if sonho.get('categoria') in ["Viagem", "Automóvel", "Reserva", "Imóvel", "Educação", "Outros"] else 5,
+                                "📂 Categoria",
+                                cat_options,
+                                index=cat_index,
                                 key=f"edit_cat_{i}"
                             )
                         
                         with col_e2:
-                            edit_data_alvo = st.date_input("Data Alvo", value=pd.to_datetime(sonho["data_alvo"]), key=f"edit_data_{i}")
+                            edit_data_alvo = st.date_input(
+                                "📅 Data Alvo", 
+                                value=pd.to_datetime(sonho["data_alvo"]), 
+                                key=f"edit_data_{i}"
+                            )
+                            
+                            # Prioridade com valor padrão seguro
+                            prio_options = ["Baixa", "Média", "Alta"]
+                            prio_index = 1  # Default para Média
+                            if sonho.get('prioridade') in prio_options:
+                                prio_index = prio_options.index(sonho.get('prioridade'))
+                            
                             edit_prioridade = st.selectbox(
-                                "Prioridade",
-                                ["Baixa", "Média", "Alta"],
-                                index=["Baixa", "Média", "Alta"].index(sonho.get('prioridade', 'Média')),
+                                "⚡ Prioridade",
+                                prio_options,
+                                index=prio_index,
                                 key=f"edit_prio_{i}"
                             )
                             edit_valor_atual = st.number_input(
-                                "Valor Atual",
+                                "💰 Valor Atual",
                                 value=sonho["valor_atual"],
                                 min_value=0.0,
                                 key=f"edit_atual_{i}"
                             )
                         
-                        edit_descricao = st.text_area("Descrição", value=sonho.get("descricao", ""), height=60, key=f"edit_desc_{i}")
+                        edit_descricao = st.text_area(
+                            "📝 Descrição", 
+                            value=sonho.get("descricao", ""), 
+                            height=80, 
+                            key=f"edit_desc_{i}"
+                        )
+                        
+                        # Status com valor padrão seguro
+                        status_options = ["Em Andamento", "Desistido", "Concluído"]
+                        status_index = 0  # Default para Em Andamento
+                        if sonho.get('status') in status_options:
+                            status_index = status_options.index(sonho.get('status'))
+                        
                         edit_status = st.selectbox(
-                            "Status",
-                            ["Em Andamento", "Desistido", "Concluído"],
-                            index=["Em Andamento", "Desistido", "Concluído"].index(sonho.get('status', 'Em Andamento')),
+                            "📊 Status",
+                            status_options,
+                            index=status_index,
                             key=f"edit_status_{i}"
                         )
                         
-                        col_save, col_cancel = st.columns(2)
+                        col_save, col_cancel = st.columns(2, gap="medium")
+                        
                         with col_save:
-                            if st.form_submit_button("💾 Salvar"):
-                                dados["sonhos_projetos"].loc[i, "nome"] = edit_nome
-                                dados["sonhos_projetos"].loc[i, "valor_alvo"] = edit_valor_alvo
-                                dados["sonhos_projetos"].loc[i, "categoria"] = edit_categoria
-                                dados["sonhos_projetos"].loc[i, "data_alvo"] = edit_data_alvo
-                                dados["sonhos_projetos"].loc[i, "prioridade"] = edit_prioridade
-                                dados["sonhos_projetos"].loc[i, "valor_atual"] = edit_valor_atual
-                                dados["sonhos_projetos"].loc[i, "descricao"] = edit_descricao
-                                dados["sonhos_projetos"].loc[i, "status"] = edit_status
-                                
-                                st.session_state["dados"] = dados
-                                DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
-                                st.session_state[f"editing_sonho_{i}"] = False
-                                st.success("Atualizado!")
-                                st.rerun()
+                            save_btn = st.form_submit_button(
+                                "💾 Salvar Alterações",
+                                use_container_width=True,
+                                type="primary"
+                            )
                         
                         with col_cancel:
-                            if st.form_submit_button("❌ Cancelar"):
-                                st.session_state[f"editing_sonho_{i}"] = False
-                                st.rerun()
+                            cancel_btn = st.form_submit_button(
+                                "❌ Cancelar",
+                                use_container_width=True,
+                                type="secondary"
+                            )
+                        
+                        # Processar ações
+                        if save_btn:
+                            dados["sonhos_projetos"].loc[i, "nome"] = edit_nome
+                            dados["sonhos_projetos"].loc[i, "valor_alvo"] = edit_valor_alvo
+                            dados["sonhos_projetos"].loc[i, "categoria"] = edit_categoria
+                            dados["sonhos_projetos"].loc[i, "data_alvo"] = edit_data_alvo
+                            dados["sonhos_projetos"].loc[i, "prioridade"] = edit_prioridade
+                            dados["sonhos_projetos"].loc[i, "valor_atual"] = edit_valor_atual
+                            dados["sonhos_projetos"].loc[i, "descricao"] = edit_descricao
+                            dados["sonhos_projetos"].loc[i, "status"] = edit_status
+                            
+                            st.session_state["dados"] = dados
+                            DatabaseManager.save("sonhos_projetos", dados["sonhos_projetos"], usuario)
+                            st.session_state[f"editing_sonho_{i}"] = False
+                            
+                            st.session_state["msg"] = f"✅ Sonho '{edit_nome}' atualizado com sucesso!"
+                            st.session_state["msg_tipo"] = "success"
+                            st.rerun()
+                        
+                        if cancel_btn:
+                            st.session_state[f"editing_sonho_{i}"] = False
+                            st.rerun()
+                    
+                    st.markdown("</div>", unsafe_allow_html=True)
+                
+                st.markdown("</div>", unsafe_allow_html=True)
             
-            # Divisor fino
-            st.markdown("<hr style='margin: 8px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
+            # Espaçamento entre cards
+            st.markdown("<div style='margin-bottom: 8px;'></div>", unsafe_allow_html=True)
     else:
-        st.caption("Nenhum sonho cadastrado.")
-
-
-
+        # Mensagem para quando não há sonhos
+        st.markdown("""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            border: 2px dashed #374151;
+            margin: 20px 0;
+        ">
+            <div style="font-size: 64px; margin-bottom: 20px; color: #6b7280;">🎯</div>
+            <h3 style="color: #9ca3af; margin-bottom: 12px;">Nenhum sonho cadastrado</h3>
+            <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                Crie seu primeiro sonho clicando em "➕ Adicionar Novo Sonho" acima!
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 
