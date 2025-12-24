@@ -1742,16 +1742,7 @@ elif menu == "💰 INVESTIMENTOS":
                 
                 # Criar card para cada investimento
                 with st.container():
-                    st.markdown(f"""
-                    <div style="
-                        background: #1f2937;
-                        border-radius: 12px;
-                        padding: 16px;
-                        margin-bottom: 12px;
-                        border-left: 4px solid {cor_perfil};
-                        border: 1px solid #374151;
-                    ">
-                    """, unsafe_allow_html=True)
+
                     
                     col1, col2, col3, col4 = st.columns([3, 2, 2, 1.5], gap="small")
                     
