@@ -1488,85 +1488,195 @@ if menu == "📝 LANÇAMENTOS":
 
 
 # =========================================================
-# 💰 INVESTIMENTOS - VERSÃO COMPACTA
+# 💰 INVESTIMENTOS - VERSÃO ESTILIZADA
 # =========================================================
 
 elif menu == "💰 INVESTIMENTOS":
-
-    st.markdown("💰 Carteira de Investimentos")
+    
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        border: 1px solid #10b981;
+    ">
+        <h1 style="
+            color: white;
+            margin: 0 0 8px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        ">
+            <span style="
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 10px;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">💰</span>
+            Carteira de Investimentos
+        </h1>
+        <p style="color: #e5e7eb; margin: 0; opacity: 0.9;">
+            Gerencie e acompanhe seus investimentos
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Mensagens de feedback estilizadas
     if st.session_state.get("msg"):
-        if st.session_state.get("msg_tipo") == "error":
-            st.error(st.session_state["msg"])
-        elif st.session_state.get("msg_tipo") == "warning":
-            st.warning(st.session_state["msg"])
-        else:
-            st.success(st.session_state["msg"])
-
+        msg_tipo = st.session_state.get("msg_tipo", "info")
+        msg_icon = {
+            "error": "❌",
+            "warning": "⚠️",
+            "success": "✅",
+            "info": "ℹ️"
+        }.get(msg_tipo, "ℹ️")
+        
+        msg_color = {
+            "error": "#ef4444",
+            "warning": "#f59e0b",
+            "success": "#10b981",
+            "info": "#3b82f6"
+        }.get(msg_tipo, "#3b82f6")
+        
+        st.markdown(f"""
+        <div style="
+            background: {msg_color}15;
+            border: 1px solid {msg_color}30;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #e5e7eb;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 20px;">{msg_icon}</span>
+                <div>{st.session_state["msg"]}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         st.session_state["msg"] = None
 
-    # ---------------- RESUMO ----------------
+    # ---------------- RESUMO ESTILIZADO ----------------
     total = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
-    st.metric("Total Investido", f"R$ {total:,.2f}")
+    total_formatado = f"R$ {total:,.2f}"
+    
+    st.markdown(f"""
+    <div style="
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        border-radius: 16px;
+        padding: 20px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        margin-bottom: 24px;
+        text-align: center;
+    ">
+        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">💰 Total Investido</div>
+        <div style="font-size: 32px; font-weight: bold;">{total_formatado}</div>
+        <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+            <i>Valor atual da sua carteira</i>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.divider()
 
-    # ---------------- FORM ADICIONAR ----------------
-    with st.expander("➕ Adicionar Investimento", expanded=False):
-        with st.form("form_investimento", clear_on_submit=True):
-            col1, col2 = st.columns(2, gap="large")
+    # ---------------- FORM ADICIONAR ESTILIZADO ----------------
+    with st.expander("➕ Adicionar Novo Investimento", expanded=False):
+        with st.container():
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 24px;
+                border: 1px solid #374151;
+                margin-bottom: 20px;
+            ">
+            """, unsafe_allow_html=True)
+            
+            with st.form("form_investimento", clear_on_submit=True):
+                col1, col2 = st.columns(2, gap="large")
 
-            with col1:
-                instituicao = st.text_input("Instituição")
-                ativo = st.text_input("Ativo")
-                tipo = st.selectbox(
-                    "tipo",
-                    ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"]
-                )
+                with col1:
+                    st.markdown("#### 📋 Informações Básicas")
+                    instituicao = st.text_input("🏦 Instituição", placeholder="Ex: XP Investimentos")
+                    ativo = st.text_input("📈 Ativo", placeholder="Ex: PETR4, CDB, FII")
+                    tipo = st.selectbox(
+                        "📊 Tipo",
+                        ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"]
+                    )
 
-            with col2:
-                valor_atual = st.number_input("Valor Atual (R$)", min_value=0.0, step=100.0)
-                rendimento = st.number_input(
-                    "Rendimento Mensal (%)",
-                    min_value=0.0,
-                    max_value=100.0,
-                    value=0.8,
-                    step=0.1
-                ) / 100
-                categoria = st.selectbox(
-                    "Perfil",
-                    ["Conservador", "Moderado", "Arrojado", "Especulativo"]
-                )
+                with col2:
+                    st.markdown("#### 💰 Valores e Características")
+                    valor_atual = st.number_input(
+                        "💰 Valor Atual (R$)", 
+                        min_value=0.0, 
+                        step=100.0,
+                        value=1000.0
+                    )
+                    rendimento = st.number_input(
+                        "📈 Rendimento Mensal (%)",
+                        min_value=0.0,
+                        max_value=100.0,
+                        value=0.8,
+                        step=0.1
+                    ) / 100
+                    categoria = st.selectbox(
+                        "🎯 Perfil",
+                        ["Conservador", "Moderado", "Arrojado", "Especulativo"]
+                    )
 
-            data_entrada = st.date_input("Data de Entrada", date.today())
-            observacao = st.text_area("Observações", height=60)
-
-            submitted = st.form_submit_button("💾 SALVAR INVESTIMENTO")
-
-            if submitted:
-                novo = pd.DataFrame([{
-                    "Instituicao": instituicao,
-                    "Ativo": ativo,
-                    "tipo": tipo,
-                    "valor_atual": valor_atual,
-                    "Data_Entrada": data_entrada,
-                    "Rendimento_Mensal": rendimento,
-                    "categoria": categoria,
-                    "Observacao": observacao
-                }])
+                st.markdown("#### 📅 Detalhes Adicionais")
+                col_data, col_obs = st.columns([1, 2], gap="large")
                 
+                with col_data:
+                    data_entrada = st.date_input("📅 Data de Entrada", date.today())
+                
+                with col_obs:
+                    observacao = st.text_area(
+                        "📝 Observações", 
+                        placeholder="Observações importantes sobre o investimento...",
+                        height=80
+                    )
 
-                df = dados["investimentos"].copy()
-                df = pd.concat([df, novo], ignore_index=True)
+                submitted = st.form_submit_button(
+                    "💾 SALVAR INVESTIMENTO",
+                    use_container_width=True,
+                    type="primary"
+                )
 
-                dados["investimentos"] = df
-                st.session_state["dados"] = dados
-                DatabaseManager.save("investimentos", df, usuario)
-                st.session_state["msg"] = "Salvo"
-                st.session_state["msg_tipo"] = "success"
-                st.rerun()
+                if submitted:
+                    novo = pd.DataFrame([{
+                        "Instituicao": instituicao,
+                        "Ativo": ativo,
+                        "tipo": tipo,
+                        "valor_atual": valor_atual,
+                        "Data_Entrada": data_entrada,
+                        "Rendimento_Mensal": rendimento,
+                        "categoria": categoria,
+                        "Observacao": observacao
+                    }])
+                    
 
-    # ---------------- LISTA DE INVESTIMENTOS COMPACTA ----------------
-    st.subheader("📋 Meus Investimentos")
+                    df = dados["investimentos"].copy()
+                    df = pd.concat([df, novo], ignore_index=True)
+
+                    dados["investimentos"] = df
+                    st.session_state["dados"] = dados
+                    DatabaseManager.save("investimentos", df, usuario)
+                    st.session_state["msg"] = "✅ Investimento salvo com sucesso!"
+                    st.session_state["msg_tipo"] = "success"
+                    st.rerun()
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    st.divider()
+
+    # ---------------- LISTA DE INVESTIMENTOS ESTILIZADA ----------------
+    st.markdown("### 📋 Meus Investimentos")
     
     if not dados["investimentos"].empty:
         df_investimentos = dados["investimentos"].copy()
@@ -1575,9 +1685,7 @@ elif menu == "💰 INVESTIMENTOS":
         df_investimentos.columns = df_investimentos.columns.str.lower()
         
         # Container para lista
-        lista_container = st.container()
-        
-        with lista_container:
+        with st.container():
             for idx, row in df_investimentos.iterrows():
                 # Formatar data de entrada
                 data_str = ""
@@ -1587,56 +1695,180 @@ elif menu == "💰 INVESTIMENTOS":
                     else:
                         data_str = str(row['data_entrada'])
                 
-                # Criar linha compacta
-                col1, col2, col3, col4 = st.columns([3, 2, 2, 1], gap="small")
+                # Definir cores baseadas no perfil
+                cor_perfil = {
+                    "Conservador": "#10b981",
+                    "Moderado": "#3b82f6",
+                    "Arrojado": "#f59e0b",
+                    "Especulativo": "#ef4444"
+                }.get(row.get('categoria', 'Conservador'), "#6b7280")
                 
-                with col1:
-                    st.markdown(f"**{row.get('ativo', 'Sem nome')}**")
-                    st.caption(f"{row.get('instituicao', '')} • {row.get('tipo', '')}")
-                
-                with col2:
-                    st.markdown(f"**R$ {row.get('valor_atual', 0):,.2f}**")
-                    rendimento = row.get('rendimento_mensal', 0)
-                    if isinstance(rendimento, (int, float)):
-                        st.caption(f"{rendimento:.2%} ao mês")
-                
-                with col3:
-                    st.caption(f"Perfil: {row.get('categoria', '')}")
-                    if data_str:
-                        st.caption(f"Entrada: {data_str}")
-                
-                with col4:
-                    # Botões compactos
-                    col_btn1, col_btn2 = st.columns(2)
+                # Criar card para cada investimento
+                with st.container():
+                    st.markdown(f"""
+                    <div style="
+                        background: #1f2937;
+                        border-radius: 12px;
+                        padding: 16px;
+                        margin-bottom: 12px;
+                        border-left: 4px solid {cor_perfil};
+                        border: 1px solid #374151;
+                    ">
+                    """, unsafe_allow_html=True)
                     
-                    with col_btn1:
-                        if st.button("✏️", key=f"edit_{idx}", help="Editar"):
-                            st.session_state[f"editing_{idx}"] = True
-                            st.rerun()
+                    col1, col2, col3, col4 = st.columns([3, 2, 2, 1.5], gap="small")
                     
-                    with col_btn2:
-                        if st.button("🗑️", key=f"del_{idx}", help="Excluir"):
-                            # Confirmar exclusão rápida
-                            confirm = st.checkbox(f"Confirmar exclusão de {row.get('ativo', 'este investimento')}", key=f"confirm_{idx}")
-                            if confirm:
-                                df_investimentos = df_investimentos.drop(idx).reset_index(drop=True)
-                                dados["investimentos"] = df_investimentos
-                                st.session_state["dados"] = dados
-                                DatabaseManager.save("investimentos", df_investimentos, usuario)
-                                st.success("Investimento excluído!")
-                                st.rerun()
-                
-                # Formulário de edição (aparece apenas quando ativado)
-                if st.session_state.get(f"editing_{idx}", False):
-                    with st.expander(f"✏️ Editar {row.get('ativo', 'Investimento')}", expanded=True):
+                    with col1:
+                        # Nome do ativo com destaque
+                        st.markdown(f"""
+                        <div style="
+                            font-size: 18px;
+                            font-weight: bold;
+                            color: white;
+                            margin-bottom: 4px;
+                        ">{row.get('ativo', 'Sem nome')}</div>
+                        <div style="
+                            font-size: 12px;
+                            color: #9ca3af;
+                        ">🏦 {row.get('instituicao', 'N/A')} • 📊 {row.get('tipo', 'N/A')}</div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        # Valor e rendimento
+                        valor_formatado = f"R$ {row.get('valor_atual', 0):,.2f}"
+                        rendimento = row.get('rendimento_mensal', 0)
+                        rend_formatado = f"{rendimento:.2%} ao mês" if isinstance(rendimento, (int, float)) else "N/A"
+                        
+                        st.markdown(f"""
+                        <div style="
+                            font-size: 16px;
+                            font-weight: bold;
+                            color: #10b981;
+                            margin-bottom: 4px;
+                        ">{valor_formatado}</div>
+                        <div style="
+                            font-size: 12px;
+                            color: #6b7280;
+                        ">📈 {rend_formatado}</div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col3:
+                        # Perfil e data
+                        perfil_emoji = {
+                            "Conservador": "🛡️",
+                            "Moderado": "⚖️",
+                            "Arrojado": "🚀",
+                            "Especulativo": "🎲"
+                        }.get(row.get('categoria', 'Conservador'), "📊")
+                        
+                        st.markdown(f"""
+                        <div style="
+                            font-size: 12px;
+                            color: {cor_perfil};
+                            margin-bottom: 4px;
+                            display: flex;
+                            align-items: center;
+                            gap: 4px;
+                        ">
+                            {perfil_emoji} <strong>{row.get('categoria', '')}</strong>
+                        </div>
+                        <div style="
+                            font-size: 11px;
+                            color: #6b7280;
+                        ">📅 Entrada: {data_str}</div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col4:
+                        # Botões de ação
+                        btn_container = st.container()
+                        with btn_container:
+                            col_btn1, col_btn2 = st.columns(2, gap="small")
+                            
+                            with col_btn1:
+                                if st.button(
+                                    "✏️", 
+                                    key=f"edit_{idx}",
+                                    help="Editar investimento",
+                                    use_container_width=True
+                                ):
+                                    st.session_state[f"editing_{idx}"] = True
+                                    st.rerun()
+                            
+                            with col_btn2:
+                                if st.button(
+                                    "🗑️", 
+                                    key=f"del_{idx}",
+                                    help="Excluir investimento",
+                                    use_container_width=True,
+                                    type="secondary"
+                                ):
+                                    st.session_state[f"delete_confirm_{idx}"] = True
+                    
+                    # Modal de confirmação de exclusão
+                    if st.session_state.get(f"delete_confirm_{idx}", False):
+                        st.markdown("""
+                        <div style="
+                            background: #7f1d1d;
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin-top: 12px;
+                            border: 1px solid #ef4444;
+                        ">
+                        """, unsafe_allow_html=True)
+                        
+                        col_confirm1, col_confirm2 = st.columns([3, 1])
+                        with col_confirm1:
+                            st.warning(f"⚠️ **Confirmar exclusão de {row.get('ativo', 'este investimento')}?**")
+                        
+                        with col_confirm2:
+                            col_yes, col_no = st.columns(2)
+                            with col_yes:
+                                if st.button("✅ Sim", key=f"yes_{idx}", use_container_width=True):
+                                    df_investimentos = df_investimentos.drop(idx).reset_index(drop=True)
+                                    dados["investimentos"] = df_investimentos
+                                    st.session_state["dados"] = dados
+                                    DatabaseManager.save("investimentos", df_investimentos, usuario)
+                                    st.session_state["msg"] = "✅ Investimento excluído com sucesso!"
+                                    st.session_state["msg_tipo"] = "success"
+                                    st.session_state[f"delete_confirm_{idx}"] = False
+                                    st.rerun()
+                            with col_no:
+                                if st.button("❌ Não", key=f"no_{idx}", use_container_width=True):
+                                    st.session_state[f"delete_confirm_{idx}"] = False
+                                    st.rerun()
+                        
+                        st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    # Formulário de edição (aparece apenas quando ativado)
+                    if st.session_state.get(f"editing_{idx}", False):
+                        st.markdown("""
+                        <div style="
+                            background: #111827;
+                            border-radius: 12px;
+                            padding: 20px;
+                            margin-top: 12px;
+                            border: 2px solid #3b82f6;
+                        ">
+                        """, unsafe_allow_html=True)
+                        
                         with st.form(f"form_edit_{idx}"):
+                            st.markdown(f"### ✏️ Editando: {row.get('ativo', 'Investimento')}")
+                            
                             col_e1, col_e2 = st.columns(2, gap="small")
                             
                             with col_e1:
-                                edit_instituicao = st.text_input("Instituição", value=row.get('instituicao', ''), key=f"edit_inst_{idx}")
-                                edit_ativo = st.text_input("Ativo", value=row.get('ativo', ''), key=f"edit_ativo_{idx}")
+                                edit_instituicao = st.text_input(
+                                    "🏦 Instituição", 
+                                    value=row.get('instituicao', ''), 
+                                    key=f"edit_inst_{idx}"
+                                )
+                                edit_ativo = st.text_input(
+                                    "📈 Ativo", 
+                                    value=row.get('ativo', ''), 
+                                    key=f"edit_ativo_{idx}"
+                                )
                                 edit_tipo = st.selectbox(
-                                    "tipo",
+                                    "📊 Tipo",
                                     ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"],
                                     index=["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"].index(row.get('tipo', 'Renda Fixa')) 
                                     if row.get('tipo') in ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"] else 0,
@@ -1645,14 +1877,14 @@ elif menu == "💰 INVESTIMENTOS":
                             
                             with col_e2:
                                 edit_valor = st.number_input(
-                                    "Valor Atual (R$)", 
+                                    "💰 Valor Atual (R$)", 
                                     min_value=0.0, 
                                     step=100.0, 
                                     value=float(row.get('valor_atual', 0)),
                                     key=f"edit_valor_{idx}"
                                 )
                                 edit_rendimento = st.number_input(
-                                    "Rendimento Mensal (%)",
+                                    "📈 Rendimento Mensal (%)",
                                     min_value=0.0,
                                     max_value=100.0,
                                     value=float(row.get('rendimento_mensal', 0.8) * 100),
@@ -1660,7 +1892,7 @@ elif menu == "💰 INVESTIMENTOS":
                                     key=f"edit_rend_{idx}"
                                 ) / 100
                                 edit_categoria = st.selectbox(
-                                    "Perfil",
+                                    "🎯 Perfil",
                                     ["Conservador", "Moderado", "Arrojado", "Especulativo"],
                                     index=["Conservador", "Moderado", "Arrojado", "Especulativo"].index(row.get('categoria', 'Conservador')) 
                                     if row.get('categoria') in ["Conservador", "Moderado", "Arrojado", "Especulativo"] else 0,
@@ -1668,21 +1900,25 @@ elif menu == "💰 INVESTIMENTOS":
                                 )
                             
                             edit_data_entrada = st.date_input(
-                                "Data de Entrada", 
+                                "📅 Data de Entrada", 
                                 value=pd.to_datetime(row.get('data_entrada', date.today())),
                                 key=f"edit_data_{idx}"
                             )
                             
                             edit_observacao = st.text_area(
-                                "Observações", 
+                                "📝 Observações", 
                                 value=row.get('observacao', ''),
                                 key=f"edit_obs_{idx}",
-                                height=60
+                                height=80
                             )
                             
-                            col_save, col_cancel = st.columns(2)
+                            col_save, col_cancel = st.columns(2, gap="medium")
                             with col_save:
-                                if st.form_submit_button("💾 Salvar"):
+                                if st.form_submit_button(
+                                    "💾 Salvar Alterações",
+                                    use_container_width=True,
+                                    type="primary"
+                                ):
                                     # Atualizar os dados
                                     df_investimentos.at[idx, 'instituicao'] = edit_instituicao
                                     df_investimentos.at[idx, 'ativo'] = edit_ativo
@@ -1698,62 +1934,188 @@ elif menu == "💰 INVESTIMENTOS":
                                     DatabaseManager.save("investimentos", df_investimentos, usuario)
                                     
                                     st.session_state[f"editing_{idx}"] = False
-                                    st.success("Investimento atualizado!")
+                                    st.session_state["msg"] = "✅ Investimento atualizado com sucesso!"
+                                    st.session_state["msg_tipo"] = "success"
                                     st.rerun()
                             
                             with col_cancel:
-                                if st.form_submit_button("❌ Cancelar"):
+                                if st.form_submit_button(
+                                    "❌ Cancelar",
+                                    use_container_width=True,
+                                    type="secondary"
+                                ):
                                     st.session_state[f"editing_{idx}"] = False
                                     st.rerun()
+                        
+                        st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    st.markdown("</div>", unsafe_allow_html=True)
                 
-                # Divisor fino entre itens
-                st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
+                # Espaçamento entre cards
+                st.markdown("<div style='margin-bottom: 8px;'></div>", unsafe_allow_html=True)
     else:
-        st.caption("Nenhum investimento cadastrado.")
+        st.markdown("""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            border: 2px dashed #374151;
+            margin: 20px 0;
+        ">
+            <div style="font-size: 64px; margin-bottom: 20px; color: #6b7280;">💰</div>
+            <h3 style="color: #9ca3af; margin-bottom: 12px;">Nenhum investimento cadastrado</h3>
+            <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                Clique em "➕ Adicionar Novo Investimento" para começar a construir sua carteira.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # ---------------- GRÁFICOS ----------------
+    # ---------------- GRÁFICOS ESTILIZADOS ----------------
     if not dados["investimentos"].empty:
         st.divider()
-        st.subheader("📊 Distribuição da Carteira")
+        st.markdown("### 📊 Análise da Carteira")
         
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            fig = px.pie(
-                dados["investimentos"],
-                values="valor_atual",
-                names="categoria",
-                hole=0.4,
-                title="Por Perfil"
-            )
-            fig.update_layout(
-                template="plotly_dark",
-                paper_bgcolor="#0e1117",
-                plot_bgcolor="#0e1117",
-                font=dict(color="#e5e7eb", size=10),
-                showlegend=True,
-                legend=dict(font=dict(size=9))
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            fig2 = px.pie(
-                dados["investimentos"],
-                values="valor_atual",
-                names="tipo",
-                hole=0.4,
-                title="Por Tipo"
-            )
-            fig2.update_layout(
-                template="plotly_dark",
-                paper_bgcolor="#0e1117",
-                plot_bgcolor="#0e1117",
-                font=dict(color="#e5e7eb", size=10),
-                showlegend=True,
-                legend=dict(font=dict(size=9))
-            )
-            st.plotly_chart(fig2, use_container_width=True)
-
+        with st.container():
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 24px;
+                border: 1px solid #374151;
+            ">
+            """, unsafe_allow_html=True)
+            
+            col1, col2 = st.columns(2, gap="medium")
+            
+            with col1:
+                st.markdown("#### 🎯 Distribuição por Perfil")
+                fig = px.pie(
+                    dados["investimentos"],
+                    values="valor_atual",
+                    names="categoria",
+                    hole=0.4,
+                    color_discrete_sequence=["#10b981", "#3b82f6", "#f59e0b", "#ef4444"]
+                )
+                fig.update_traces(
+                    textposition='inside',
+                    textinfo='percent+label',
+                    hovertemplate="<b>%{label}</b><br>R$ %{value:,.2f}<br>%{percent}<extra></extra>"
+                )
+                fig.update_layout(
+                    template="plotly_dark",
+                    paper_bgcolor="#0e1117",
+                    plot_bgcolor="#0e1117",
+                    font=dict(color="#e5e7eb"),
+                    showlegend=True,
+                    height=350,
+                    margin=dict(t=30, b=30, l=30, r=30),
+                    legend=dict(
+                        orientation="v",
+                        yanchor="middle",
+                        y=0.5,
+                        xanchor="right",
+                        x=1.2,
+                        font=dict(size=11)
+                    )
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            
+            with col2:
+                st.markdown("#### 📊 Distribuição por Tipo")
+                fig2 = px.pie(
+                    dados["investimentos"],
+                    values="valor_atual",
+                    names="tipo",
+                    hole=0.4,
+                    color_discrete_sequence=px.colors.qualitative.Set3
+                )
+                fig2.update_traces(
+                    textposition='inside',
+                    textinfo='percent+label',
+                    hovertemplate="<b>%{label}</b><br>R$ %{value:,.2f}<br>%{percent}<extra></extra>"
+                )
+                fig2.update_layout(
+                    template="plotly_dark",
+                    paper_bgcolor="#0e1117",
+                    plot_bgcolor="#0e1117",
+                    font=dict(color="#e5e7eb"),
+                    showlegend=True,
+                    height=350,
+                    margin=dict(t=30, b=30, l=30, r=30),
+                    legend=dict(
+                        orientation="v",
+                        yanchor="middle",
+                        y=0.5,
+                        xanchor="right",
+                        x=1.2,
+                        font=dict(size=11)
+                    )
+                )
+                st.plotly_chart(fig2, use_container_width=True)
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            # Cards de estatísticas
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Calcular algumas estatísticas
+            num_investimentos = len(dados["investimentos"])
+            avg_rendimento = dados["investimentos"]["Rendimento_Mensal"].mean() * 100
+            maior_investimento = dados["investimentos"]["valor_atual"].max()
+            
+            col_stats1, col_stats2, col_stats3 = st.columns(3, gap="medium")
+            
+            with col_stats1:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    text-align: center;
+                ">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📈 Total de Investimentos</div>
+                    <div style="font-size: 24px; font-weight: bold;">{num_investimentos}</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                        <i>Ativos na carteira</i>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_stats2:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    text-align: center;
+                ">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📊 Rendimento Médio</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #10b981;">{avg_rendimento:.2f}%</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                        <i>Mensal</i>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_stats3:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    text-align: center;
+                ">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">💰 Maior Investimento</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #3b82f6;">R$ {maior_investimento:,.0f}</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                        <i>Valor individual</i>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
 
 # =========================================================
