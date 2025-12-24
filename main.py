@@ -5101,18 +5101,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
         col_controle1, col_controle2 = st.columns(2, gap="medium")
         
         with col_controle1:
-            st.markdown("""
-            <div style="
-                background: #1f2937;
-                border-radius: 12px;
-                padding: 20px;
-                border: 1px solid #374151;
-                text-align: center;
-            ">
-                <div style="font-size: 14px; color: #d1d5db; margin-bottom: 16px;">
-                    💾 Salvar como Rascunho
-                </div>
-            """, unsafe_allow_html=True)
+
             
             if st.button("💾 Salvar Rascunho", use_container_width=True):
                 texto_exec = gerar_texto_executivo(
@@ -5142,18 +5131,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
             st.markdown("</div>", unsafe_allow_html=True)
         
         with col_controle2:
-            st.markdown("""
-            <div style="
-                background: #1f2937;
-                border-radius: 12px;
-                padding: 20px;
-                border: 1px solid #374151;
-                text-align: center;
-            ">
-                <div style="font-size: 14px; color: #d1d5db; margin-bottom: 16px;">
-                    🔒 Finalizar Mês
-                </div>
-            """, unsafe_allow_html=True)
+
             
             if st.button("🔒 Finalizar Mês", use_container_width=True):
                 texto_exec = gerar_texto_executivo(
