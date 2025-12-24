@@ -1358,71 +1358,321 @@ with st.sidebar:
             st.rerun()
 
 # =========================================================
-# 📝 LANÇAMENTOS - VERSÃO COMPACTA
+# 📝 LANÇAMENTOS - VERSÃO ESTILIZADA
 # =========================================================
 if menu == "📝 LANÇAMENTOS":
 
-    st.markdown("📝 Registro de Transações")
-    if st.session_state.get("msg"):
-        if st.session_state.get("msg_tipo") == "error":
-            st.error(st.session_state["msg"])
-        elif st.session_state.get("msg_tipo") == "warning":
-            st.warning(st.session_state["msg"])
-        else:
-            st.success(st.session_state["msg"])
+    # Cabeçalho estilizado
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        border: 1px solid #334155;
+    ">
+        <h1 style="
+            color: white;
+            margin: 0 0 8px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        ">
+            <span style="
+                background: #10b981;
+                border-radius: 10px;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">📝</span>
+            Registro de Transações
+        </h1>
+        <p style="color: #94a3b8; margin: 0;">
+            Registre suas receitas, despesas e investimentos
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
+    # Mensagens de feedback estilizadas
+    if st.session_state.get("msg"):
+        msg_tipo = st.session_state.get("msg_tipo", "info")
+        msg_icon = {
+            "error": "❌",
+            "warning": "⚠️",
+            "success": "✅",
+            "info": "ℹ️"
+        }.get(msg_tipo, "ℹ️")
+        
+        msg_color = {
+            "error": "#ef4444",
+            "warning": "#f59e0b",
+            "success": "#10b981",
+            "info": "#3b82f6"
+        }.get(msg_tipo, "#3b82f6")
+        
+        st.markdown(f"""
+        <div style="
+            background: {msg_color}15;
+            border: 1px solid {msg_color}30;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #e5e7eb;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 20px;">{msg_icon}</span>
+                <div>{st.session_state["msg"]}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         st.session_state["msg"] = None
 
-    # ---------------- FORM ----------------
-    with st.form("form_lancamento", clear_on_submit=True):
-        col1, col2, col3 = st.columns(3 , gap="large")
-
-        with col1:
-            data = st.date_input("data", date.today())
-            tipo = st.selectbox("tipo", ["Despesa", "Receita", "Investimento"])
-
-        with col2:
-            valor = st.number_input("Valor (R$)", min_value=0.0, step=10.0, format="%.2f")
-            categoria = st.selectbox(
-                "categoria",
-                dados["categorias"]["nome"].tolist() if not dados["categorias"].empty else []
-            )
-
-        with col3:
-            responsavel = st.radio("Responsável", ["🧔 Ele", "👩‍🦰 Ela", "Compartilhado"], horizontal=True)
-            fixo = st.checkbox("Recorrente")
-
-        descricao = st.text_input("descrição")
+    # ================= FORMULÁRIO ESTILIZADO =================
+    st.markdown("### 📝 Novo Lançamento")
+    
+    with st.container():
+        st.markdown("""
+        <div style="
+            background: #1f2937;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #374151;
+            margin-bottom: 24px;
+        ">
+        """, unsafe_allow_html=True)
         
-        submitted = st.form_submit_button("💾 SALVAR")
-        
-        if submitted:
-            nova = pd.DataFrame([{
-                "data": data,
-                "tipo": tipo,
-                "valor": valor,
-                "categoria": categoria,
-                "subcategoria": "",
-                "descricao": descricao,
-                "responsavel": responsavel,
-                "fixo": "Sim" if fixo else "Não"
-            }])
+        with st.form("form_lancamento", clear_on_submit=True):
+            # Primeira linha do formulário
+            col1, col2, col3 = st.columns(3, gap="large")
             
-
-            df = dados["historico"].copy()
-            df = pd.concat([df, nova], ignore_index=True)
-
-            dados["historico"] = df
-            st.session_state["dados"] = dados
-            DatabaseManager.save("historico", df, usuario)
-            st.session_state["msg"] = "Salvo"
-            st.session_state["msg_tipo"] = "success"
-            st.rerun()
+            with col1:
+                st.markdown("""
+                <div style="
+                    background: #111827;
+                    border-radius: 10px;
+                    padding: 16px;
+                    margin-bottom: 16px;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">
+                        📅 Data
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                data = st.date_input(
+                    "Data",
+                    date.today(),
+                    label_visibility="collapsed"
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+                st.markdown("""
+                <div style="
+                    background: #111827;
+                    border-radius: 10px;
+                    padding: 16px;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">
+                        🏷️ Tipo
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                tipo = st.selectbox(
+                    "Tipo",
+                    ["Despesa", "Receita", "Investimento"],
+                    label_visibility="collapsed"
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown("""
+                <div style="
+                    background: #111827;
+                    border-radius: 10px;
+                    padding: 16px;
+                    margin-bottom: 16px;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">
+                        💰 Valor
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                valor = st.number_input(
+                    "Valor (R$)",
+                    min_value=0.0,
+                    step=10.0,
+                    format="%.2f",
+                    label_visibility="collapsed"
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+                st.markdown("""
+                <div style="
+                    background: #111827;
+                    border-radius: 10px;
+                    padding: 16px;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">
+                        🗂️ Categoria
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                categoria = st.selectbox(
+                    "Categoria",
+                    dados["categorias"]["nome"].tolist() if not dados["categorias"].empty else ["Selecione..."],
+                    label_visibility="collapsed"
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown("""
+                <div style="
+                    background: #111827;
+                    border-radius: 10px;
+                    padding: 16px;
+                    margin-bottom: 16px;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">
+                        👤 Responsável
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # Estilizar os radio buttons
+                st.markdown("""
+                <style>
+                div[data-testid="stRadio"] > div {
+                    flex-direction: row !important;
+                    gap: 16px !important;
+                }
+                
+                div[data-testid="stRadio"] > div > label {
+                    background: #374151 !important;
+                    border-radius: 8px !important;
+                    padding: 8px 16px !important;
+                    border: 1px solid #4b5563 !important;
+                    margin: 0 !important;
+                    flex: 1;
+                    text-align: center;
+                }
+                
+                div[data-testid="stRadio"] > div > label[data-checked="true"] {
+                    background: #3b82f6 !important;
+                    border-color: #3b82f6 !important;
+                }
+                
+                div[data-testid="stRadio"] > div > label > div:nth-child(2) {
+                    color: #e5e7eb !important;
+                    font-size: 13px !important;
+                    justify-content: center;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+                
+                responsavel = st.radio(
+                    "Responsável",
+                    ["🧔 Ele", "👩‍🦰 Ela", "🤝 Compartilhado"],
+                    horizontal=True,
+                    label_visibility="collapsed"
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+                st.markdown("""
+                <div style="
+                    background: #111827;
+                    border-radius: 10px;
+                    padding: 16px;
+                    border: 1px solid #374151;
+                ">
+                """, unsafe_allow_html=True)
+                
+                # Checkbox estilizado
+                col_check1, col_check2 = st.columns([1, 4])
+                with col_check1:
+                    st.markdown("""
+                    <style>
+                    .stCheckbox > label > div:first-child {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    </style>
+                    """, unsafe_allow_html=True)
+                with col_check2:
+                    fixo = st.checkbox(
+                        "💰 Lançamento Recorrente",
+                        help="Esta transação se repete todo mês"
+                    )
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            # Descrição
+            st.markdown("""
+            <div style="
+                background: #111827;
+                border-radius: 10px;
+                padding: 16px;
+                border: 1px solid #374151;
+                margin-top: 16px;
+            ">
+                <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">
+                    📋 Descrição
+                </div>
+            """, unsafe_allow_html=True)
+            
+            descricao = st.text_input(
+                "Descrição",
+                placeholder="Ex: Salário, Supermercado, Ação PETR4...",
+                label_visibility="collapsed"
+            )
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            # Botão de submit
+            col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+            with col_btn2:
+                submitted = st.form_submit_button(
+                    "💾 SALVAR LANÇAMENTO",
+                    type="primary",
+                    use_container_width=True
+                )
+            
+            if submitted:
+                if not descricao.strip():
+                    st.error("❌ Por favor, informe uma descrição para o lançamento")
+                elif valor <= 0:
+                    st.error("❌ O valor deve ser maior que zero")
+                else:
+                    nova = pd.DataFrame([{
+                        "data": data,
+                        "tipo": tipo,
+                        "valor": valor,
+                        "categoria": categoria,
+                        "subcategoria": "",
+                        "descricao": descricao.strip(),
+                        "responsavel": responsavel,
+                        "fixo": "Sim" if fixo else "Não"
+                    }])
+                    
+                    df = dados["historico"].copy()
+                    df = pd.concat([df, nova], ignore_index=True)
+                    dados["historico"] = df
+                    st.session_state["dados"] = dados
+                    DatabaseManager.save("historico", df, usuario)
+                    
+                    st.success(f"✅ {tipo} de **R$ {valor:,.2f}** registrado com sucesso!")
+                    st.rerun()
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.divider()
-    
-    # ================= LISTA DE LANÇAMENTOS COMPACTA =================
-    st.subheader("📋 Lançamentos Registrados")
+
+    # ================= LISTA DE LANÇAMENTOS ESTILIZADA =================
+    st.markdown("### 📋 Lançamentos Registrados")
     
     if not dados["historico"].empty:
         df_historico = dados["historico"].copy()
@@ -1430,56 +1680,256 @@ if menu == "📝 LANÇAMENTOS":
         # Ordenar por data (mais recente primeiro)
         df_historico = df_historico.sort_values("data", ascending=False)
         
-        # Container para a lista
-        lista_container = st.container()
-        
-        with lista_container:
-            for idx, row in df_historico.iterrows():
-                # Determinar cor baseada no tipo
-                if row['tipo'] == "Despesa":
-                    valor_color = "red"
-                    valor_prefix = "-"
-                elif row['tipo'] == "Receita":
-                    valor_color = "green"
-                    valor_prefix = "+"
-                else:
-                    valor_color = "white"
-                    valor_prefix = ""
-                
-                # Formatar data
-                if isinstance(row['data'], str):
-                    data_str = row['data']
-                else:
-                    data_str = row['data'].strftime("%d/%m/%Y")
-                
-                # Criar item compacto
-                col1, col2, col3, col4 = st.columns([3, 2, 1, 1], gap="small")
-                
-                with col1:
-                    st.markdown(f"**{row['descricao'][:30]}{'...' if len(row['descricao']) > 30 else ''}**")
-                    st.caption(f"{row['categoria']} • {row['responsavel']} • {data_str}")
-                
-                with col2:
-                    st.markdown(f"<span style='color: {valor_color}; font-weight: bold;'>{valor_prefix}R$ {row['valor']:,.2f}</span>", unsafe_allow_html=True)
-                
-                with col3:
-                    st.caption(row['tipo'])
-                
-                with col4:
-                    # Botão para excluir - mais compacto
-                    if st.button("🗑️", key=f"del_hist_{idx}", help="Excluir"):
-                        # Remover da lista
-                        df_historico = df_historico.drop(idx).reset_index(drop=True)
-                        dados["historico"] = df_historico
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("historico", df_historico, usuario)
-                        st.success("Lançamento excluído!")
+        # Filtros
+        with st.container():
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 16px;
+                border: 1px solid #374151;
+                margin-bottom: 16px;
+            ">
+            """, unsafe_allow_html=True)
+            
+            col_filtro1, col_filtro2, col_filtro3, col_filtro4 = st.columns(4, gap="medium")
+            
+            with col_filtro1:
+                tipo_filtro = st.selectbox(
+                    "Filtrar por tipo",
+                    ["Todos"] + df_historico["tipo"].unique().tolist(),
+                    key="filtro_tipo"
+                )
+            
+            with col_filtro2:
+                categoria_filtro = st.selectbox(
+                    "Filtrar por categoria",
+                    ["Todas"] + df_historico["categoria"].unique().tolist(),
+                    key="filtro_categoria"
+                )
+            
+            with col_filtro3:
+                responsavel_filtro = st.selectbox(
+                    "Filtrar por responsável",
+                    ["Todos"] + df_historico["responsavel"].unique().tolist(),
+                    key="filtro_responsavel"
+                )
+            
+            with col_filtro4:
+                # Botões de ação
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    if st.button("🔄 Atualizar", use_container_width=True):
                         st.rerun()
-                
-                # Divisor fino
-                st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
+                with col_btn2:
+                    if st.button("📤 Exportar", use_container_width=True):
+                        csv = df_historico.to_csv(index=False)
+                        st.download_button(
+                            label="📥 Baixar CSV",
+                            data=csv,
+                            file_name=f"lancamentos_{date.today().strftime('%Y_%m_%d')}.csv",
+                            mime="text/csv",
+                            use_container_width=True
+                        )
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Aplicar filtros
+        df_filtrado = df_historico.copy()
+        
+        if tipo_filtro != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["tipo"] == tipo_filtro]
+        
+        if categoria_filtro != "Todas":
+            df_filtrado = df_filtrado[df_filtrado["categoria"] == categoria_filtro]
+        
+        if responsavel_filtro != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["responsavel"] == responsavel_filtro]
+        
+        # Resumo dos filtros
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            border-radius: 12px;
+            padding: 16px;
+            color: white;
+            margin-bottom: 16px;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 14px;">Mostrando {len(df_filtrado)} de {len(df_historico)} lançamentos</div>
+                    <div style="font-size: 12px; opacity: 0.9;">
+                        Total: R$ {df_filtrado['valor'].sum():,.2f}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 12px; opacity: 0.9;">
+                        💰 Receitas: R$ {df_filtrado[df_filtrado['tipo'] == 'Receita']['valor'].sum():,.2f}
+                    </div>
+                    <div style="font-size: 12px; opacity: 0.9;">
+                        📉 Despesas: R$ {df_filtrado[df_filtrado['tipo'] == 'Despesa']['valor'].sum():,.2f}
+                    </div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Lista de lançamentos com cards
+        for idx, row in df_filtrado.iterrows():
+            # Determinar cores e ícones baseados no tipo
+            if row['tipo'] == "Despesa":
+                cor_card = "#7f1d1d"
+                cor_texto = "#f87171"
+                icone = "📉"
+                simbolo = "-"
+            elif row['tipo'] == "Receita":
+                cor_card = "#064e3b"
+                cor_texto = "#34d399"
+                icone = "💰"
+                simbolo = "+"
+            else:  # Investimento
+                cor_card = "#78350f"
+                cor_texto = "#fbbf24"
+                icone = "📈"
+                simbolo = "↗"
+            
+            # Determinar ícone do responsável
+            if "Ele" in row['responsavel']:
+                icone_resp = "🧔"
+            elif "Ela" in row['responsavel']:
+                icone_resp = "👩‍🦰"
+            else:
+                icone_resp = "🤝"
+            
+            # Formatar data
+            if isinstance(row['data'], str):
+                data_str = row['data']
+            else:
+                data_str = row['data'].strftime("%d/%m/%Y")
+            
+            # Card do lançamento
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, {cor_card} 0%, #1f2937 100%);
+                border-radius: 12px;
+                padding: 16px;
+                border: 1px solid {cor_texto}30;
+                margin-bottom: 12px;
+                color: #e5e7eb;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                            <span style="font-size: 20px;">{icone}</span>
+                            <div>
+                                <div style="font-size: 16px; font-weight: bold;">
+                                    {row['descricao'][:40]}{'...' if len(row['descricao']) > 40 else ''}
+                                </div>
+                                <div style="font-size: 12px; color: #9ca3af; display: flex; gap: 12px; margin-top: 4px;">
+                                    <span>🗂️ {row['categoria']}</span>
+                                    <span>{icone_resp} {row['responsavel']}</span>
+                                    <span>📅 {data_str}</span>
+                                    <span>{'💰 Recorrente' if row['fixo'] == 'Sim' else '🔄 Único'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: right;">
+                        <div style="font-size: 20px; font-weight: bold; color: {cor_texto};">
+                            {simbolo} R$ {row['valor']:,.2f}
+                        </div>
+                        <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">
+                            {row['tipo']}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Botões de ação em uma linha separada
+            col_btn1, col_btn2, col_btn3, col_btn4 = st.columns([2, 1, 1, 1], gap="small")
+            
+            with col_btn3:
+                if st.button("✏️ Editar", key=f"edit_{idx}", use_container_width=True):
+                    st.info("Funcionalidade de edição em desenvolvimento")
+            
+            with col_btn4:
+                if st.button("🗑️ Excluir", key=f"del_{idx}", type="secondary", use_container_width=True):
+                    # Remover da lista
+                    df_historico = df_historico.drop(idx).reset_index(drop=True)
+                    dados["historico"] = df_historico
+                    st.session_state["dados"] = dados
+                    DatabaseManager.save("historico", df_historico, usuario)
+                    st.success("✅ Lançamento excluído com sucesso!")
+                    st.rerun()
+            
+            # Divisor fino entre cards
+            st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+        
+        # Paginação se houver muitos itens
+        if len(df_filtrado) > 20:
+            st.markdown("---")
+            col_pag1, col_pag2, col_pag3 = st.columns([1, 2, 1])
+            with col_pag2:
+                st.caption(f"Mostrando {min(20, len(df_filtrado))} de {len(df_filtrado)} lançamentos")
+    
     else:
-        st.caption("Nenhum lançamento registrado.")
+        # Card para estado vazio
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            border-radius: 16px;
+            padding: 60px 20px;
+            text-align: center;
+            border: 2px dashed #374151;
+            margin: 20px 0;
+        ">
+            <div style="font-size: 64px; margin-bottom: 20px; color: #6b7280;">📭</div>
+            <h3 style="color: #9ca3af; margin-bottom: 12px;">Nenhum lançamento registrado</h3>
+            <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                Use o formulário acima para registrar suas primeiras transações!
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Card de dicas
+        with st.expander("💡 Dicas para organizar seus lançamentos", expanded=True):
+            col_tip1, col_tip2 = st.columns(2)
+            
+            with col_tip1:
+                st.markdown("""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    height: 100%;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 24px; margin-bottom: 12px;">⏰</div>
+                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Registre diariamente</div>
+                    <div style="font-size: 14px; color: #9ca3af;">
+                        Mantenha o hábito de registrar todas as transações no mesmo dia
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_tip2:
+                st.markdown("""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    height: 100%;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 24px; margin-bottom: 12px;">🏷️</div>
+                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Use categorias específicas</div>
+                    <div style="font-size: 14px; color: #9ca3af;">
+                        Categorias detalhadas facilitam análises futuras
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
 
 
