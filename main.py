@@ -1896,7 +1896,7 @@ elif menu == "💰 INVESTIMENTOS":
                             with col_e1:
                                 edit_instituicao = st.text_input(
                                     "🏦 Instituição", 
-                                    value=instituicao_name,
+                                    value=instituicao_nome,
                                     key=f"edit_inst_{idx}"
                                 )
                                 edit_ativo = st.text_input(
