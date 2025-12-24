@@ -4250,430 +4250,1009 @@ elif menu == "👥 USUÁRIOS":
 
 
 # =========================================================
-# 📄 RELATÓRIO EXECUTIVO
+# 📄 RELATÓRIO EXECUTIVO - VERSÃO ESTILIZADA
 # =========================================================
 
 elif menu == "📄 RELATÓRIO EXECUTIVO":
-
-    st.markdown("📄 Relatório Financeiro Executivo")
+    
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        border: 1px solid #334155;
+    ">
+        <h1 style="
+            color: white;
+            margin: 0 0 8px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        ">
+            <span style="
+                background: #8b5cf6;
+                border-radius: 10px;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">📄</span>
+            Relatório Executivo Financeiro
+        </h1>
+        <p style="color: #94a3b8; margin: 0;">
+            Visão consolidada para tomada de decisão estratégica
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Mensagens de feedback estilizadas
     if st.session_state.get("msg"):
-        if st.session_state.get("msg_tipo") == "error":
-            st.error(st.session_state["msg"])
-        elif st.session_state.get("msg_tipo") == "warning":
-            st.warning(st.session_state["msg"])
-        else:
-            st.success(st.session_state["msg"])
-
+        msg_tipo = st.session_state.get("msg_tipo", "info")
+        msg_icon = {
+            "error": "❌",
+            "warning": "⚠️",
+            "success": "✅",
+            "info": "ℹ️"
+        }.get(msg_tipo, "ℹ️")
+        
+        msg_color = {
+            "error": "#ef4444",
+            "warning": "#f59e0b",
+            "success": "#10b981",
+            "info": "#3b82f6"
+        }.get(msg_tipo, "#3b82f6")
+        
+        st.markdown(f"""
+        <div style="
+            background: {msg_color}15;
+            border: 1px solid {msg_color}30;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #e5e7eb;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 20px;">{msg_icon}</span>
+                <div>{st.session_state["msg"]}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         st.session_state["msg"] = None
-    st.caption("Visão consolidada para tomada de decisão")
-
+    
     st.divider()
 
-    st.subheader("📌 Resumo Executivo")
-
-    col1, col2, col3, col4 = st.columns(4, gap="large")
-
     # ================= RESUMO EXECUTIVO =================
-
+    st.markdown("### 📌 Resumo Executivo")
+    
     variacao_mensal = saldo_variavel + saldo_fixo
-
+    
     if meta_patrimonio > 0:
         perc_meta = patrimonio / meta_patrimonio * 100
     else:
         perc_meta = 0
-
+    
     status_meta = (
         "🟢 Atingida" if perc_meta >= 100 else
         "🟡 Em progresso" if perc_meta >= 60 else
         "🔴 Crítica"
     )
-
-    col1.metric(
-        "💰 Patrimônio Atual",
-        f"R$ {patrimonio:,.2f}"
-    )
-
-    col2.metric(
-        "📈 Resultado do Mês",
-        f"R$ {variacao_mensal:,.2f}",
-        delta=f"{(variacao_mensal / patrimonio * 100):.1f}%" if patrimonio > 0 else None,
-        delta_color="inverse" if variacao_mensal < 0 else "normal"
-    )
-
-    col3.metric(
-        "🏢 Saldo Fixo",
-        f"R$ {saldo_fixo:,.2f}",
-        delta_color="inverse" if saldo_fixo < 0 else "normal"
-    )
-
-    col4.metric(
-        "🎯 Status da Meta",
-        f"{perc_meta:.1f}% • {status_meta}"
-    )
-
+    
+    # Cards de métricas principais
+    with st.container():
+        col1, col2, col3, col4 = st.columns(4, gap="medium")
+        
+        with col1:
+            # Card 1: Patrimônio
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+                border-radius: 16px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 10px;
+                        width: 48px;
+                        height: 48px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 12px;
+                    ">
+                        <span style="font-size: 24px;">💰</span>
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">Patrimônio Atual</div>
+                    <div style="font-size: 28px; font-weight: bold; margin: 8px 0;">
+                        R$ {patrimonio:,.0f}
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>Valor total acumulado</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            # Card 2: Resultado do Mês
+            delta_color = "normal" if variacao_mensal >= 0 else "inverse"
+            cor_card = "#10b981" if variacao_mensal >= 0 else "#ef4444"
+            icone = "📈" if variacao_mensal >= 0 else "📉"
+            
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, {cor_card}80 0%, {cor_card} 100%);
+                border-radius: 16px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px {cor_card}30;
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 10px;
+                        width: 48px;
+                        height: 48px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 12px;
+                    ">
+                        <span style="font-size: 24px;">{icone}</span>
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">Resultado do Mês</div>
+                    <div style="font-size: 28px; font-weight: bold; margin: 8px 0;">
+                        R$ {abs(variacao_mensal):,.0f}
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>{"Lucro" if variacao_mensal >= 0 else "Prejuízo"} mensal</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            # Card 3: Saldo Fixo
+            cor_saldo_fixo = "#60a5fa" if saldo_fixo >= 0 else "#f87171"
+            
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                border-radius: 16px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 10px;
+                        width: 48px;
+                        height: 48px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 12px;
+                    ">
+                        <span style="font-size: 24px;">🏢</span>
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">Saldo Fixo</div>
+                    <div style="font-size: 28px; font-weight: bold; margin: 8px 0;">
+                        R$ {saldo_fixo:,.0f}
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>Para investimentos</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            # Card 4: Status da Meta
+            cor_meta = "#10b981" if perc_meta >= 100 else "#f59e0b" if perc_meta >= 60 else "#ef4444"
+            
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+                border-radius: 16px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            ">
+                <div>
+                    <div style="
+                        background: {cor_meta};
+                        border-radius: 10px;
+                        width: 48px;
+                        height: 48px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 12px;
+                    ">
+                        <span style="font-size: 24px;">🎯</span>
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">Status da Meta</div>
+                    <div style="font-size: 20px; font-weight: bold; margin: 8px 0;">
+                        {perc_meta:.1f}%
+                    </div>
+                    <div style="font-size: 12px;">
+                        {status_meta}
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    
     st.divider()
 
-
-    st.subheader("📊 Diagnóstico do Mês")
-    # ================= DIAGNÓSTICO =================
-
-    if saldo_variavel < 0 and saldo_fixo < 0:
-        diagnostico = "🔴 Mês financeiramente negativo. Atenção imediata ao controle de gastos."
-    elif saldo_variavel < 0:
-        diagnostico = "🟡 Gastos variáveis acima do esperado. Revisar despesas não recorrentes."
-    elif saldo_fixo < 0:
-        diagnostico = "🟠 Estrutura fixa deficitária. Ajuste de receitas ou redução de custos."
-    else:
-        diagnostico = "🟢 Fluxo financeiro saudável neste mês."
-
-    if "🟢" in diagnostico:
-        st.caption(diagnostico)
-    else:
-        st.caption(diagnostico)
-
-    st.divider()
-
-    st.subheader("🚀 Projeção e Cenário Base")
-    # ================= PROJEÇÃO EXECUTIVA =================
-
-    if not df_projecao.empty:
-        ultimo = df_projecao.iloc[-1]
-        meses_ate_meta = len(df_projecao)
-
-        texto_proj = (
-            f"📈 Mantido o cenário atual, o patrimônio projetado é de "
-            f"R$ {ultimo['patrimonio']:,.2f} em aproximadamente "
-            f"{meses_ate_meta} meses."
-        )
-
-        if ultimo["meta_atingida"]:
-            texto_proj += " 🎯 A meta será atingida dentro do horizonte projetado."
+    # ================= DIAGNÓSTICO DO MÊS =================
+    st.markdown("### 📊 Diagnóstico do Mês")
+    
+    with st.container():
+        
+        # Determinar diagnóstico
+        if saldo_variavel < 0 and saldo_fixo < 0:
+            diagnostico = "Mês financeiramente negativo. Atenção imediata ao controle de gastos."
+            cor_diag = "#ef4444"
+            icone_diag = "🔴"
+        elif saldo_variavel < 0:
+            diagnostico = "Gastos variáveis acima do esperado. Revisar despesas não recorrentes."
+            cor_diag = "#f59e0b"
+            icone_diag = "🟡"
+        elif saldo_fixo < 0:
+            diagnostico = "Estrutura fixa deficitária. Ajuste de receitas ou redução de custos."
+            cor_diag = "#f97316"
+            icone_diag = "🟠"
         else:
-            texto_proj += " ⚠️ A meta não será atingida sem ajustes no plano."
-
-        st.caption(texto_proj)
-    else:
-        st.caption("Projeção indisponível por falta de dados.")
-
+            diagnostico = "Fluxo financeiro saudável neste mês."
+            cor_diag = "#10b981"
+            icone_diag = "🟢"
+        
+        st.markdown(f"""
+        <div style="
+            background: {cor_diag}15;
+            border: 1px solid {cor_diag}30;
+            border-radius: 12px;
+            padding: 20px;
+            color: #e5e7eb;
+            margin-top: 20px;
+        ">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span style="font-size: 32px;">{icone_diag}</span>
+                <div>
+                    <div style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">
+                        {diagnostico}
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">
+                        Última análise: {datetime.now().strftime('%d/%m/%Y %H:%M')}
+                    </div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    
     st.divider()
 
-
-    st.subheader("📝 Análise Executiva Consolidada")
-
-    texto_exec = gerar_texto_executivo(
-        patrimonio=patrimonio,
-        saldo_variavel=saldo_variavel,
-        saldo_fixo=saldo_fixo,
-        perc_meta=perc_meta,
-        status_meta=status_meta,
-        df_projecao=df_projecao
-    )
-
-    st.write(texto_exec)
-
-    # ================= Recomendação Estratégica =================
-
-    st.subheader("💡 Recomendação Estratégica")
+    # ================= PROJEÇÃO E CENÁRIO BASE =================
+    st.markdown("### 🚀 Projeção e Cenário Base")
     
-    # Calcular sugestão para 5, 10 e 15 anos
-    prazos = [5, 10, 15]
+    with st.container():
+        
+        if not df_projecao.empty:
+            ultimo = df_projecao.iloc[-1]
+            meses_ate_meta = len(df_projecao)
+            
+            if ultimo["meta_atingida"]:
+                texto_proj = f"✅ Meta será atingida em aproximadamente {meses_ate_meta} meses."
+                cor_proj = "#10b981"
+                icone_proj = "✅"
+            else:
+                texto_proj = f"⚠️ Meta não será atingida sem ajustes no plano."
+                cor_proj = "#f59e0b"
+                icone_proj = "⚠️"
+            
+            st.markdown(f"""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid #374151;
+                margin-bottom: 20px;
+            ">
+                <div style="display: flex; align-items: flex-start; gap: 16px;">
+                    <span style="font-size: 24px; color: {cor_proj};">{icone_proj}</span>
+                    <div>
+                        <div style="font-size: 16px; color: #e5e7eb; font-weight: bold; margin-bottom: 8px;">
+                            Mantido o cenário atual:
+                        </div>
+                        <div style="color: #d1d5db;">
+                            Patrimônio projetado: <strong>R$ {ultimo['patrimonio']:,.2f}</strong><br>
+                            Tempo estimado: <strong>{meses_ate_meta} meses</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Gráfico de projeção
+            st.markdown("#### 📈 Evolução Projetada")
+            
+            fig_proj = px.line(
+                df_projecao,
+                x="data",
+                y="patrimonio",
+                markers=True,
+                line_shape="spline"
+            )
+            
+            fig_proj.update_traces(
+                line=dict(width=4, color="#3b82f6"),
+                marker=dict(size=8, color="#60a5fa"),
+                hovertemplate="<b>%{x|%b/%Y}</b><br>R$ %{y:,.0f}<extra></extra>"
+            )
+            
+            # Linha da meta
+            fig_proj.add_hline(
+                y=meta_patrimonio,
+                line_dash="dash",
+                line_color="#10b981",
+                line_width=2,
+                annotation_text=f"Meta: R$ {meta_patrimonio:,.0f}",
+                annotation_position="top left",
+                annotation_font=dict(color="#10b981", size=12)
+            )
+            
+            fig_proj.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="#0e1117",
+                plot_bgcolor="#0e1117",
+                font=dict(color="#e5e7eb"),
+                hovermode="x unified",
+                xaxis=dict(
+                    title="",
+                    gridcolor="#374151",
+                    showgrid=True,
+                    tickfont=dict(size=12)
+                ),
+                yaxis=dict(
+                    title="Patrimônio (R$)",
+                    gridcolor="#374151",
+                    showgrid=True,
+                    tickfont=dict(size=12),
+                    tickprefix="R$ "
+                ),
+                height=400,
+                margin=dict(t=40, b=40, l=60, r=40)
+            )
+            
+            st.plotly_chart(fig_proj, use_container_width=True)
+            
+        else:
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 60px 20px;
+                text-align: center;
+                border: 2px dashed #374151;
+                margin: 20px 0;
+            ">
+                <div style="font-size: 64px; margin-bottom: 20px; color: #6b7280;">📊</div>
+                <h3 style="color: #9ca3af; margin-bottom: 12px;">Projeção indisponível</h3>
+                <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                    Dados insuficientes para gerar projeção.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
     
-    for prazo in prazos:
-        aporte, viavel = calcular_aporte_ideal_para_meta(
-            patrimonio_atual=patrimonio,
-            meta_patrimonio=meta_patrimonio,
+    st.divider()
+
+    # ================= ANÁLISE EXECUTIVA CONSOLIDADA =================
+    st.markdown("### 📝 Análise Executiva Consolidada")
+    
+    with st.container():
+        
+        texto_exec = gerar_texto_executivo(
+            patrimonio=patrimonio,
+            saldo_variavel=saldo_variavel,
+            saldo_fixo=saldo_fixo,
+            perc_meta=perc_meta,
+            status_meta=status_meta,
+            df_projecao=df_projecao
+        )
+        
+        st.markdown("""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #374151;
+            color: #e5e7eb;
+            line-height: 1.6;
+            font-size: 15px;
+        ">
+        """, unsafe_allow_html=True)
+        
+        st.write(texto_exec)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.divider()
+
+    # ================= RECOMENDAÇÃO ESTRATÉGICA =================
+    st.markdown("### 💡 Recomendação Estratégica")
+    
+    with st.container():
+        
+        st.markdown("#### 🎯 Aporte Ideal por Prazo")
+        
+        # Calcular sugestão para 5, 10 e 15 anos
+        prazos = [5, 10, 15]
+        
+        for prazo in prazos:
+            aporte, viavel = calcular_aporte_ideal_para_meta(
+                patrimonio_atual=patrimonio,
+                meta_patrimonio=meta_patrimonio,
+                rendimento_mensal=rendimento_mensal,
+                inflacao_mensal=inflacao_mensal,
+                tempo_desejado_anos=prazo
+            )
+            
+            cor_card_rec = "#10b981" if viavel else "#f59e0b"
+            status_rec = "✅ Viável" if viavel else "⚠️ Ajustar"
+            
+            col_r1, col_r2, col_r3 = st.columns([1, 2, 1], gap="medium")
+            
+            with col_r1:
+                st.markdown(f"""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 12px;
+                    padding: 16px;
+                    text-align: center;
+                    border: 1px solid #374151;
+                ">
+                    <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">⏳ Prazo</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #e5e7eb;">{prazo} anos</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_r2:
+                st.markdown(f"""
+                <div style="
+                    background: {cor_card_rec}20;
+                    border-radius: 12px;
+                    padding: 16px;
+                    border: 2px solid {cor_card_rec};
+                    text-align: center;
+                ">
+                    <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">💰 Aporte Mensal</div>
+                    <div style="font-size: 20px; font-weight: bold; color: {cor_card_rec};">R$ {aporte:,.0f}</div>
+                    <div style="font-size: 12px; color: {cor_card_rec}; margin-top: 4px;">{status_rec}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_r3:
+                diferenca = aporte - saldo_fixo
+                if diferenca > 0:
+                    st.markdown(f"""
+                    <div style="
+                        background: #1f2937;
+                        border-radius: 12px;
+                        padding: 16px;
+                        text-align: center;
+                        border: 1px solid #374151;
+                    ">
+                        <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">📊 Diferença</div>
+                        <div style="font-size: 16px; font-weight: bold; color: #f59e0b;">
+                            +R$ {diferenca:,.0f}
+                        </div>
+                        <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">a mais/mês</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div style="
+                        background: #1f2937;
+                        border-radius: 12px;
+                        padding: 16px;
+                        text-align: center;
+                        border: 1px solid #374151;
+                    ">
+                        <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">📊 Diferença</div>
+                        <div style="font-size: 16px; font-weight: bold; color: #10b981;">
+                            ✓ Dentro
+                        </div>
+                        <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">do atual</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.divider()
+
+    # ================= SIMULADOR DE CENÁRIOS =================
+    st.markdown("### 🧮 Simulador de Cenários")
+    
+    with st.container():
+        
+        st.markdown("Simule ajustes financeiros e veja o impacto no patrimônio ao longo do tempo.")
+        
+        with st.expander("⚙️ Configurar cenário de simulação", expanded=False):
+            col1, col2 = st.columns(2, gap="large")
+            
+            with col1:
+                st.markdown("""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 12px;
+                    padding: 20px;
+                    border: 1px solid #374151;
+                    margin-bottom: 20px;
+                ">
+                    <div style="font-size: 14px; color: #d1d5db; margin-bottom: 12px;">
+                        ➕ Aporte mensal adicional
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                aporte_extra = st.number_input(
+                    "Valor em R$",
+                    min_value=0.0,
+                    step=100.0,
+                    value=0.0,
+                    label_visibility="collapsed"
+                )
+                
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown("""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 12px;
+                    padding: 20px;
+                    border: 1px solid #374151;
+                    margin-bottom: 20px;
+                ">
+                    <div style="font-size: 14px; color: #d1d5db; margin-bottom: 12px;">
+                        📉 Redução das despesas fixas
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                ajuste_despesas = st.slider(
+                    "Percentual de redução",
+                    min_value=0,
+                    max_value=50,
+                    value=0,
+                    step=5,
+                    label_visibility="collapsed"
+                )
+                
+                st.markdown("</div>", unsafe_allow_html=True)
+        
+        # ================= CÁLCULO DO CENÁRIO SIMULADO =================
+        saldo_fixo_simulado = saldo_fixo + aporte_extra
+        
+        if ajuste_despesas > 0:
+            reducao = despesas_fixas * (ajuste_despesas / 100)
+            saldo_fixo_simulado += reducao
+        
+        # 🔹 A PROJEÇÃO SIMULADA SEMPRE EXISTE
+        df_projecao_simulada = projetar_patrimonio(
+            patrimonio_inicial=patrimonio,
+            saldo_fixo_mensal=saldo_fixo_simulado,
             rendimento_mensal=rendimento_mensal,
             inflacao_mensal=inflacao_mensal,
-            tempo_desejado_anos=prazo
+            meta_patrimonio=meta_patrimonio,
+            meses=120
         )
         
-        col_r1, col_r2, col_r3 = st.columns([1, 2, 1])
+        # ================= COMPARAÇÃO DE CENÁRIOS =================
+        st.markdown("#### 📊 Comparação de Cenários")
         
-        with col_r1:
-            st.metric(f"Prazo", f"{prazo} anos")
-        
-        with col_r2:
-            if viavel:
-                st.success(f"💰 Aporte mensal: R$ {aporte:,.2f}")
-            else:
-                st.error(f"💰 Aporte mensal: R$ {aporte:,.2f} (inviável)")
-        
-        with col_r3:
-            diferenca = aporte - saldo_fixo
-            if diferenca > 0:
-                st.caption(f"+R$ {diferenca:,.2f}/mês")
-            else:
-                st.caption("✓ Dentro do atual")
-
-
-
-    # ================= ALERTAS =================
-
-    alertas = []
-
-    if saldo_variavel < 0:
-        alertas.append("⚠️ Despesas variáveis superaram receitas no mês.")
-
-    if saldo_fixo < 0:
-        alertas.append("⚠️ Estrutura fixa está consumindo patrimônio.")
-
-    if perc_meta < 50:
-        alertas.append("⚠️ Patrimônio distante da meta definida.")
-
-    if not alertas:
-        st.caption("✅ Nenhum alerta crítico identificado.")
-    else:
-        for alerta in alertas:
-            st.error(alerta)
-
-    st.divider()
-    st.subheader("🧮 Simulador de Cenários")
-
-    st.caption("Simule ajustes financeiros e veja o impacto no patrimônio ao longo do tempo.")
-
-    with st.expander("⚙️ Configurar cenário de simulação"):
-        col1, col2 = st.columns(2, gap="large")
-
-        with col1:
-            aporte_extra = st.number_input(
-                "➕ Aporte mensal adicional (R$)",
-                min_value=0.0,
-                step=100.0,
-                value=0.0
+        if not df_projecao.empty and not df_projecao_simulada.empty:
+            meses_base = len(df_projecao)
+            meses_simulado = len(df_projecao_simulada)
+            ganho_tempo = meses_base - meses_simulado
+            
+            colc1, colc2, colc3 = st.columns(3, gap="medium")
+            
+            with colc1:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    text-align: center;
+                ">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">⏱️ Cenário Atual</div>
+                    <div style="font-size: 24px; font-weight: bold;">{meses_base} meses</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                        <i>Tempo até meta</i>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with colc2:
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    text-align: center;
+                ">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">🚀 Cenário Simulado</div>
+                    <div style="font-size: 24px; font-weight: bold;">{meses_simulado} meses</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                        <i>{f"-{ganho_tempo} meses" if ganho_tempo > 0 else "Sem alteração"}</i>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with colc3:
+                impacto = saldo_fixo_simulado - saldo_fixo
+                cor_impacto = "#10b981" if impacto >= 0 else "#ef4444"
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                    border-radius: 12px;
+                    padding: 20px;
+                    color: white;
+                    text-align: center;
+                ">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">💡 Impacto Mensal</div>
+                    <div style="font-size: 24px; font-weight: bold; color: {cor_impacto};">
+                        R$ {impacto:+,.0f}
+                    </div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                        <i>{"Aporte adicional" if impacto > 0 else "Redução"}</i>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # ================= GRÁFICO COMPARATIVO =================
+            st.markdown("#### 📈 Evolução do Patrimônio — Comparativo")
+            
+            # Preparar dados para o gráfico
+            df_base = df_projecao.copy()
+            df_base["Cenário"] = "Atual"
+            
+            df_sim = df_projecao_simulada.copy()
+            df_sim["Cenário"] = "Simulado"
+            
+            df_plot = pd.concat([df_base, df_sim], ignore_index=True)
+            
+            fig_comp = px.line(
+                df_plot,
+                x="data",
+                y="patrimonio",
+                color="Cenário",
+                color_discrete_map={"Atual": "#3b82f6", "Simulado": "#10b981"},
+                markers=True,
+                line_shape="spline"
             )
-
-        with col2:
-            ajuste_despesas = st.slider(
-                "📉 Redução das despesas fixas (%)",
-                min_value=0,
-                max_value=50,
-                value=0,
-                step=5
+            
+            fig_comp.update_traces(
+                line=dict(width=3),
+                marker=dict(size=6),
+                hovertemplate="<b>%{x|%b/%Y}</b><br>%{data.name}: R$ %{y:,.0f}<extra></extra>"
             )
-
-
-
-
-    # ================= CÁLCULO DO CENÁRIO SIMULADO =================
-
-    saldo_fixo_simulado = saldo_fixo + aporte_extra
-
-    if ajuste_despesas > 0:
-        reducao = despesas_fixas * (ajuste_despesas / 100)
-        saldo_fixo_simulado += reducao
-
-
-    # 🔹 A PROJEÇÃO SIMULADA SEMPRE EXISTE
-    df_projecao_simulada = projetar_patrimonio(
-        patrimonio_inicial=patrimonio,
-        saldo_fixo_mensal=saldo_fixo_simulado,
-        rendimento_mensal=rendimento_mensal,
-        inflacao_mensal=inflacao_mensal,
-        meta_patrimonio=meta_patrimonio,
-        meses=120
-    )
-
-    st.divider()
-    st.subheader("📊 Comparação de Cenários")
-
-    if not df_projecao.empty and not df_projecao_simulada.empty:
-
-        meses_base = len(df_projecao)
-        meses_simulado = len(df_projecao_simulada)
-
-        ganho_tempo = meses_base - meses_simulado
-
-        colc1, colc2, colc3 = st.columns(3)
-
-        colc1.metric(
-            "⏱️ Tempo até Meta (Atual)",
-            f"{meses_base} meses"
-        )
-
-        colc2.metric(
-            "🚀 Tempo até Meta (Simulado)",
-            f"{meses_simulado} meses",
-            delta=f"-{ganho_tempo} meses" if ganho_tempo > 0 else None
-        )
-
-        colc3.metric(
-            "💡 Impacto Mensal",
-            f"R$ {saldo_fixo_simulado - saldo_fixo:,.2f}"
-        )
-    else:
-        st.caption("Simulação indisponível.")
-
-
-    st.divider()
-    st.subheader("📈 Evolução do Patrimônio — Cenários Comparados")
-
-    # Preparar dados para o gráfico
-    df_base = df_projecao.copy()
-    df_base["Cenário"] = "Atual"
-
-    df_sim = df_projecao_simulada.copy()
-    df_sim["Cenário"] = "Simulado"
-
-    df_plot = pd.concat([df_base, df_sim], ignore_index=True)
-
-
-    fig_comp = px.line(
-        df_plot,
-        x="data",
-        y="patrimonio",
-        color="Cenário",
-        markers=True,
-        title="Comparação de Crescimento Patrimonial"
-    )
-
-    # Linha da meta
-    fig_comp.add_hline(
-        y=meta_patrimonio,
-        line_dash="dash",
-        line_color="red",
-        annotation_text="Meta",
-        annotation_position="top left"
-    )
-
-    fig_comp.update_layout(
-        height=450,
-        yaxis_title="Patrimônio (R$)",
-        xaxis_title="data",
-        hovermode="x unified"
-    )
+            
+            # Linha da meta
+            fig_comp.add_hline(
+                y=meta_patrimonio,
+                line_dash="dash",
+                line_color="#8b5cf6",
+                line_width=2,
+                annotation_text="Meta",
+                annotation_position="top left",
+                annotation_font=dict(color="#8b5cf6", size=12)
+            )
+            
+            fig_comp.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="#0e1117",
+                plot_bgcolor="#0e1117",
+                font=dict(color="#e5e7eb"),
+                hovermode="x unified",
+                xaxis=dict(
+                    title="",
+                    gridcolor="#374151",
+                    showgrid=True,
+                    tickfont=dict(size=12)
+                ),
+                yaxis=dict(
+                    title="Patrimônio (R$)",
+                    gridcolor="#374151",
+                    showgrid=True,
+                    tickfont=dict(size=12),
+                    tickprefix="R$ "
+                ),
+                height=450,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+            
+            st.plotly_chart(fig_comp, use_container_width=True)
+        else:
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 40px 20px;
+                text-align: center;
+                border: 2px dashed #374151;
+                margin: 20px 0;
+            ">
+                <div style="font-size: 48px; margin-bottom: 16px; color: #6b7280;">📊</div>
+                <h4 style="color: #9ca3af; margin-bottom: 8px;">Simulação indisponível</h4>
+                <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                    Configure o cenário de simulação para ver resultados.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
     
-
-    st.plotly_chart(fig_comp, use_container_width=True)
-
-
-# =========================================================
-# GERADOR DE PDF
-# =========================================================
-
-
-
     st.divider()
-    st.subheader("📥 Exportar Relatório")
 
-    texto_exec = gerar_texto_executivo(
-        patrimonio=patrimonio,
-        saldo_variavel=saldo_variavel,
-        saldo_fixo=saldo_fixo,
-        perc_meta=perc_meta,
-        status_meta=status_meta,
-        df_projecao=df_projecao
-    )
-
-    html = gerar_relatorio_html(
-        nome_familia=nome_familia,
-        patrimonio=patrimonio,
-        saldo_variavel=saldo_variavel,
-        saldo_fixo=saldo_fixo,
-        perc_meta=perc_meta,
-        status_meta=status_meta,
-        texto_exec=texto_exec
-    )
-
-    st.download_button(
-        label="⬇️ Baixar Relatório Executivo (HTML)",
-        data=html,
-        file_name="relatorio_financeiro_executivo.html",
-        mime="text/html"
-    )
-
-
-    # =========================================================
-    # 🗂️ CONTROLE DO RELATÓRIO MENSAL
-    # =========================================================
-
+    # ================= ALERTAS E CONTROLE =================
+    st.markdown("### ⚠️ Alertas Críticos")
+    
+    with st.container():
+        
+        alertas = []
+        
+        if saldo_variavel < 0:
+            alertas.append("⚠️ Despesas variáveis superaram receitas no mês.")
+        
+        if saldo_fixo < 0:
+            alertas.append("⚠️ Estrutura fixa está consumindo patrimônio.")
+        
+        if perc_meta < 50:
+            alertas.append("⚠️ Patrimônio distante da meta definida.")
+        
+        if not alertas:
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                text-align: center;
+            ">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
+                    <span style="font-size: 32px;">✅</span>
+                    <div style="text-align: left;">
+                        <div style="font-size: 18px; font-weight: bold; margin-bottom: 4px;">
+                            Nenhum alerta crítico
+                        </div>
+                        <div style="font-size: 14px; opacity: 0.9;">
+                            Sua saúde financeira está sob controle.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            for alerta in alertas:
+                st.markdown(f"""
+                <div style="
+                    background: #7f1d1d20;
+                    border: 1px solid #ef4444;
+                    border-radius: 12px;
+                    padding: 16px;
+                    margin-bottom: 12px;
+                    color: #e5e7eb;
+                ">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 20px; color: #ef4444;">⚠️</span>
+                        <div>{alerta}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+    
     st.divider()
-    st.subheader("🗂️ Controle do Relatório Mensal")
 
-    col1, col2 = st.columns(2, gap="large")
-
-    with col1:
-        if st.button("💾 Salvar como Rascunho"):
-            texto_exec = gerar_texto_executivo(
-                patrimonio=patrimonio,
-                saldo_variavel=saldo_variavel,
-                saldo_fixo=saldo_fixo,
-                perc_meta=perc_meta,
-                status_meta=status_meta,
-                df_projecao=df_projecao
-            )
-
-            ok, msg = salvar_relatorio_mensal(
-                dados=dados,
-                patrimonio=patrimonio,
-                saldo_fixo=saldo_fixo,
-                saldo_variavel=saldo_variavel,
-                perc_meta=perc_meta,
-                texto_exec=texto_exec,
-                status="Rascunho"
-            )
-
-            if ok:
-                st.caption(msg)
-            else:
-                st.caption(msg)
-
-    with col2:
-        if st.button("🔒 Finalizar Mês"):
-            texto_exec = gerar_texto_executivo(
-                patrimonio=patrimonio,
-                saldo_variavel=saldo_variavel,
-                saldo_fixo=saldo_fixo,
-                perc_meta=perc_meta,
-                status_meta=status_meta,
-                df_projecao=df_projecao
-            )
-
-            ok, msg = salvar_relatorio_mensal(
-                dados=dados,
-                patrimonio=patrimonio,
-                saldo_fixo=saldo_fixo,
-                saldo_variavel=saldo_variavel,
-                perc_meta=perc_meta,
-                texto_exec=texto_exec,
-                status="Finalizado"
-            )
-
-            st.caption(msg) if ok else st.error(msg)
-
-    # =========================================================
-    # 📜 RELATÓRIOS ANTERIORES
-    # =========================================================
-
-    if not dados.get("relatorios_historicos", pd.DataFrame()).empty:
-        st.divider()
-        st.subheader("📜 Relatórios Anteriores")
-
-
-        df_hist = dados.get("relatorios_historicos", pd.DataFrame()).copy()
-
-        # 🔒 blindagem de schema
-        for col in ["mes", "status", "patrimonio", "saldo_fixo", "saldo_variavel", "perc_meta"]:
-            if col not in df_hist.columns:
-                df_hist[col] = None
-
-        df_hist = dados["relatorios_historicos"].sort_values("mes", ascending=False)
-
-        st.dataframe(
-            df_hist[[
-                "mes",
-                "patrimonio",
-                "saldo_fixo",
-                "saldo_variavel",
-                "perc_meta",
-                "status"
-            ]].style.format({
-                "patrimonio": "R$ {:,.2f}",
-                "saldo_fixo": "R$ {:,.2f}",
-                "saldo_variavel": "R$ {:,.2f}",
-                "perc_meta": "{:.1f}%"
-            }),
+    # ================= CONTROLE DO RELATÓRIO =================
+    st.markdown("### 📥 Controle e Exportação")
+    
+    with st.container():
+        
+        col_controle1, col_controle2 = st.columns(2, gap="medium")
+        
+        with col_controle1:
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid #374151;
+                text-align: center;
+            ">
+                <div style="font-size: 14px; color: #d1d5db; margin-bottom: 16px;">
+                    💾 Salvar como Rascunho
+                </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("💾 Salvar Rascunho", use_container_width=True):
+                texto_exec = gerar_texto_executivo(
+                    patrimonio=patrimonio,
+                    saldo_variavel=saldo_variavel,
+                    saldo_fixo=saldo_fixo,
+                    perc_meta=perc_meta,
+                    status_meta=status_meta,
+                    df_projecao=df_projecao
+                )
+                
+                ok, msg = salvar_relatorio_mensal(
+                    dados=dados,
+                    patrimonio=patrimonio,
+                    saldo_fixo=saldo_fixo,
+                    saldo_variavel=saldo_variavel,
+                    perc_meta=perc_meta,
+                    texto_exec=texto_exec,
+                    status="Rascunho"
+                )
+                
+                if ok:
+                    st.success(msg)
+                else:
+                    st.error(msg)
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        with col_controle2:
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid #374151;
+                text-align: center;
+            ">
+                <div style="font-size: 14px; color: #d1d5db; margin-bottom: 16px;">
+                    🔒 Finalizar Mês
+                </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("🔒 Finalizar Mês", use_container_width=True):
+                texto_exec = gerar_texto_executivo(
+                    patrimonio=patrimonio,
+                    saldo_variavel=saldo_variavel,
+                    saldo_fixo=saldo_fixo,
+                    perc_meta=perc_meta,
+                    status_meta=status_meta,
+                    df_projecao=df_projecao
+                )
+                
+                ok, msg = salvar_relatorio_mensal(
+                    dados=dados,
+                    patrimonio=patrimonio,
+                    saldo_fixo=saldo_fixo,
+                    saldo_variavel=saldo_variavel,
+                    perc_meta=perc_meta,
+                    texto_exec=texto_exec,
+                    status="Finalizado"
+                )
+                
+                st.success(msg) if ok else st.error(msg)
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Botão de exportação
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        texto_exec = gerar_texto_executivo(
+            patrimonio=patrimonio,
+            saldo_variavel=saldo_variavel,
+            saldo_fixo=saldo_fixo,
+            perc_meta=perc_meta,
+            status_meta=status_meta,
+            df_projecao=df_projecao
+        )
+        
+        html = gerar_relatorio_html(
+            nome_familia=nome_familia,
+            patrimonio=patrimonio,
+            saldo_variavel=saldo_variavel,
+            saldo_fixo=saldo_fixo,
+            perc_meta=perc_meta,
+            status_meta=status_meta,
+            texto_exec=texto_exec
+        )
+        
+        st.download_button(
+            label="⬇️ Baixar Relatório Executivo (HTML)",
+            data=html,
+            file_name=f"relatorio_executivo_{datetime.now().strftime('%Y%m%d_%H%M')}.html",
+            mime="text/html",
             use_container_width=True
         )
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.divider()
+
+    # ================= HISTÓRICO DE RELATÓRIOS =================
+    if not dados.get("relatorios_historicos", pd.DataFrame()).empty:
+        st.markdown("### 📜 Relatórios Anteriores")
+        
+        with st.container():
+            
+            df_hist = dados.get("relatorios_historicos", pd.DataFrame()).copy()
+            
+            # 🔒 blindagem de schema
+            for col in ["mes", "status", "patrimonio", "saldo_fixo", "saldo_variavel", "perc_meta"]:
+                if col not in df_hist.columns:
+                    df_hist[col] = None
+            
+            df_hist = dados["relatorios_historicos"].sort_values("mes", ascending=False)
+            
+            # Estilizar o dataframe
+            def color_status(val):
+                if val == "Finalizado":
+                    return "background-color: #065f46; color: white;"
+                elif val == "Rascunho":
+                    return "background-color: #78350f; color: white;"
+                return ""
+            
+            st.dataframe(
+                df_hist[[
+                    "mes",
+                    "patrimonio",
+                    "saldo_fixo",
+                    "saldo_variavel",
+                    "perc_meta",
+                    "status"
+                ]].style.format({
+                    "patrimonio": "R$ {:,.2f}",
+                    "saldo_fixo": "R$ {:,.2f}",
+                    "saldo_variavel": "R$ {:,.2f}",
+                    "perc_meta": "{:.1f}%"
+                }).applymap(color_status, subset=["status"]),
+                use_container_width=True,
+                height=300
+            )
+            
+            st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # PLACEHOLDERS (não quebram)
