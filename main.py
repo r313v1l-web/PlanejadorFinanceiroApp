@@ -2003,11 +2003,13 @@ elif menu == "🎯 SONHOS & METAS":
 
 
 # =========================================================
-# 🏢 FLUXOS FIXOS - CORREÇÃO DA EDIÇÃO
+# 🏢 FLUXOS FIXOS - VERSÃO CORRIGIDA COM CARDS
 # =========================================================
 elif menu == "🏢 FLUXOS FIXOS":
 
     st.markdown("🏢 Fluxos Fixos Mensais")
+    
+    # Mensagens de feedback
     if st.session_state.get("msg"):
         if st.session_state.get("msg_tipo") == "error":
             st.error(st.session_state["msg"])
@@ -2015,8 +2017,9 @@ elif menu == "🏢 FLUXOS FIXOS":
             st.warning(st.session_state["msg"])
         else:
             st.success(st.session_state["msg"])
-
         st.session_state["msg"] = None
+    
+    st.caption("Controle suas receitas e despesas recorrentes")
 
     # 🔥 NORMALIZAR O DATAFRAME
     if not dados["fluxo_fixo"].empty:
@@ -2033,369 +2036,691 @@ elif menu == "🏢 FLUXOS FIXOS":
     total_receitas = receitas["valor"].sum() if not receitas.empty else 0
     total_despesas = despesas["valor"].sum() if not despesas.empty else 0
     saldo_fixo = total_receitas - total_despesas
+    total_fluxos = len(df_fluxo)
+    
+    # Média de valores
+    media_receitas = receitas["valor"].mean() if not receitas.empty else 0
+    media_despesas = despesas["valor"].mean() if not despesas.empty else 0
 
-    col1, col2, col3 = st.columns(3, gap="small")
-    col1.metric("Receitas", f"R$ {total_receitas:,.2f}")
-    col2.metric("Despesas", f"R$ {total_despesas:,.2f}")
-    col3.metric("Saldo", f"R$ {saldo_fixo:,.2f}")
+    # ---------- CARDS DE RESUMO ----------
+    st.markdown("### 📊 Resumo dos Fluxos")
+    
+    # Container para os cards
+    with st.container():
+        col1, col2, col3, col4 = st.columns(4, gap="medium")
+        
+        with col1:
+            # Card 1: Receitas Fixas
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                margin-bottom: 10px;
+            ">
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 10px;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-right: 12px;
+                    ">
+                        <span style="font-size: 20px;">📈</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 14px; opacity: 0.9;">Receitas Fixas</div>
+                        <div style="font-size: 24px; font-weight: bold;">R$ {receitas:,.0f}</div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>{qtd_receitas} receitas • Média: R$ {media_rec:,.0f}</i>
+                </div>
+            </div>
+            """.format(receitas=total_receitas, qtd_receitas=len(receitas), media_rec=media_receitas), unsafe_allow_html=True)
+        
+        with col2:
+            # Card 2: Despesas Fixas
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                margin-bottom: 10px;
+            ">
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                    <div style="
+                        background: #ef4444;
+                        border-radius: 10px;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-right: 12px;
+                    ">
+                        <span style="font-size: 20px;">📉</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 14px; opacity: 0.9;">Despesas Fixas</div>
+                        <div style="font-size: 24px; font-weight: bold;">R$ {despesas:,.0f}</div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>{qtd_despesas} despesas • Média: R$ {media_desp:,.0f}</i>
+                </div>
+            </div>
+            """.format(despesas=total_despesas, qtd_despesas=len(despesas), media_desp=media_despesas), unsafe_allow_html=True)
+        
+        with col3:
+            # Card 3: Saldo Fixo
+            cor_saldo = "#34d399" if saldo_fixo >= 0 else "#f87171"
+            icone_saldo = "🟢" if saldo_fixo >= 0 else "🔴"
+            texto_saldo = "Superavit" if saldo_fixo >= 0 else "Deficit"
+            
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                margin-bottom: 10px;
+            ">
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 10px;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-right: 12px;
+                    ">
+                        <span style="font-size: 20px;">{icone}</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 14px; opacity: 0.9;">Saldo Fixo</div>
+                        <div style="font-size: 24px; font-weight: bold;">R$ {saldo:,.0f}</div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; opacity: 0.8;">
+                    <i>{texto} mensal fixo</i>
+                </div>
+            </div>
+            """.format(
+                icone=icone_saldo,
+                saldo=abs(saldo_fixo),
+                texto=texto_saldo
+            ), unsafe_allow_html=True)
+        
+        with col4:
+            # Card 4: Estatísticas
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+                margin-bottom: 10px;
+            ">
+                <div style="margin-bottom: 12px;">
+                    <div style="font-size: 14px; opacity: 0.9;">📊 Estatísticas</div>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 20px; font-weight: bold;">{total}</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Fluxos</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 20px; font-weight: bold;">{receitas_qtd}</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Receitas</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 20px; font-weight: bold;">{despesas_qtd}</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Despesas</div>
+                    </div>
+                </div>
+            </div>
+            """.format(total=total_fluxos, receitas_qtd=len(receitas), despesas_qtd=len(despesas)), unsafe_allow_html=True)
+    
+    # Barra de equilíbrio estilizada
+    if total_receitas > 0:
+        percentual_despesas = (total_despesas / total_receitas * 100) if total_receitas > 0 else 0
+    else:
+        percentual_despesas = 0
+    
+    st.markdown("""
+    <div style="
+        background: #1f2937;
+        border-radius: 10px;
+        padding: 16px;
+        margin: 16px 0;
+        border: 1px solid #374151;
+    ">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: #d1d5db; font-size: 14px;">Equilíbrio Financeiro</span>
+            <span style="color: #60a5fa; font-weight: bold; font-size: 14px;">{percentual:.1f}%</span>
+        </div>
+        <div style="
+            background: #374151;
+            border-radius: 20px;
+            height: 10px;
+            overflow: hidden;
+        ">
+            <div style="
+                background: linear-gradient(90deg, #3b82f6, #60a5fa);
+                width: {percentual}%;
+                height: 100%;
+                border-radius: 20px;
+                transition: width 0.5s ease;
+            "></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px;">
+            <span style="color: #9ca3af;">R$ 0</span>
+            <span style="color: #9ca3af;">Despesas / Receitas</span>
+            <span style="color: #9ca3af;">R$ {receitas:,.0f}</span>
+        </div>
+    </div>
+    """.format(percentual=min(percentual_despesas, 100), receitas=total_receitas), unsafe_allow_html=True)
 
     st.divider()
 
-    # ---------------- ADICIONAR FLUXO ----------------
-    with st.expander("➕ Novo Fluxo", expanded=False):
-        with st.form("form_fluxo", clear_on_submit=True):
-            col1, col2 = st.columns(2, gap="small")
-
-            with col1:
-                nome = st.text_input("Nome")
-                valor = st.number_input("Valor (R$)", min_value=0.0, step=10.0)
-                tipo = st.selectbox("Tipo", ["Receita", "Despesa"])
-
-            with col2:
-                categorias_disponiveis = []
-                if not dados["categorias"].empty:
-                    df_categorias = dados["categorias"].copy()
-                    df_categorias.columns = df_categorias.columns.str.lower()
-                    
-                    if "ativa" in df_categorias.columns:
-                        df_categorias["ativa"] = pd.to_numeric(df_categorias["ativa"], errors='coerce').fillna(1).astype(bool)
-                        categorias_ativas = df_categorias[df_categorias["ativa"] == True]
-                    else:
-                        categorias_ativas = df_categorias
-                    
-                    if "nome" in categorias_ativas.columns:
-                        categorias_disponiveis = categorias_ativas["nome"].dropna().unique().tolist()
+    # ---------- CARD PARA NOVO FLUXO ----------
+    st.markdown("### ➕ Novo Fluxo Fixo")
+    
+    with st.form("form_fluxo", clear_on_submit=True):
+        col1, col2 = st.columns(2, gap="medium")
+        
+        with col1:
+            nome = st.text_input(
+                "📝 Nome do Fluxo",
+                placeholder="Ex: Salário, Aluguel, Internet..."
+            )
+            valor = st.number_input(
+                "💰 Valor (R$)",
+                min_value=0.0,
+                step=10.0,
+                value=0.0,
+                format="%.2f"
+            )
+            tipo = st.selectbox("📊 Tipo", ["Receita", "Despesa"])
+        
+        with col2:
+            # Categorias disponíveis
+            categorias_disponiveis = []
+            if not dados["categorias"].empty:
+                df_categorias = dados["categorias"].copy()
+                df_categorias.columns = df_categorias.columns.str.lower()
                 
-                if not categorias_disponiveis:
-                    categorias_disponiveis = ["Outros"]
+                if "ativa" in df_categorias.columns:
+                    df_categorias["ativa"] = pd.to_numeric(df_categorias["ativa"], errors='coerce').fillna(1).astype(bool)
+                    categorias_ativas = df_categorias[df_categorias["ativa"] == True]
+                else:
+                    categorias_ativas = df_categorias
                 
-                categoria = st.selectbox("Categoria", categorias_disponiveis)
-                recorrencia = st.selectbox("Recorrência", ["Mensal", "Anual", "Trimestral", "Semestral"])
+                if "nome" in categorias_ativas.columns:
+                    categorias_disponiveis = categorias_ativas["nome"].dropna().unique().tolist()
+            
+            if not categorias_disponiveis:
+                categorias_disponiveis = ["Outros"]
+            
+            categoria = st.selectbox("🏷️ Categoria", categorias_disponiveis)
+            recorrencia = st.selectbox("🔄 Recorrência", ["Mensal", "Anual", "Trimestral", "Semestral"])
+        
+        # Datas
+        col_d1, col_d2 = st.columns(2, gap="medium")
+        with col_d1:
+            data_inicio = st.date_input("📅 Data de Início", date.today())
+        with col_d2:
+            data_fim = st.date_input("⏰ Data de Fim (opcional)", value=None)
+        
+        observacao = st.text_area(
+            "📝 Observações",
+            placeholder="Detalhes adicionais sobre este fluxo...",
+            height=80
+        )
+        
+        submitted = st.form_submit_button(
+            "💾 Salvar Fluxo",
+            type="primary",
+            use_container_width=True
+        )
 
-            data_inicio = st.date_input("Data de Início", date.today())
-            data_fim = st.date_input("Data de Fim (opcional)", value=None)
-            observacao = st.text_area("Observações", height=60)
+        if submitted and nome.strip():
+            data_inicio_str = data_inicio.isoformat() if data_inicio else None
+            data_fim_str = data_fim.isoformat() if data_fim else None
+            
+            novo = pd.DataFrame([{
+                "nome": nome.strip(),
+                "valor": float(valor),
+                "tipo": tipo.strip().title(),
+                "categoria": categoria,
+                "data_inicio": data_inicio_str,
+                "data_fim": data_fim_str,
+                "recorrencia": recorrencia,
+                "observacao": observacao.strip()
+            }])
 
-            if st.form_submit_button("💾 Salvar"):
-                data_inicio_str = data_inicio.isoformat() if data_inicio else None
-                data_fim_str = data_fim.isoformat() if data_fim else None
+            df_novo_fluxo = pd.concat([df_fluxo, novo], ignore_index=True) if not df_fluxo.empty else novo
+            
+            dados["fluxo_fixo"] = df_novo_fluxo
+            st.session_state["dados"] = dados
+            DatabaseManager.save("fluxo_fixo", df_novo_fluxo, usuario)
+            
+            st.success(f"✅ Fluxo '{nome.strip()}' adicionado com sucesso!")
+            st.rerun()
+        elif submitted:
+            st.error("❌ Por favor, informe um nome para o fluxo")
+
+    st.divider()
+
+    # ---------- CARDS PARA LISTA DE FLUXOS COM ABAS ----------
+    st.markdown("### 📋 Meus Fluxos Fixos")
+        
+    if not df_fluxo.empty:
+        # Criar abas para organização
+        tab1, tab2 = st.tabs(["📈 Receitas Fixas", "📉 Despesas Fixas"])
+        
+        with tab1:
+            if not receitas.empty:
+                # Header da aba de receitas
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+                    border-radius: 12px;
+                    padding: 16px;
+                    color: #1e40af;
+                    margin-bottom: 20px;
+                    border: 1px solid #60a5fa;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 16px; font-weight: bold;">📈 Receitas Fixas</div>
+                            <div style="font-size: 14px;">{len(receitas)} receitas cadastradas</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 20px; font-weight: bold;">R$ {total_receitas:,.2f}</div>
+                            <div style="font-size: 12px;">Total mensal</div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                novo = pd.DataFrame([{
-                    "nome": nome.strip(),
-                    "valor": float(valor),
-                    "tipo": tipo.strip().title(),
-                    "categoria": categoria,
-                    "data_inicio": data_inicio_str,
-                    "data_fim": data_fim_str,
-                    "recorrencia": recorrencia,
-                    "observacao": observacao.strip()
-                }])
-
-                df_novo_fluxo = pd.concat([df_fluxo, novo], ignore_index=True) if not df_fluxo.empty else novo
+                # Mostrar receitas - usando a mesma função de card adaptada
+                for idx, row in receitas.iterrows():
+                    mostrar_fluxo_card(idx, row, df_fluxo, unique_counter=idx)
+            else:
+                st.info("Nenhuma receita fixa cadastrada.")
+        
+        with tab2:
+            if not despesas.empty:
+                # Header da aba de despesas
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+                    border-radius: 12px;
+                    padding: 16px;
+                    color: #dc2626;
+                    margin-bottom: 20px;
+                    border: 1px solid #f87171;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 16px; font-weight: bold;">📉 Despesas Fixas</div>
+                            <div style="font-size: 14px;">{len(despesas)} despesas cadastradas</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 20px; font-weight: bold;">R$ {total_despesas:,.2f}</div>
+                            <div style="font-size: 12px;">Total mensal</div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                dados["fluxo_fixo"] = df_novo_fluxo
-                st.session_state["dados"] = dados
-                DatabaseManager.save("fluxo_fixo", df_novo_fluxo, usuario)
+                # Mostrar despesas
+                for idx, row in despesas.iterrows():
+                    mostrar_fluxo_card(idx, row, df_fluxo, unique_counter=idx + 1000)
+            else:
+                st.info("Nenhuma despesa fixa cadastrada.")
 
-                st.success("Fluxo adicionado!")
+    else:
+        # Card para estado vazio
+        with st.container():
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+                border-radius: 12px;
+                padding: 60px 20px;
+                text-align: center;
+                border: 2px dashed #374151;
+                margin: 20px 0;
+            ">
+                <div style="font-size: 64px; margin-bottom: 20px; color: #6b7280;">📭</div>
+                <h3 style="color: #9ca3af; margin-bottom: 12px;">Nenhum fluxo fixo registrado</h3>
+                <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                    Use o formulário acima para registrar seus primeiros fluxos fixos!
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ---------- BOTÃO PARA EXPORTAR ----------
+    if not df_fluxo.empty:
+        st.divider()
+        
+        with st.container():
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 10px;
+                padding: 20px;
+                border: 1px solid #374151;
+            ">
+                <div style="text-align: center;">
+                    <div style="font-size: 16px; color: #d1d5db; margin-bottom: 16px;">
+                        📤 Exportar Dados
+                    </div>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+            """, unsafe_allow_html=True)
+            
+            col_exp1, col_exp2 = st.columns(2)
+            
+            with col_exp1:
+                if st.button("📋 Copiar Resumo", use_container_width=True):
+                    resumo = f"""🏢 RESUMO DE FLUXOS FIXOS - {date.today().strftime('%d/%m/%Y')}
+
+📈 Receitas Fixas: R$ {total_receitas:,.2f} ({len(receitas)} fluxos)
+📉 Despesas Fixas: R$ {total_despesas:,.2f} ({len(despesas)} fluxos)
+💰 Saldo Fixo: R$ {saldo_fixo:,.2f}
+📊 Total de Fluxos: {total_fluxos}
+📅 Média Receitas: R$ {media_receitas:,.2f}
+📅 Média Despesas: R$ {media_despesas:,.2f}
+"""
+                    st.code(resumo)
+            
+            with col_exp2:
+                # Download CSV
+                csv = df_fluxo.to_csv(index=False)
+                st.download_button(
+                    label="📥 Baixar CSV Completo",
+                    data=csv,
+                    file_name=f"fluxos_fixos_{date.today().strftime('%Y_%m')}.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+            
+            st.markdown("""
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+# =========================================================
+# FUNÇÃO AUXILIAR: MOSTRAR CARD DE FLUXO
+# =========================================================
+def mostrar_fluxo_card(idx, row, df_original, unique_counter):
+    """Função auxiliar para mostrar um card de fluxo fixo"""
+    unique_key = f"fluxo_del_btn_{unique_counter}"
+    
+    # Determinar cor baseada no tipo
+    if row['tipo'] == "Receita":
+        valor_color = "#10b981"
+        valor_prefix = "+"
+        tipo_emoji = "📈"
+        cor_borda = "#10b981"
+    else:
+        valor_color = "#ef4444"
+        valor_prefix = "-"
+        tipo_emoji = "📉"
+        cor_borda = "#ef4444"
+    
+    # Determinar cor da recorrência
+    cores_recorrencia = {
+        "Mensal": "#3b82f6",
+        "Anual": "#8b5cf6",
+        "Trimestral": "#ec4899",
+        "Semestral": "#f59e0b"
+    }
+    cor_recorrencia = cores_recorrencia.get(row.get('recorrencia', 'Mensal'), "#3b82f6")
+    
+    # Formatar datas
+    data_inicio_str = ""
+    if 'data_inicio' in row and row['data_inicio']:
+        try:
+            data_inicio_str = pd.to_datetime(row['data_inicio']).strftime("%d/%m/%Y")
+        except:
+            data_inicio_str = str(row['data_inicio'])
+    
+    data_fim_str = ""
+    if 'data_fim' in row and row['data_fim'] and pd.notna(row['data_fim']):
+        try:
+            data_fim_str = pd.to_datetime(row['data_fim']).strftime("%d/%m/%Y")
+        except:
+            data_fim_str = str(row['data_fim'])
+    
+    # Card para cada fluxo
+    with st.container():
+        st.markdown(f"""
+        <div style="
+            background: #1f2937;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid {cor_borda};
+            border: 1px solid #374151;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <div style="
+                            background: {cor_recorrencia}20;
+                            color: {cor_recorrencia};
+                            padding: 4px 12px;
+                            border-radius: 20px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            margin-right: 12px;
+                        ">
+                            {row.get('recorrencia', 'Mensal')}
+                        </div>
+                        <div style="
+                            background: #374151;
+                            color: #d1d5db;
+                            padding: 4px 10px;
+                            border-radius: 6px;
+                            font-size: 12px;
+                            font-weight: bold;
+                        ">
+                            {row.get('categoria', 'Sem categoria')}
+                        </div>
+                    </div>
+                    <div style="font-size: 16px; font-weight: bold; color: #f9fafb; margin-bottom: 4px;">
+                        {row['nome']}
+                    </div>
+                    <div style="font-size: 12px; color: #9ca3af;">
+                        {tipo_emoji} {row['tipo']} • Início: {data_inicio_str} {f'• Fim: {data_fim_str}' if data_fim_str else ''}
+                    </div>
+                    {f'<div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">{row.get("observacao", "")[:80]}{"..." if len(row.get("observacao", "")) > 80 else ""}</div>' if row.get('observacao') else ''}
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 20px; font-weight: bold; color: {valor_color}; margin-bottom: 8px;">
+                        {valor_prefix}R$ {row['valor']:,.2f}
+                    </div>
+        """, unsafe_allow_html=True)
+        
+        # Botões de ação
+        col_btn1, col_btn2 = st.columns(2, gap="small")
+        
+        with col_btn1:
+            if st.button("✏️", key=f"fluxo_edit_{unique_key}", help="Editar"):
+                st.session_state[f"fluxo_editing_{unique_key}"] = True
                 st.rerun()
-
-    # ---------------- LISTA COMPACTA ----------------
-    st.subheader("📋 Meus Fluxos")
-    
-    tab1, tab2 = st.tabs(["📈 Receitas", "📉 Despesas"])
-    
-    with tab1:
-        if not receitas.empty:
-            for idx, row in receitas.iterrows():
-                # Inicializar estado para edição
-                edit_key = f"editing_rec_{idx}"
-                if edit_key not in st.session_state:
-                    st.session_state[edit_key] = False
-                
-                # Linha principal
-                col1, col2, col3, col4 = st.columns([3, 2, 1, 1], gap="small")
-                
-                with col1:
-                    st.markdown(f"**{row.get('nome', '')}**")
-                    st.caption(f"{row.get('categoria', '')} • {row.get('recorrencia', 'Mensal')}")
-                
-                with col2:
-                    st.markdown(f"**R$ {row.get('valor', 0):,.2f}**")
-                    if row.get('observacao'):
-                        st.caption(f"{row.get('observacao', '')[:30]}...")
-                
-                with col3:
-                    if st.button("✏️", key=f"btn_edit_rec_{idx}", help="Editar"):
-                        st.session_state[edit_key] = True
+        
+        with col_btn2:
+            if st.button("🗑️", key=f"fluxo_del_{unique_key}", help="Excluir"):
+                st.session_state[f"confirm_delete_fluxo_{unique_key}"] = True
+                st.rerun()
+        
+        st.markdown("""
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Confirmação de exclusão
+        if st.session_state.get(f"confirm_delete_fluxo_{unique_key}", False):
+            with st.container():
+                st.warning(f"Excluir '{row['nome'][:30]}...'?")
+                col_conf1, col_conf2 = st.columns(2)
+                with col_conf1:
+                    if st.button("✅ Sim", key=f"confirm_yes_fluxo_{unique_key}", use_container_width=True):
+                        # Encontrar e excluir o registro
+                        for df_idx, df_row in df_original.iterrows():
+                            if (df_row['nome'] == row['nome'] and 
+                                df_row['valor'] == row['valor'] and 
+                                df_row['tipo'] == row['tipo']):
+                                
+                                df_novo = df_original.drop(df_idx).reset_index(drop=True)
+                                dados["fluxo_fixo"] = df_novo
+                                st.session_state["dados"] = dados
+                                DatabaseManager.save("fluxo_fixo", df_novo, usuario)
+                                
+                                st.session_state[f"confirm_delete_fluxo_{unique_key}"] = False
+                                st.success("Fluxo excluído!")
+                                st.rerun()
+                                break
+                        
+                        st.session_state[f"confirm_delete_fluxo_{unique_key}"] = False
+                        st.error("Não foi possível encontrar o fluxo para exclusão.")
                         st.rerun()
-                
-                with col4:
-                    if st.button("🗑️", key=f"btn_del_rec_{idx}", help="Excluir"):
-                        df_fluxo = df_fluxo.drop(idx).reset_index(drop=True)
-                        dados["fluxo_fixo"] = df_fluxo
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
-                        st.success("Excluído!")
+                        
+                with col_conf2:
+                    if st.button("❌ Não", key=f"confirm_no_fluxo_{unique_key}", use_container_width=True):
+                        st.session_state[f"confirm_delete_fluxo_{unique_key}"] = False
                         st.rerun()
-                
-                # Formulário de edição (aparece apenas quando ativado)
-                if st.session_state[edit_key]:
-                    with st.expander(f"✏️ Editar {row.get('nome', 'Receita')}", expanded=True):
-                        with st.form(f"form_edit_rec_{idx}"):
-                            col_e1, col_e2 = st.columns(2, gap="small")
+        
+        # Formulário de edição (se ativado)
+        if st.session_state.get(f"fluxo_editing_{unique_key}", False):
+            with st.expander(f"✏️ Editar {row['nome']}", expanded=True):
+                with st.form(f"form_edit_fluxo_{unique_key}"):
+                    col_e1, col_e2 = st.columns(2, gap="small")
+                    
+                    with col_e1:
+                        edit_nome = st.text_input("Nome", value=row['nome'], key=f"edit_nome_fluxo_{unique_key}")
+                        edit_valor = st.number_input(
+                            "Valor (R$)", 
+                            min_value=0.0, 
+                            step=10.0, 
+                            value=float(row['valor']),
+                            key=f"edit_valor_fluxo_{unique_key}"
+                        )
+                        edit_tipo = st.selectbox(
+                            "Tipo", 
+                            ["Receita", "Despesa"],
+                            index=0 if row['tipo'] == "Receita" else 1,
+                            key=f"edit_tipo_fluxo_{unique_key}"
+                        )
+                    
+                    with col_e2:
+                        # Categorias disponíveis
+                        categorias_disponiveis = []
+                        if not dados["categorias"].empty:
+                            df_categorias = dados["categorias"].copy()
+                            df_categorias.columns = df_categorias.columns.str.lower()
                             
-                            with col_e1:
-                                edit_nome = st.text_input("Nome", value=row.get('nome', ''), key=f"edit_nome_rec_{idx}")
-                                edit_valor = st.number_input(
-                                    "Valor (R$)", 
-                                    min_value=0.0, 
-                                    step=10.0, 
-                                    value=float(row.get('valor', 0)),
-                                    key=f"edit_valor_rec_{idx}"
-                                )
-                                edit_tipo = st.selectbox(
-                                    "Tipo", 
-                                    ["Receita", "Despesa"],
-                                    index=0 if row.get('tipo') == "Receita" else 1,
-                                    key=f"edit_tipo_rec_{idx}"
-                                )
+                            if "ativa" in df_categorias.columns:
+                                df_categorias["ativa"] = pd.to_numeric(df_categorias["ativa"], errors='coerce').fillna(1).astype(bool)
+                                categorias_ativas = df_categorias[df_categorias["ativa"] == True]
+                            else:
+                                categorias_ativas = df_categorias
                             
-                            with col_e2:
-                                # Categorias disponíveis
-                                categorias_disponiveis = []
-                                if not dados["categorias"].empty:
-                                    df_categorias = dados["categorias"].copy()
-                                    df_categorias.columns = df_categorias.columns.str.lower()
+                            if "nome" in categorias_ativas.columns:
+                                categorias_disponiveis = categorias_ativas["nome"].dropna().unique().tolist()
+                        
+                        if not categorias_disponiveis:
+                            categorias_disponiveis = ["Outros"]
+                        
+                        # Encontrar índice da categoria atual
+                        categoria_atual = row.get('categoria', 'Outros')
+                        categoria_index = categorias_disponiveis.index(categoria_atual) if categoria_atual in categorias_disponiveis else 0
+                        
+                        edit_categoria = st.selectbox(
+                            "Categoria",
+                            categorias_disponiveis,
+                            index=categoria_index,
+                            key=f"edit_cat_fluxo_{unique_key}"
+                        )
+                        
+                        edit_recorrencia = st.selectbox(
+                            "Recorrência",
+                            ["Mensal", "Anual", "Trimestral", "Semestral"],
+                            index=["Mensal", "Anual", "Trimestral", "Semestral"].index(row.get('recorrencia', 'Mensal')),
+                            key=f"edit_rec_fluxo_{unique_key}"
+                        )
+                    
+                    # Datas
+                    edit_data_inicio = st.date_input(
+                        "Data de Início", 
+                        value=pd.to_datetime(row.get('data_inicio', date.today())),
+                        key=f"edit_inicio_fluxo_{unique_key}"
+                    )
+                    
+                    edit_data_fim = st.date_input(
+                        "Data de Fim (opcional)", 
+                        value=pd.to_datetime(row.get('data_fim')) if row.get('data_fim') else None,
+                        key=f"edit_fim_fluxo_{unique_key}"
+                    )
+                    
+                    edit_observacao = st.text_area(
+                        "Observações", 
+                        value=row.get('observacao', ''),
+                        height=60,
+                        key=f"edit_obs_fluxo_{unique_key}"
+                    )
+                    
+                    col_save, col_cancel = st.columns(2)
+                    with col_save:
+                        if st.form_submit_button("💾 Salvar"):
+                            # Encontrar e atualizar o registro
+                            for df_idx, df_row in df_original.iterrows():
+                                if (df_row['nome'] == row['nome'] and 
+                                    df_row['valor'] == row['valor'] and 
+                                    df_row['tipo'] == row['tipo']):
                                     
-                                    if "ativa" in df_categorias.columns:
-                                        df_categorias["ativa"] = pd.to_numeric(df_categorias["ativa"], errors='coerce').fillna(1).astype(bool)
-                                        categorias_ativas = df_categorias[df_categorias["ativa"] == True]
-                                    else:
-                                        categorias_ativas = df_categorias
-                                    
-                                    if "nome" in categorias_ativas.columns:
-                                        categorias_disponiveis = categorias_ativas["nome"].dropna().unique().tolist()
-                                
-                                if not categorias_disponiveis:
-                                    categorias_disponiveis = ["Outros"]
-                                
-                                # Encontrar índice da categoria atual
-                                categoria_atual = row.get('categoria', 'Outros')
-                                categoria_index = categorias_disponiveis.index(categoria_atual) if categoria_atual in categorias_disponiveis else 0
-                                
-                                edit_categoria = st.selectbox(
-                                    "Categoria",
-                                    categorias_disponiveis,
-                                    index=categoria_index,
-                                    key=f"edit_cat_rec_{idx}"
-                                )
-                                
-                                edit_recorrencia = st.selectbox(
-                                    "Recorrência",
-                                    ["Mensal", "Anual", "Trimestral", "Semestral"],
-                                    index=["Mensal", "Anual", "Trimestral", "Semestral"].index(row.get('recorrencia', 'Mensal')),
-                                    key=f"edit_rec_rec_{idx}"
-                                )
-                            
-                            # Datas
-                            edit_data_inicio = st.date_input(
-                                "Data de Início", 
-                                value=pd.to_datetime(row.get('data_inicio', date.today())),
-                                key=f"edit_inicio_rec_{idx}"
-                            )
-                            
-                            edit_data_fim = st.date_input(
-                                "Data de Fim (opcional)", 
-                                value=pd.to_datetime(row.get('data_fim')) if row.get('data_fim') else None,
-                                key=f"edit_fim_rec_{idx}"
-                            )
-                            
-                            edit_observacao = st.text_area(
-                                "Observações", 
-                                value=row.get('observacao', ''),
-                                height=60,
-                                key=f"edit_obs_rec_{idx}"
-                            )
-                            
-                            col_save, col_cancel = st.columns(2)
-                            with col_save:
-                                if st.form_submit_button("💾 Salvar Alterações"):
-                                    # Atualizar os dados
                                     data_inicio_str = edit_data_inicio.isoformat() if edit_data_inicio else None
                                     data_fim_str = edit_data_fim.isoformat() if edit_data_fim else None
                                     
-                                    df_fluxo.at[idx, 'nome'] = edit_nome
-                                    df_fluxo.at[idx, 'valor'] = float(edit_valor)
-                                    df_fluxo.at[idx, 'tipo'] = edit_tipo
-                                    df_fluxo.at[idx, 'categoria'] = edit_categoria
-                                    df_fluxo.at[idx, 'data_inicio'] = data_inicio_str
-                                    df_fluxo.at[idx, 'data_fim'] = data_fim_str
-                                    df_fluxo.at[idx, 'recorrencia'] = edit_recorrencia
-                                    df_fluxo.at[idx, 'observacao'] = edit_observacao
+                                    df_original.at[df_idx, 'nome'] = edit_nome
+                                    df_original.at[df_idx, 'valor'] = float(edit_valor)
+                                    df_original.at[df_idx, 'tipo'] = edit_tipo
+                                    df_original.at[df_idx, 'categoria'] = edit_categoria
+                                    df_original.at[df_idx, 'data_inicio'] = data_inicio_str
+                                    df_original.at[df_idx, 'data_fim'] = data_fim_str
+                                    df_original.at[df_idx, 'recorrencia'] = edit_recorrencia
+                                    df_original.at[df_idx, 'observacao'] = edit_observacao
                                     
-                                    dados["fluxo_fixo"] = df_fluxo
+                                    dados["fluxo_fixo"] = df_original
                                     st.session_state["dados"] = dados
-                                    DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+                                    DatabaseManager.save("fluxo_fixo", df_original, usuario)
                                     
-                                    st.session_state[edit_key] = False
-                                    st.success("Receita atualizada!")
+                                    st.session_state[f"fluxo_editing_{unique_key}"] = False
+                                    st.success("Fluxo atualizado!")
                                     st.rerun()
-                            
-                            with col_cancel:
-                                if st.form_submit_button("❌ Cancelar"):
-                                    st.session_state[edit_key] = False
-                                    st.rerun()
-                
-                st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
-        else:
-            st.caption("Nenhuma receita fixa")
-    
-    with tab2:
-        if not despesas.empty:
-            for idx, row in despesas.iterrows():
-                # Inicializar estado para edição
-                edit_key = f"editing_desp_{idx}"
-                if edit_key not in st.session_state:
-                    st.session_state[edit_key] = False
-                
-                # Linha principal
-                col1, col2, col3, col4 = st.columns([3, 2, 1, 1], gap="small")
-                
-                with col1:
-                    st.markdown(f"**{row.get('nome', '')}**")
-                    st.caption(f"{row.get('categoria', '')} • {row.get('recorrencia', 'Mensal')}")
-                
-                with col2:
-                    st.markdown(f"**R$ {row.get('valor', 0):,.2f}**")
-                    if row.get('observacao'):
-                        st.caption(f"{row.get('observacao', '')[:30]}...")
-                
-                with col3:
-                    if st.button("✏️", key=f"btn_edit_desp_{idx}", help="Editar"):
-                        st.session_state[edit_key] = True
-                        st.rerun()
-                
-                with col4:
-                    if st.button("🗑️", key=f"btn_del_desp_{idx}", help="Excluir"):
-                        df_fluxo = df_fluxo.drop(idx).reset_index(drop=True)
-                        dados["fluxo_fixo"] = df_fluxo
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
-                        st.success("Excluído!")
-                        st.rerun()
-                
-                # Formulário de edição (aparece apenas quando ativado)
-                if st.session_state[edit_key]:
-                    with st.expander(f"✏️ Editar {row.get('nome', 'Despesa')}", expanded=True):
-                        with st.form(f"form_edit_desp_{idx}"):
-                            col_e1, col_e2 = st.columns(2, gap="small")
-                            
-                            with col_e1:
-                                edit_nome = st.text_input("Nome", value=row.get('nome', ''), key=f"edit_nome_desp_{idx}")
-                                edit_valor = st.number_input(
-                                    "Valor (R$)", 
-                                    min_value=0.0, 
-                                    step=10.0, 
-                                    value=float(row.get('valor', 0)),
-                                    key=f"edit_valor_desp_{idx}"
-                                )
-                                edit_tipo = st.selectbox(
-                                    "Tipo", 
-                                    ["Receita", "Despesa"],
-                                    index=0 if row.get('tipo') == "Receita" else 1,
-                                    key=f"edit_tipo_desp_{idx}"
-                                )
-                            
-                            with col_e2:
-                                # Categorias disponíveis
-                                categorias_disponiveis = []
-                                if not dados["categorias"].empty:
-                                    df_categorias = dados["categorias"].copy()
-                                    df_categorias.columns = df_categorias.columns.str.lower()
-                                    
-                                    if "ativa" in df_categorias.columns:
-                                        df_categorias["ativa"] = pd.to_numeric(df_categorias["ativa"], errors='coerce').fillna(1).astype(bool)
-                                        categorias_ativas = df_categorias[df_categorias["ativa"] == True]
-                                    else:
-                                        categorias_ativas = df_categorias
-                                    
-                                    if "nome" in categorias_ativas.columns:
-                                        categorias_disponiveis = categorias_ativas["nome"].dropna().unique().tolist()
-                                
-                                if not categorias_disponiveis:
-                                    categorias_disponiveis = ["Outros"]
-                                
-                                # Encontrar índice da categoria atual
-                                categoria_atual = row.get('categoria', 'Outros')
-                                categoria_index = categorias_disponiveis.index(categoria_atual) if categoria_atual in categorias_disponiveis else 0
-                                
-                                edit_categoria = st.selectbox(
-                                    "Categoria",
-                                    categorias_disponiveis,
-                                    index=categoria_index,
-                                    key=f"edit_cat_desp_{idx}"
-                                )
-                                
-                                edit_recorrencia = st.selectbox(
-                                    "Recorrência",
-                                    ["Mensal", "Anual", "Trimestral", "Semestral"],
-                                    index=["Mensal", "Anual", "Trimestral", "Semestral"].index(row.get('recorrencia', 'Mensal')),
-                                    key=f"edit_rec_desp_{idx}"
-                                )
-                            
-                            # Datas
-                            edit_data_inicio = st.date_input(
-                                "Data de Início", 
-                                value=pd.to_datetime(row.get('data_inicio', date.today())),
-                                key=f"edit_inicio_desp_{idx}"
-                            )
-                            
-                            edit_data_fim = st.date_input(
-                                "Data de Fim (opcional)", 
-                                value=pd.to_datetime(row.get('data_fim')) if row.get('data_fim') else None,
-                                key=f"edit_fim_desp_{idx}"
-                            )
-                            
-                            edit_observacao = st.text_area(
-                                "Observações", 
-                                value=row.get('observacao', ''),
-                                height=60,
-                                key=f"edit_obs_desp_{idx}"
-                            )
-                            
-                            col_save, col_cancel = st.columns(2)
-                            with col_save:
-                                if st.form_submit_button("💾 Salvar Alterações"):
-                                    # Atualizar os dados
-                                    data_inicio_str = edit_data_inicio.isoformat() if edit_data_inicio else None
-                                    data_fim_str = edit_data_fim.isoformat() if edit_data_fim else None
-                                    
-                                    df_fluxo.at[idx, 'nome'] = edit_nome
-                                    df_fluxo.at[idx, 'valor'] = float(edit_valor)
-                                    df_fluxo.at[idx, 'tipo'] = edit_tipo
-                                    df_fluxo.at[idx, 'categoria'] = edit_categoria
-                                    df_fluxo.at[idx, 'data_inicio'] = data_inicio_str
-                                    df_fluxo.at[idx, 'data_fim'] = data_fim_str
-                                    df_fluxo.at[idx, 'recorrencia'] = edit_recorrencia
-                                    df_fluxo.at[idx, 'observacao'] = edit_observacao
-                                    
-                                    dados["fluxo_fixo"] = df_fluxo
-                                    st.session_state["dados"] = dados
-                                    DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
-                                    
-                                    st.session_state[edit_key] = False
-                                    st.success("Despesa atualizada!")
-                                    st.rerun()
-                            
-                            with col_cancel:
-                                if st.form_submit_button("❌ Cancelar"):
-                                    st.session_state[edit_key] = False
-                                    st.rerun()
-                
-                st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
-        else:
-            st.caption("Nenhuma despesa fixa")
+                                    break
+                    
+                    with col_cancel:
+                        if st.form_submit_button("❌ Cancelar"):
+                            st.session_state[f"fluxo_editing_{unique_key}"] = False
+                            st.rerun()
        
 
 
