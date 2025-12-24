@@ -4687,17 +4687,7 @@ elif menu == "📄 RELATÓRIO EXECUTIVO":
             df_projecao=df_projecao
         )
         
-        st.markdown("""
-        <div style="
-            background: #1f2937;
-            border-radius: 12px;
-            padding: 24px;
-            border: 1px solid #374151;
-            color: #e5e7eb;
-            line-height: 1.6;
-            font-size: 15px;
-        ">
-        """, unsafe_allow_html=True)
+        
         
         st.write(texto_exec)
         
