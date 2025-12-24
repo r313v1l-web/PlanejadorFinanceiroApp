@@ -3259,7 +3259,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
 
 
 # =========================================================
-# 📊 DASHBOARD - VERSÃO ESTILIZADA
+# 📊 DASHBOARD - VERSÃO ESTILIZADA CORRIGIDA
 # =========================================================
 
 elif menu == "📊 DASHBOARD":
@@ -3592,7 +3592,7 @@ elif menu == "📊 DASHBOARD":
                 hovertemplate="<b>%{x|%b/%Y}</b><br>R$ %{y:,.0f}<extra></extra>"
             )
 
-            # Linha da meta
+            # Linha da meta - usando add_hline com annotation separada
             fig.add_hline(
                 y=meta_patrimonio,
                 line_dash="dash",
@@ -3607,16 +3607,33 @@ elif menu == "📊 DASHBOARD":
 
             if not meta_df.empty:
                 data_meta = pd.to_datetime(meta_df.iloc[0]["data"])
-
-                # Linha vertical no ponto da meta
+                
+                # Converter para string para evitar problemas com datetime
+                data_meta_str = data_meta.strftime('%Y-%m-%d')
+                
+                # Adicionar linha vertical
                 fig.add_vline(
                     x=data_meta,
                     line_dash="dot",
                     line_color="#10b981",
-                    line_width=2,
-                    annotation_text=f"Meta atingida em {data_meta.strftime('%m/%Y')}",
-                    annotation_position="top left",
-                    annotation_font=dict(color="#10b981", size=10)
+                    line_width=2
+                )
+                
+                # Adicionar anotação separadamente usando add_annotation
+                fig.add_annotation(
+                    x=data_meta,
+                    y=1,
+                    xref="x",
+                    yref="paper",
+                    text=f"Meta atingida em {data_meta.strftime('%m/%Y')}",
+                    showarrow=False,
+                    yanchor="bottom",
+                    font=dict(color="#10b981", size=10),
+                    bgcolor="rgba(16, 185, 129, 0.1)",
+                    bordercolor="#10b981",
+                    borderwidth=1,
+                    borderpad=4,
+                    xanchor="left"
                 )
 
             fig.update_layout(
@@ -3934,6 +3951,7 @@ elif menu == "📊 DASHBOARD":
         """, unsafe_allow_html=True)
     
     with col_r3:
+        margem_seguranca = ((receitas_fixas - despesas_fixas) / receitas_fixas * 100) if receitas_fixas > 0 else 0
         st.markdown(f"""
         <div style="
             background: #1f2937;
@@ -3942,7 +3960,7 @@ elif menu == "📊 DASHBOARD":
             border: 1px solid #374151;
         ">
             <div style="font-size: 14px; color: #d1d5db; margin-bottom: 8px;">📊 Margem de Segurança</div>
-            <div style="font-size: 20px; font-weight: bold; color: #3b82f6;">{((receitas_fixas - despesas_fixas) / receitas_fixas * 100):.1f}%</div>
+            <div style="font-size: 20px; font-weight: bold; color: #3b82f6;">{margem_seguranca:.1f}%</div>
         </div>
         """, unsafe_allow_html=True)
 # =========================================================
