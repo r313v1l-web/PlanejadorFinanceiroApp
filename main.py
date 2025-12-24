@@ -1195,13 +1195,13 @@ with st.sidebar:
     # Criar seleção de menu com estilo personalizado
     st.markdown("""
     <style>
-    /* Estilizar os radio buttons para parecerem cards */
-    div[data-testid="stRadio"] > div {
+    /* Estilizar os radio buttons do MENU para parecerem cards */
+    .sidebar-menu-container div[data-testid="stRadio"] > div {
         flex-direction: column;
         gap: 8px;
     }
     
-    div[data-testid="stRadio"] > div > label {
+    .sidebar-menu-container div[data-testid="stRadio"] > div > label {
         background: #1f2937 !important;
         border-radius: 12px !important;
         padding: 16px !important;
@@ -1210,26 +1210,26 @@ with st.sidebar:
         margin: 0 !important;
     }
     
-    div[data-testid="stRadio"] > div > label:hover {
+    .sidebar-menu-container div[data-testid="stRadio"] > div > label:hover {
         background: #374151 !important;
         border-color: #4b5563 !important;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
     
-    div[data-testid="stRadio"] > div > label[data-checked="true"] {
+    .sidebar-menu-container div[data-testid="stRadio"] > div > label[data-checked="true"] {
         background: linear-gradient(135deg, var(--selected-bg) 0%, rgba(0, 0, 0, 0.1) 100%) !important;
         border: 1px solid var(--selected-color) !important;
         box-shadow: 0 4px 12px var(--selected-shadow) !important;
     }
     
-    /* Esconder o radio button original */
-    div[data-testid="stRadio"] > div > label > div:first-child {
+    /* REMOVIDO: Não esconder o radio button original */
+    /* div[data-testid="stRadio"] > div > label > div:first-child {
         display: none !important;
-    }
+    } */
     
-    /* Estilizar o texto */
-    div[data-testid="stRadio"] > div > label > div:nth-child(2) {
+    /* Estilizar o texto do menu */
+    .sidebar-menu-container div[data-testid="stRadio"] > div > label > div:nth-child(2) {
         font-weight: 500 !important;
         font-size: 14px !important;
         display: flex !important;
@@ -1238,8 +1238,8 @@ with st.sidebar:
         color: #f9fafb !important;
     }
     
-    /* Ícones */
-    .menu-icon {
+    /* Ícones do menu */
+    .sidebar-menu-container .menu-icon {
         font-size: 20px;
         display: flex;
         align-items: center;
@@ -1256,39 +1256,42 @@ with st.sidebar:
     for item in menu_data:
         menu_options.append(f"{item['emoji']} {item['label']}")
 
-    # Container para o menu
-    with st.container():
-        st.markdown("""
-        <div style="margin-bottom: 16px; color: #d1d5db; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
-            NAVEGAÇÃO
-        </div>
-        """, unsafe_allow_html=True)
+    # Container para o menu com classe específica
+    st.markdown('<div class="sidebar-menu-container">', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="margin-bottom: 16px; color: #d1d5db; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
+        NAVEGAÇÃO
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Inserir estilo dinâmico para cada opção (agora específico para o container do menu)
+    css_vars = []
+    for i, item in enumerate(menu_data):
+        css_vars.append(f"""
+        .sidebar-menu-container div[data-testid="stRadio"] > div > label:nth-child({i + 1}) {{
+            --selected-color: {item['color']} !important;
+            --selected-bg: {item['bg_color']} !important;
+            --selected-shadow: rgba({int(item['color'][1:3], 16)}, {int(item['color'][3:5], 16)}, {int(item['color'][5:7], 16)}, 0.2) !important;
+        }}
         
-        # Inserir estilo dinâmico para cada opção
-        css_vars = []
-        for i, item in enumerate(menu_data):
-            css_vars.append(f"""
-            div[data-testid="stRadio"] > div > label:nth-child({i + 1}) {{
-                --selected-color: {item['color']} !important;
-                --selected-bg: {item['bg_color']} !important;
-                --selected-shadow: rgba({int(item['color'][1:3], 16)}, {int(item['color'][3:5], 16)}, {int(item['color'][5:7], 16)}, 0.2) !important;
-            }}
-            
-            div[data-testid="stRadio"] > div > label:nth-child({i + 1})[data-checked="true"] .menu-icon {{
-                background: {item['color']} !important;
-                color: white !important;
-            }}
-            """)
-        
-        st.markdown(f"<style>{''.join(css_vars)}</style>", unsafe_allow_html=True)
-        
-        # Radio button com as opções
-        menu = st.radio(
-            "Menu de Navegação",
-            menu_options,
-            label_visibility="collapsed",
-            key="styled_menu"
-        )
+        .sidebar-menu-container div[data-testid="stRadio"] > div > label:nth-child({i + 1})[data-checked="true"] .menu-icon {{
+            background: {item['color']} !important;
+            color: white !important;
+        }}
+        """)
+    
+    st.markdown(f"<style>{''.join(css_vars)}</style>", unsafe_allow_html=True)
+    
+    # Radio button com as opções
+    menu = st.radio(
+        "Menu de Navegação",
+        menu_options,
+        label_visibility="collapsed",
+        key="styled_menu"
+    )
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.divider()
 
@@ -1356,7 +1359,6 @@ with st.sidebar:
         ):
             st.session_state.clear()
             st.rerun()
-
 # =========================================================
 # 📝 LANÇAMENTOS - VERSÃO COMPACTA
 # =========================================================
