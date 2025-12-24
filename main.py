@@ -2411,20 +2411,73 @@ elif menu == "🏢 FLUXOS FIXOS":
 # =========================================================
 
 elif menu == "💸 CONTROLE DE GASTOS":
-
-    st.markdown("💸 Controle de Gastos Mensais")
     
-    # Mensagens de feedback
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        border: 1px solid #7c3aed;
+    ">
+        <h1 style="
+            color: white;
+            margin: 0 0 8px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        ">
+            <span style="
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 10px;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">💸</span>
+            Controle de Gastos Mensais
+        </h1>
+        <p style="color: #e5e7eb; margin: 0; opacity: 0.9;">
+            Reserva mensal para gastos do dia a dia
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Mensagens de feedback estilizadas
     if st.session_state.get("msg"):
-        if st.session_state.get("msg_tipo") == "error":
-            st.error(st.session_state["msg"])
-        elif st.session_state.get("msg_tipo") == "warning":
-            st.warning(st.session_state["msg"])
-        else:
-            st.success(st.session_state["msg"])
+        msg_tipo = st.session_state.get("msg_tipo", "info")
+        msg_icon = {
+            "error": "❌",
+            "warning": "⚠️",
+            "success": "✅",
+            "info": "ℹ️"
+        }.get(msg_tipo, "ℹ️")
+        
+        msg_color = {
+            "error": "#ef4444",
+            "warning": "#f59e0b",
+            "success": "#10b981",
+            "info": "#8b5cf6"
+        }.get(msg_tipo, "#8b5cf6")
+        
+        st.markdown(f"""
+        <div style="
+            background: {msg_color}15;
+            border: 1px solid {msg_color}30;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #e5e7eb;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 20px;">{msg_icon}</span>
+                <div>{st.session_state["msg"]}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         st.session_state["msg"] = None
-    
-    st.caption("Reserva mensal para gastos do dia a dia")
 
     # ---------- RESERVA ----------
     reserva_mensal = float(config_dict.get("reserva_gastos", 0))
