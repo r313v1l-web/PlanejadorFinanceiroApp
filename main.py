@@ -3894,7 +3894,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
                     'plano saúde', 'unimed', 'amil', 'sulamerica', 'hospital', 'pronto socorro', 'emergência',
                     'dentista', 'odontólogo', 'ortodontista', 'clínica', 'psicólogo', 'psiquiatra', 'terapia',
                     'fisioterapeuta', 'nutricionista', 'personal trainer', 'academia', 'suplemento', 'vitamina',
-                    'óculos', 'lente', 'cirurgia', 'internação', 'ambulância', 'convênio', 'seguro saúde'
+                    'óculos', 'lente', 'cirurgia', 'internação', 'ambulância', 'convênio',  'seguro saúde'
                 ],
                 
                 "🎓 Educação": [
@@ -3926,7 +3926,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
                     'celular', 'smartphone', 'iphone', 'samsung', 'xiaomi', 'tablet', 'ipad', 'notebook',
                     'laptop', 'computador', 'pc', 'mac', 'impressora', 'monitor', 'mouse', 'teclado',
                     'headset', 'fone', 'caixa som', 'webcam', 'microfone', 'roteador', 'modem', 'cabo',
-                    'pendrive', 'hd', 'ssd', 'memória', 'processador', 'placa mãe', 'placa vídeo',
+                    'pendrive', 'hd', 'ssd', 'memória', 'processador', 'placa mãe', 'placa de vídeo',
                     'gabinete', 'fonte', 'cooler', 'ventoinha', 'software', 'app', 'aplicativo',
                     'assinatura app', 'jogo digital', 'assinatura jogo'
                 ],
@@ -3987,7 +3987,8 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 categoria_encontrada = False
                 
                 for categoria, palavras in palavras_chave.items():
-                    if any(palavra in desc_lower for palavra in palavras):
+                    # Verificar se qualquer palavra (em minúsculo) está na descrição (em minúsculo)
+                    if any(palavra.lower() in desc_lower for palavra in palavras):
                         categorias[categoria] += row['valor']
                         categoria_encontrada = True
                         break
