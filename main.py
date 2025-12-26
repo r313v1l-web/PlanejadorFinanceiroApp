@@ -1582,7 +1582,7 @@ with st.sidebar:
 # 📝 LANÇAMENTOS - VERSÃO ESTILIZADA COMPLETA
 # =========================================================
 
-elif menu == "📝 LANÇAMENTOS":
+if menu == "📝 LANÇAMENTOS":
     
     st.markdown("""
     <div style="
@@ -2476,6 +2476,67 @@ elif menu == "📝 LANÇAMENTOS":
                     )
             
             st.markdown("</div>", unsafe_allow_html=True)
+    
+    # ================= LISTA DE LANÇAMENTOS COMPACTA =================
+    st.subheader("📋 Lançamentos Registrados")
+    
+    if not dados["historico"].empty:
+        df_historico = dados["historico"].copy()
+        
+        # Ordenar por data (mais recente primeiro)
+        df_historico = df_historico.sort_values("data", ascending=False)
+        
+        # Container para a lista
+        lista_container = st.container()
+        
+        with lista_container:
+            for idx, row in df_historico.iterrows():
+                # Determinar cor baseada no tipo
+                if row['tipo'] == "Despesa":
+                    valor_color = "red"
+                    valor_prefix = "-"
+                elif row['tipo'] == "Receita":
+                    valor_color = "green"
+                    valor_prefix = "+"
+                else:
+                    valor_color = "white"
+                    valor_prefix = ""
+                
+                # Formatar data
+                if isinstance(row['data'], str):
+                    data_str = row['data']
+                else:
+                    data_str = row['data'].strftime("%d/%m/%Y")
+                
+                # Criar item compacto
+                col1, col2, col3, col4 = st.columns([3, 2, 1, 1], gap="small")
+                
+                with col1:
+                    st.markdown(f"**{row['descricao'][:30]}{'...' if len(row['descricao']) > 30 else ''}**")
+                    st.caption(f"{row['categoria']} • {row['responsavel']} • {data_str}")
+                
+                with col2:
+                    st.markdown(f"<span style='color: {valor_color}; font-weight: bold;'>{valor_prefix}R$ {row['valor']:,.2f}</span>", unsafe_allow_html=True)
+                
+                with col3:
+                    st.caption(row['tipo'])
+                
+                with col4:
+                    # Botão para excluir - mais compacto
+                    if st.button("🗑️", key=f"del_hist_{idx}", help="Excluir"):
+                        # Remover da lista
+                        df_historico = df_historico.drop(idx).reset_index(drop=True)
+                        dados["historico"] = df_historico
+                        st.session_state["dados"] = dados
+                        DatabaseManager.save("historico", df_historico, usuario)
+                        st.success("Lançamento excluído!")
+                        st.rerun()
+                
+                # Divisor fino
+                st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
+    else:
+        st.caption("Nenhum lançamento registrado.")
+
 
 
 # =========================================================
