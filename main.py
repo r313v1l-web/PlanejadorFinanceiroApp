@@ -1769,15 +1769,7 @@ if menu == "📝 LANÇAMENTOS":
     
     with st.expander("📝 Clique para expandir o formulário", expanded=True):
         with st.container():
-            st.markdown("""
-            <div style="
-                background: #1f2937;
-                border-radius: 12px;
-                padding: 24px;
-                border: 1px solid #374151;
-                margin-bottom: 20px;
-            ">
-            """, unsafe_allow_html=True)
+
             
             with st.form("form_novo_lancamento", clear_on_submit=True):
                 col1, col2, col3 = st.columns(3, gap="large")
@@ -2191,15 +2183,7 @@ if menu == "📝 LANÇAMENTOS":
                     
                     # Confirmação de exclusão
                     if st.session_state.get(f"confirm_del_lanc_{idx_original}", False):
-                        st.markdown("""
-                        <div style="
-                            background: #7f1d1d;
-                            border-radius: 8px;
-                            padding: 16px;
-                            margin-top: 12px;
-                            border: 1px solid #ef4444;
-                        ">
-                        """, unsafe_allow_html=True)
+
                         
                         col_confirm1, col_confirm2 = st.columns([2, 1])
                         
@@ -2229,15 +2213,7 @@ if menu == "📝 LANÇAMENTOS":
                     
                     # Formulário de edição
                     if st.session_state.get(f"editing_lanc_{idx_original}", False):
-                        st.markdown("""
-                        <div style="
-                            background: rgba(16, 185, 129, 0.1);
-                            border: 2px solid #10b981;
-                            border-radius: 12px;
-                            padding: 20px;
-                            margin-top: 12px;
-                        ">
-                        """, unsafe_allow_html=True)
+
                         
                         with st.form(f"form_edit_lanc_{idx_original}"):
                             st.markdown(f"### ✏️ Editando: {descricao_transacao[:30]}...")
@@ -2888,15 +2864,7 @@ elif menu == "💰 INVESTIMENTOS":
                     
                     # Modal de confirmação de exclusão
                     if st.session_state.get(f"delete_confirm_{idx}", False):
-                        st.markdown("""
-                        <div style="
-                            background: #7f1d1d;
-                            border-radius: 8px;
-                            padding: 16px;
-                            margin-top: 12px;
-                            border: 1px solid #ef4444;
-                        ">
-                        """, unsafe_allow_html=True)
+
                         
                         col_confirm1, col_confirm2 = st.columns([3, 1])
                         with col_confirm1:
@@ -2924,15 +2892,7 @@ elif menu == "💰 INVESTIMENTOS":
                     
                     # Formulário de edição (aparece apenas quando ativado)
                     if st.session_state.get(f"editing_{idx}", False):
-                        st.markdown("""
-                        <div style="
-                            background: #111827;
-                            border-radius: 12px;
-                            padding: 20px;
-                            margin-top: 12px;
-                            border: 2px solid #3b82f6;
-                        ">
-                        """, unsafe_allow_html=True)
+
                         
                         with st.form(f"form_edit_{idx}"):
                             st.markdown(f"### ✏️ Editando: {ativo_nome}")
@@ -3413,15 +3373,7 @@ elif menu == "🎯 SONHOS & METAS":
     # ---------------- NOVO SONHO ESTILIZADO ----------------
     with st.expander("➕ Adicionar Novo Sonho", expanded=False):
         with st.container():
-            st.markdown("""
-            <div style="
-                background: #1f2937;
-                border-radius: 12px;
-                padding: 24px;
-                border: 1px solid #374151;
-                margin-bottom: 20px;
-            ">
-            """, unsafe_allow_html=True)
+
             
             with st.form("form_novo_sonho", clear_on_submit=True):
                 col1, col2 = st.columns(2, gap="large")
@@ -3621,13 +3573,6 @@ elif menu == "🎯 SONHOS & METAS":
                 with col_acoes1:
                     # Movimentar valor
                     with st.popover("💰 Movimentar", use_container_width=True):
-                        st.markdown("""
-                        <div style="
-                            background: #1f2937;
-                            border-radius: 8px;
-                            padding: 16px;
-                        ">
-                        """, unsafe_allow_html=True)
                         
                         valor_mov = st.number_input(
                             "Valor (+ para adicionar, - para retirar)", 
@@ -3719,15 +3664,7 @@ elif menu == "🎯 SONHOS & METAS":
                 
                 # Formulário de edição
                 if st.session_state.get(f"editing_sonho_{i}", False):
-                    st.markdown("""
-                    <div style="
-                        background: #111827;
-                        border-radius: 12px;
-                        padding: 20px;
-                        margin-top: 16px;
-                        border: 2px solid #3b82f6;
-                    ">
-                    """, unsafe_allow_html=True)
+
                     
                     with st.form(f"form_edit_sonho_{i}"):
                         st.markdown(f"### ✏️ Editando: {sonho['nome']}")
