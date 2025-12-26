@@ -4495,17 +4495,47 @@ elif menu == "🏢 FLUXOS FIXOS":
                     # Formatar datas
                     data_inicio_format = ""
                     data_fim_format = ""
-                    
+
                     if row.get('data_inicio'):
                         try:
-                            data_inicio_format = pd.to_datetime(row['data_inicio']).strftime("%d/%m/%Y")
-                        except:
+                            # Se for string no formato YYYY-MM-DD, converter corretamente
+                            if isinstance(row['data_inicio'], str):
+                                # Remover hora se existir
+                                data_str = row['data_inicio'].split(' ')[0] if ' ' in row['data_inicio'] else row['data_inicio']
+                                # Converter para datetime
+                                data_dt = pd.to_datetime(data_str, format='%Y-%m-%d', errors='coerce')
+                                if pd.notna(data_dt):
+                                    data_inicio_format = data_dt.strftime("%d/%m/%Y")
+                                else:
+                                    data_inicio_format = data_str
+                            elif isinstance(row['data_inicio'], pd.Timestamp):
+                                data_inicio_format = row['data_inicio'].strftime("%d/%m/%Y")
+                            elif hasattr(row['data_inicio'], 'strftime'):
+                                data_inicio_format = row['data_inicio'].strftime("%d/%m/%Y")
+                            else:
+                                data_inicio_format = str(row['data_inicio'])
+                        except Exception as e:
                             data_inicio_format = str(row['data_inicio'])
-                    
+
                     if row.get('data_fim'):
                         try:
-                            data_fim_format = pd.to_datetime(row['data_fim']).strftime("%d/%m/%Y")
-                        except:
+                            # Se for string no formato YYYY-MM-DD, converter corretamente
+                            if isinstance(row['data_fim'], str):
+                                # Remover hora se existir
+                                data_str = row['data_fim'].split(' ')[0] if ' ' in row['data_fim'] else row['data_fim']
+                                # Converter para datetime
+                                data_dt = pd.to_datetime(data_str, format='%Y-%m-%d', errors='coerce')
+                                if pd.notna(data_dt):
+                                    data_fim_format = data_dt.strftime("%d/%m/%Y")
+                                else:
+                                    data_fim_format = data_str
+                            elif isinstance(row['data_fim'], pd.Timestamp):
+                                data_fim_format = row['data_fim'].strftime("%d/%m/%Y")
+                            elif hasattr(row['data_fim'], 'strftime'):
+                                data_fim_format = row['data_fim'].strftime("%d/%m/%Y")
+                            else:
+                                data_fim_format = str(row['data_fim'])
+                        except Exception as e:
                             data_fim_format = str(row['data_fim'])
                     
                     # Card para cada despesa
@@ -4665,12 +4695,148 @@ elif menu == "🏢 FLUXOS FIXOS":
                             st.markdown("</div>", unsafe_allow_html=True)
                         
                         # Formulário de edição (estrutura similar às receitas)
+                        # Formulário de edição
                         if st.session_state.get(f"editing_desp_{idx}", False):
-                            # Similar ao formulário de edição das receitas
-                            # (mantenha a mesma estrutura, apenas ajustando chaves)
-                            pass
-                        
-                        st.markdown("</div>", unsafe_allow_html=True)
+                            st.markdown("""
+                            <div style="
+                                background: rgba(249, 115, 22, 0.1);
+                                border: 2px solid #f97316;
+                                border-radius: 12px;
+                                padding: 20px;
+                                margin-top: 12px;
+                            ">
+                            """, unsafe_allow_html=True)
+                            
+                            with st.form(f"form_edit_desp_{idx}"):
+                                st.markdown(f"### ✏️ Editando: {nome_fluxo}")
+                                
+                                col_edit1, col_edit2 = st.columns(2, gap="small")
+                                
+                                with col_edit1:
+                                    edit_nome = st.text_input(
+                                        "Nome", 
+                                        value=nome_fluxo,
+                                        key=f"edit_nome_desp_{idx}"
+                                    )
+                                    edit_valor = st.number_input(
+                                        "Valor (R$)", 
+                                        min_value=0.0, 
+                                        step=10.0, 
+                                        value=valor_fluxo,
+                                        key=f"edit_valor_desp_{idx}"
+                                    )
+                                    edit_tipo = st.selectbox(
+                                        "Tipo", 
+                                        ["Receita", "Despesa"],
+                                        index=1,  # Despesa
+                                        key=f"edit_tipo_desp_{idx}"
+                                    )
+                                
+                                with col_edit2:
+                                    # Categorias disponíveis
+                                    edit_categoria = st.selectbox(
+                                        "Categoria",
+                                        categorias_disponiveis,
+                                        index=categorias_disponiveis.index(categoria_fluxo) if categoria_fluxo in categorias_disponiveis else 0,
+                                        key=f"edit_cat_desp_{idx}"
+                                    )
+                                    
+                                    edit_recorrencia = st.selectbox(
+                                        "Recorrência",
+                                        ["Mensal", "Anual", "Trimestral", "Semestral"],
+                                        index=["Mensal", "Anual", "Trimestral", "Semestral"].index(recorrencia_fluxo) if recorrencia_fluxo in ["Mensal", "Anual", "Trimestral", "Semestral"] else 0,
+                                        key=f"edit_rec_desp_{idx}"
+                                    )
+                                
+                                # Datas com tratamento correto
+                                edit_data_inicio = None
+                                if row.get('data_inicio'):
+                                    try:
+                                        if isinstance(row['data_inicio'], str):
+                                            # Remover hora se existir
+                                            data_str = row['data_inicio'].split(' ')[0] if ' ' in row['data_inicio'] else row['data_inicio']
+                                            edit_data_inicio = pd.to_datetime(data_str, format='%Y-%m-%d', errors='coerce').date()
+                                        elif isinstance(row['data_inicio'], pd.Timestamp):
+                                            edit_data_inicio = row['data_inicio'].date()
+                                        elif hasattr(row['data_inicio'], 'date'):
+                                            edit_data_inicio = row['data_inicio'].date()
+                                    except:
+                                        edit_data_inicio = date.today()
+                                else:
+                                    edit_data_inicio = date.today()
+                                
+                                edit_data_inicio = st.date_input(
+                                    "Data de Início", 
+                                    value=edit_data_inicio,
+                                    key=f"edit_inicio_desp_{idx}"
+                                )
+                                
+                                edit_data_fim = None
+                                if row.get('data_fim'):
+                                    try:
+                                        if isinstance(row['data_fim'], str):
+                                            # Remover hora se existir
+                                            data_str = row['data_fim'].split(' ')[0] if ' ' in row['data_fim'] else row['data_fim']
+                                            edit_data_fim = pd.to_datetime(data_str, format='%Y-%m-%d', errors='coerce').date()
+                                        elif isinstance(row['data_fim'], pd.Timestamp):
+                                            edit_data_fim = row['data_fim'].date()
+                                        elif hasattr(row['data_fim'], 'date'):
+                                            edit_data_fim = row['data_fim'].date()
+                                    except:
+                                        edit_data_fim = None
+                                
+                                edit_data_fim = st.date_input(
+                                    "Data de Fim (opcional)", 
+                                    value=edit_data_fim,
+                                    key=f"edit_fim_desp_{idx}"
+                                )
+                                
+                                edit_observacao = st.text_area(
+                                    "Observações", 
+                                    value=observacao_fluxo,
+                                    height=60,
+                                    key=f"edit_obs_desp_{idx}"
+                                )
+                                
+                                col_save, col_cancel = st.columns(2, gap="medium")
+                                with col_save:
+                                    if st.form_submit_button(
+                                        "💾 Salvar Alterações",
+                                        use_container_width=True,
+                                        type="primary"
+                                    ):
+                                        # Atualizar os dados
+                                        data_inicio_str = edit_data_inicio.isoformat() if edit_data_inicio else None
+                                        data_fim_str = edit_data_fim.isoformat() if edit_data_fim else None
+                                        
+                                        df_fluxo.at[idx, 'nome'] = edit_nome
+                                        df_fluxo.at[idx, 'valor'] = float(edit_valor)
+                                        df_fluxo.at[idx, 'tipo'] = edit_tipo
+                                        df_fluxo.at[idx, 'categoria'] = edit_categoria
+                                        df_fluxo.at[idx, 'data_inicio'] = data_inicio_str
+                                        df_fluxo.at[idx, 'data_fim'] = data_fim_str
+                                        df_fluxo.at[idx, 'recorrencia'] = edit_recorrencia
+                                        df_fluxo.at[idx, 'observacao'] = edit_observacao
+                                        
+                                        dados["fluxo_fixo"] = df_fluxo
+                                        st.session_state["dados"] = dados
+                                        DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+                                        
+                                        st.session_state[f"editing_desp_{idx}"] = False
+                                        st.session_state["msg"] = f"✅ Despesa '{edit_nome}' atualizada!"
+                                        st.session_state["msg_tipo"] = "success"
+                                        st.rerun()
+                                
+                                with col_cancel:
+                                    if st.form_submit_button(
+                                        "❌ Cancelar",
+                                        use_container_width=True,
+                                        type="secondary"
+                                    ):
+                                        st.session_state[f"editing_desp_{idx}"] = False
+                                        st.rerun()
+                            
+                            st.markdown("</div>", unsafe_allow_html=True)
             else:
                 # Mensagem para quando não há despesas
                 st.markdown("""
