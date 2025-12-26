@@ -1921,7 +1921,7 @@ if menu == "📝 LANÇAMENTOS":
 
     # ================= HISTÓRICO DE LANÇAMENTOS =================
     st.markdown("### 📋 Histórico de Transações")
-    
+
     if not dados["historico"].empty:
         df_historico_total = dados["historico"].copy()
         df_historico_total.columns = df_historico_total.columns.str.lower()
@@ -2009,41 +2009,49 @@ if menu == "📝 LANÇAMENTOS":
         </div>
         """, unsafe_allow_html=True)
         
-        # Paginação
-        if "pagina_lancamentos" not in st.session_state:
-            st.session_state["pagina_lancamentos"] = 1
+        # CORREÇÃO: Definir total_paginas com valor padrão
+        total_paginas = 1  # Valor padrão mínimo
         
-        itens_por_pagina = 10
-        total_paginas = (total_filtrado - 1) // itens_por_pagina + 1
-        
-        # Ajustar página atual se necessário
-        if st.session_state["pagina_lancamentos"] > total_paginas:
-            st.session_state["pagina_lancamentos"] = 1
-        
-        # Controle de página
-        col_pagina1, col_pagina2, col_pagina3 = st.columns([1, 2, 1])
-        with col_pagina2:
-            pagina_selecionada = st.number_input(
-                "📄 Página",
-                min_value=1,
-                max_value=total_paginas,
-                value=st.session_state["pagina_lancamentos"],
-                key="pagina_input_lanc"
-            )
-        
-        # Atualizar se o usuário mudou manualmente
-        if pagina_selecionada != st.session_state["pagina_lancamentos"]:
-            st.session_state["pagina_lancamentos"] = pagina_selecionada
-            st.rerun()
-        
-        inicio = (st.session_state["pagina_lancamentos"] - 1) * itens_por_pagina
-        fim = inicio + itens_por_pagina
-        
-        # Mostrar transações da página atual
-        df_pagina = df_filtrado.iloc[inicio:fim] if total_filtrado > 0 else pd.DataFrame()
-        
-        if not df_pagina.empty:
+        # CORREÇÃO: Verificar se há dados filtrados antes de mostrar paginação
+        if total_filtrado > 0:
+            # Paginação
+            if "pagina_lancamentos" not in st.session_state:
+                st.session_state["pagina_lancamentos"] = 1
+            
+            itens_por_pagina = 10
+            total_paginas = max(1, (total_filtrado - 1) // itens_por_pagina + 1)  # Garantir no mínimo 1 página
+            
+            # Ajustar página atual se necessário
+            if st.session_state["pagina_lancamentos"] > total_paginas:
+                st.session_state["pagina_lancamentos"] = total_paginas
+            
+            # Controle de página
+            col_pagina1, col_pagina2, col_pagina3 = st.columns([1, 2, 1])
+            with col_pagina2:
+                pagina_selecionada = st.number_input(
+                    "📄 Página",
+                    min_value=1,
+                    max_value=total_paginas,
+                    value=st.session_state["pagina_lancamentos"],
+                    key="pagina_input_lanc"
+                )
+            
+            # Atualizar se o usuário mudou manualmente
+            if pagina_selecionada != st.session_state["pagina_lancamentos"]:
+                st.session_state["pagina_lancamentos"] = pagina_selecionada
+                st.rerun()
+            
+            inicio = (st.session_state["pagina_lancamentos"] - 1) * itens_por_pagina
+            fim = min(inicio + itens_por_pagina, total_filtrado)
+            
+            # Mostrar transações da página atual
+            df_pagina = df_filtrado.iloc[inicio:fim].reset_index(drop=True)
+            
+            # Mostrar cards das transações
             for idx, row in df_pagina.iterrows():
+                # Encontrar o índice original correspondente
+                idx_original = df_filtrado.iloc[inicio:fim].index[idx]
+                
                 # Dados da transação
                 data_transacao = row['data']
                 tipo_transacao = row['tipo']
@@ -2052,6 +2060,7 @@ if menu == "📝 LANÇAMENTOS":
                 descricao_transacao = row['descricao']
                 responsavel_transacao = row['responsavel']
                 fixo_transacao = row.get('fixo', 'Não')
+                subcategoria_transacao = row.get('subcategoria', '')
                 
                 # Formatar data
                 if isinstance(data_transacao, pd.Timestamp):
@@ -2098,7 +2107,7 @@ if menu == "📝 LANÇAMENTOS":
                             font-weight: bold;
                             color: #f9fafb;
                             margin-bottom: 4px;
-                        ">{icone_tipo} {descricao_transacao}</div>
+                        ">{icone_tipo} {descricao_transacao[:50]}{'...' if len(descricao_transacao) > 50 else ''}</div>
                         <div style="
                             font-size: 14px;
                             color: #9ca3af;
@@ -2127,7 +2136,7 @@ if menu == "📝 LANÇAMENTOS":
                         """, unsafe_allow_html=True)
                     
                     # Subcategoria se existir
-                    if 'subcategoria' in row and row['subcategoria']:
+                    if subcategoria_transacao:
                         st.markdown(f"""
                         <div style="
                             background: {cor_tipo}20;
@@ -2137,7 +2146,7 @@ if menu == "📝 LANÇAMENTOS":
                             display: inline-block;
                         ">
                             <span style="font-size: 12px; color: {cor_tipo};">
-                                🏷️ {row['subcategoria']}
+                                🏷️ {subcategoria_transacao}
                             </span>
                         </div>
                         """, unsafe_allow_html=True)
@@ -2150,36 +2159,38 @@ if menu == "📝 LANÇAMENTOS":
                     with col_acoes1:
                         # Botão para marcar como recorrente/não recorrente
                         if fixo_transacao == 'Sim':
-                            if st.button("🔄 Não Recorrente", key=f"fixo_no_{idx}", use_container_width=True):
-                                df_historico_total.at[idx, 'fixo'] = 'Não'
+                            if st.button("🔄 Não Recorrente", key=f"fixo_no_{idx_original}", use_container_width=True):
+                                df_historico_total.at[idx_original, 'fixo'] = 'Não'
                                 dados["historico"] = df_historico_total
                                 st.session_state["dados"] = dados
                                 DatabaseManager.save("historico", df_historico_total, usuario)
-                                st.success("Transação marcada como não recorrente!")
+                                st.session_state["msg"] = "Transação marcada como não recorrente!"
+                                st.session_state["msg_tipo"] = "success"
                                 st.rerun()
                         else:
-                            if st.button("🔄 Tornar Recorrente", key=f"fixo_sim_{idx}", use_container_width=True):
-                                df_historico_total.at[idx, 'fixo'] = 'Sim'
+                            if st.button("🔄 Tornar Recorrente", key=f"fixo_sim_{idx_original}", use_container_width=True):
+                                df_historico_total.at[idx_original, 'fixo'] = 'Sim'
                                 dados["historico"] = df_historico_total
                                 st.session_state["dados"] = dados
                                 DatabaseManager.save("historico", df_historico_total, usuario)
-                                st.success("Transação marcada como recorrente!")
+                                st.session_state["msg"] = "Transação marcada como recorrente!"
+                                st.session_state["msg_tipo"] = "success"
                                 st.rerun()
                     
                     with col_acoes2:
                         # Botão de edição rápida
-                        if st.button("✏️ Editar", key=f"edit_lanc_{idx}", use_container_width=True):
-                            st.session_state[f"editing_lanc_{idx}"] = True
+                        if st.button("✏️ Editar", key=f"edit_lanc_{idx_original}", use_container_width=True):
+                            st.session_state[f"editing_lanc_{idx_original}"] = True
                             st.rerun()
                     
                     with col_acoes3:
                         # Botão de exclusão com confirmação
-                        if st.button("🗑️ Excluir", key=f"del_lanc_{idx}", use_container_width=True, type="secondary"):
-                            st.session_state[f"confirm_del_lanc_{idx}"] = True
+                        if st.button("🗑️ Excluir", key=f"del_lanc_{idx_original}", use_container_width=True, type="secondary"):
+                            st.session_state[f"confirm_del_lanc_{idx_original}"] = True
                             st.rerun()
                     
                     # Confirmação de exclusão
-                    if st.session_state.get(f"confirm_del_lanc_{idx}", False):
+                    if st.session_state.get(f"confirm_del_lanc_{idx_original}", False):
                         st.markdown("""
                         <div style="
                             background: #7f1d1d;
@@ -2199,25 +2210,25 @@ if menu == "📝 LANÇAMENTOS":
                         with col_confirm2:
                             col_yes, col_no = st.columns(2)
                             with col_yes:
-                                if st.button("✅ Sim", key=f"yes_del_lanc_{idx}", use_container_width=True):
+                                if st.button("✅ Sim", key=f"yes_del_lanc_{idx_original}", use_container_width=True):
                                     # Excluir transação
-                                    df_historico_total = df_historico_total.drop(idx).reset_index(drop=True)
+                                    df_historico_total = df_historico_total.drop(idx_original).reset_index(drop=True)
                                     dados["historico"] = df_historico_total
                                     st.session_state["dados"] = dados
                                     DatabaseManager.save("historico", df_historico_total, usuario)
                                     st.session_state["msg"] = f"✅ Transação excluída com sucesso!"
                                     st.session_state["msg_tipo"] = "success"
-                                    st.session_state[f"confirm_del_lanc_{idx}"] = False
+                                    st.session_state[f"confirm_del_lanc_{idx_original}"] = False
                                     st.rerun()
                             with col_no:
-                                if st.button("❌ Não", key=f"no_del_lanc_{idx}", use_container_width=True):
-                                    st.session_state[f"confirm_del_lanc_{idx}"] = False
+                                if st.button("❌ Não", key=f"no_del_lanc_{idx_original}", use_container_width=True):
+                                    st.session_state[f"confirm_del_lanc_{idx_original}"] = False
                                     st.rerun()
                         
                         st.markdown("</div>", unsafe_allow_html=True)
                     
                     # Formulário de edição
-                    if st.session_state.get(f"editing_lanc_{idx}", False):
+                    if st.session_state.get(f"editing_lanc_{idx_original}", False):
                         st.markdown("""
                         <div style="
                             background: rgba(16, 185, 129, 0.1);
@@ -2228,8 +2239,8 @@ if menu == "📝 LANÇAMENTOS":
                         ">
                         """, unsafe_allow_html=True)
                         
-                        with st.form(f"form_edit_lanc_{idx}"):
-                            st.markdown(f"### ✏️ Editando: {descricao_transacao}")
+                        with st.form(f"form_edit_lanc_{idx_original}"):
+                            st.markdown(f"### ✏️ Editando: {descricao_transacao[:30]}...")
                             
                             col_edit1, col_edit2 = st.columns(2, gap="small")
                             
@@ -2237,14 +2248,14 @@ if menu == "📝 LANÇAMENTOS":
                                 edit_data = st.date_input(
                                     "Data",
                                     value=pd.to_datetime(data_transacao).date() if isinstance(data_transacao, pd.Timestamp) else date.today(),
-                                    key=f"edit_data_lanc_{idx}"
+                                    key=f"edit_data_lanc_{idx_original}"
                                 )
                                 
                                 edit_tipo = st.selectbox(
                                     "Tipo",
                                     ["Despesa", "Receita", "Investimento"],
-                                    index=["Despesa", "Receita", "Investimento"].index(tipo_transacao),
-                                    key=f"edit_tipo_lanc_{idx}"
+                                    index=["Despesa", "Receita", "Investimento"].index(tipo_transacao) if tipo_transacao in ["Despesa", "Receita", "Investimento"] else 0,
+                                    key=f"edit_tipo_lanc_{idx_original}"
                                 )
                                 
                                 edit_valor = st.number_input(
@@ -2252,7 +2263,7 @@ if menu == "📝 LANÇAMENTOS":
                                     min_value=0.0,
                                     step=10.0,
                                     value=valor_transacao,
-                                    key=f"edit_valor_lanc_{idx}"
+                                    key=f"edit_valor_lanc_{idx_original}"
                                 )
                             
                             with col_edit2:
@@ -2260,13 +2271,13 @@ if menu == "📝 LANÇAMENTOS":
                                     "Categoria",
                                     categorias_disponiveis,
                                     index=categorias_disponiveis.index(categoria_transacao) if categoria_transacao in categorias_disponiveis else 0,
-                                    key=f"edit_cat_lanc_{idx}"
+                                    key=f"edit_cat_lanc_{idx_original}"
                                 )
                                 
                                 edit_subcategoria = st.text_input(
                                     "Subcategoria",
-                                    value=row.get('subcategoria', ''),
-                                    key=f"edit_subcat_lanc_{idx}"
+                                    value=subcategoria_transacao,
+                                    key=f"edit_subcat_lanc_{idx_original}"
                                 )
                                 
                                 edit_responsavel = st.radio(
@@ -2274,19 +2285,19 @@ if menu == "📝 LANÇAMENTOS":
                                     ["🧔 Ele", "👩‍🦰 Ela", "👨‍👩‍👧‍👦 Compartilhado"],
                                     index=["🧔 Ele", "👩‍🦰 Ela", "👨‍👩‍👧‍👦 Compartilhado"].index(responsavel_transacao) if responsavel_transacao in ["🧔 Ele", "👩‍🦰 Ela", "👨‍👩‍👧‍👦 Compartilhado"] else 0,
                                     horizontal=True,
-                                    key=f"edit_resp_lanc_{idx}"
+                                    key=f"edit_resp_lanc_{idx_original}"
                                 )
                             
                             edit_descricao = st.text_input(
                                 "Descrição",
                                 value=descricao_transacao,
-                                key=f"edit_desc_lanc_{idx}"
+                                key=f"edit_desc_lanc_{idx_original}"
                             )
                             
                             edit_fixo = st.checkbox(
                                 "Recorrente",
                                 value=fixo_transacao == 'Sim',
-                                key=f"edit_fixo_lanc_{idx}"
+                                key=f"edit_fixo_lanc_{idx_original}"
                             )
                             
                             col_save, col_cancel = st.columns(2, gap="medium")
@@ -2297,20 +2308,20 @@ if menu == "📝 LANÇAMENTOS":
                                     type="primary"
                                 ):
                                     # Atualizar os dados
-                                    df_historico_total.at[idx, 'data'] = edit_data
-                                    df_historico_total.at[idx, 'tipo'] = edit_tipo
-                                    df_historico_total.at[idx, 'valor'] = float(edit_valor)
-                                    df_historico_total.at[idx, 'categoria'] = edit_categoria
-                                    df_historico_total.at[idx, 'subcategoria'] = edit_subcategoria.strip()
-                                    df_historico_total.at[idx, 'descricao'] = edit_descricao.strip()
-                                    df_historico_total.at[idx, 'responsavel'] = edit_responsavel
-                                    df_historico_total.at[idx, 'fixo'] = 'Sim' if edit_fixo else 'Não'
+                                    df_historico_total.at[idx_original, 'data'] = edit_data
+                                    df_historico_total.at[idx_original, 'tipo'] = edit_tipo
+                                    df_historico_total.at[idx_original, 'valor'] = float(edit_valor)
+                                    df_historico_total.at[idx_original, 'categoria'] = edit_categoria
+                                    df_historico_total.at[idx_original, 'subcategoria'] = edit_subcategoria.strip()
+                                    df_historico_total.at[idx_original, 'descricao'] = edit_descricao.strip()
+                                    df_historico_total.at[idx_original, 'responsavel'] = edit_responsavel
+                                    df_historico_total.at[idx_original, 'fixo'] = 'Sim' if edit_fixo else 'Não'
                                     
                                     dados["historico"] = df_historico_total
                                     st.session_state["dados"] = dados
                                     DatabaseManager.save("historico", df_historico_total, usuario)
                                     
-                                    st.session_state[f"editing_lanc_{idx}"] = False
+                                    st.session_state[f"editing_lanc_{idx_original}"] = False
                                     st.session_state["msg"] = f"✅ Transação atualizada com sucesso!"
                                     st.session_state["msg_tipo"] = "success"
                                     st.rerun()
@@ -2321,17 +2332,18 @@ if menu == "📝 LANÇAMENTOS":
                                     use_container_width=True,
                                     type="secondary"
                                 ):
-                                    st.session_state[f"editing_lanc_{idx}"] = False
+                                    st.session_state[f"editing_lanc_{idx_original}"] = False
                                     st.rerun()
                         
                         st.markdown("</div>", unsafe_allow_html=True)
                     
                     st.markdown("</div>", unsafe_allow_html=True)
             
-            # Informação sobre total de páginas
-            st.caption(f"📄 Página {st.session_state['pagina_lancamentos']} de {total_paginas} • {total_filtrado} transações no total")
-        
+            # CORREÇÃO: Apenas mostrar a legenda de paginação se houver transações
+            if total_filtrado > 0:
+                st.caption(f"📄 Página {st.session_state['pagina_lancamentos']} de {total_paginas} • {total_filtrado} transações no total")
         else:
+            # CORREÇÃO: Mensagem quando não há transações filtradas
             st.markdown("""
             <div style="
                 background: #1f2937;
@@ -2349,7 +2361,7 @@ if menu == "📝 LANÇAMENTOS":
             </div>
             """, unsafe_allow_html=True)
     else:
-        # Mensagem para quando não há lançamentos
+        # Mensagem para quando não há lançamentos no histórico
         st.markdown("""
         <div style="
             background: #1f2937;
@@ -2366,7 +2378,6 @@ if menu == "📝 LANÇAMENTOS":
             </p>
         </div>
         """, unsafe_allow_html=True)
-
     st.divider()
 
     # ================= ANÁLISE E EXPORTAÇÃO =================
