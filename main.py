@@ -1579,129 +1579,903 @@ with st.sidebar:
             st.session_state.clear()
             st.rerun()
 # =========================================================
-# 📝 LANÇAMENTOS - VERSÃO COMPACTA
+# 📝 LANÇAMENTOS - VERSÃO ESTILIZADA COMPLETA
 # =========================================================
-if menu == "📝 LANÇAMENTOS":
 
-    st.markdown("📝 Registro de Transações")
+elif menu == "📝 LANÇAMENTOS":
+    
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        border: 1px solid #10b981;
+    ">
+        <h1 style="
+            color: white;
+            margin: 0 0 8px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        ">
+            <span style="
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 10px;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">📝</span>
+            Registro de Transações
+        </h1>
+        <p style="color: #e5e7eb; margin: 0; opacity: 0.9;">
+            Registre e gerencie todas as suas transações financeiras
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Mensagens de feedback estilizadas
     if st.session_state.get("msg"):
-        if st.session_state.get("msg_tipo") == "error":
-            st.error(st.session_state["msg"])
-        elif st.session_state.get("msg_tipo") == "warning":
-            st.warning(st.session_state["msg"])
-        else:
-            st.success(st.session_state["msg"])
-
+        msg_tipo = st.session_state.get("msg_tipo", "info")
+        msg_icon = {
+            "error": "❌",
+            "warning": "⚠️",
+            "success": "✅",
+            "info": "ℹ️"
+        }.get(msg_tipo, "ℹ️")
+        
+        msg_color = {
+            "error": "#ef4444",
+            "warning": "#f59e0b",
+            "success": "#10b981",
+            "info": "#3b82f6"
+        }.get(msg_tipo, "#3b82f6")
+        
+        st.markdown(f"""
+        <div style="
+            background: {msg_color}15;
+            border: 1px solid {msg_color}30;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #e5e7eb;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 20px;">{msg_icon}</span>
+                <div>{st.session_state["msg"]}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         st.session_state["msg"] = None
 
-    # ---------------- FORM ----------------
-    with st.form("form_lancamento", clear_on_submit=True):
-        col1, col2, col3 = st.columns(3 , gap="large")
-
-        with col1:
-            data = st.date_input("data", date.today())
-            tipo = st.selectbox("tipo", ["Despesa", "Receita", "Investimento"])
-
-        with col2:
-            valor = st.number_input("Valor (R$)", min_value=0.0, step=10.0, format="%.2f")
-            categoria = st.selectbox(
-                "categoria",
-                dados["categorias"]["nome"].tolist() if not dados["categorias"].empty else []
-            )
-
-        with col3:
-            responsavel = st.radio("Responsável", ["🧔 Ele", "👩‍🦰 Ela", "Compartilhado"], horizontal=True)
-            fixo = st.checkbox("Recorrente")
-
-        descricao = st.text_input("descrição")
-        
-        submitted = st.form_submit_button("💾 SALVAR")
-        
-        if submitted:
-            nova = pd.DataFrame([{
-                "data": data,
-                "tipo": tipo,
-                "valor": valor,
-                "categoria": categoria,
-                "subcategoria": "",
-                "descricao": descricao,
-                "responsavel": responsavel,
-                "fixo": "Sim" if fixo else "Não"
-            }])
-            
-
-            df = dados["historico"].copy()
-            df = pd.concat([df, nova], ignore_index=True)
-
-            dados["historico"] = df
-            st.session_state["dados"] = dados
-            DatabaseManager.save("historico", df, usuario)
-            st.session_state["msg"] = "Salvo"
-            st.session_state["msg_tipo"] = "success"
-            st.rerun()
-
-    st.divider()
-    
-    # ================= LISTA DE LANÇAMENTOS COMPACTA =================
-    st.subheader("📋 Lançamentos Registrados")
+    # ================= RESUMO RÁPIDO =================
+    # Calcular estatísticas do mês atual
+    hoje = date.today()
+    mes_atual = hoje.strftime("%Y-%m")
     
     if not dados["historico"].empty:
         df_historico = dados["historico"].copy()
+        df_historico.columns = df_historico.columns.str.lower()
+        
+        # Converter data
+        df_historico["data"] = pd.to_datetime(df_historico["data"], errors='coerce')
+        df_historico["mes"] = df_historico["data"].dt.strftime("%Y-%m")
+        
+        # Filtrar mês atual
+        historico_mes = df_historico[df_historico["mes"] == mes_atual]
+        
+        if not historico_mes.empty:
+            receitas_mes = historico_mes[historico_mes["tipo"].str.lower() == "receita"]["valor"].sum()
+            despesas_mes = historico_mes[historico_mes["tipo"].str.lower() == "despesa"]["valor"].sum()
+            investimentos_mes = historico_mes[historico_mes["tipo"].str.lower() == "investimento"]["valor"].sum()
+            total_mes = len(historico_mes)
+        else:
+            receitas_mes = despesas_mes = investimentos_mes = 0
+            total_mes = 0
+    else:
+        receitas_mes = despesas_mes = investimentos_mes = 0
+        total_mes = 0
+    
+    saldo_mes = receitas_mes - despesas_mes - investimentos_mes
+
+    # Cards de métricas
+    st.markdown("### 📊 Resumo do Mês")
+    
+    with st.container():
+        col1, col2, col3, col4 = st.columns(4, gap="medium")
+        
+        with col1:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                text-align: center;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">💰 Receitas</div>
+                <div style="font-size: 24px; font-weight: bold;">R$ {receitas_mes:,.0f}</div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                    <i>Este mês</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #7c2d12 0%, #f97316 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                text-align: center;
+                box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📉 Despesas</div>
+                <div style="font-size: 24px; font-weight: bold;">R$ {despesas_mes:,.0f}</div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                    <i>Este mês</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            cor_saldo = "#10b981" if saldo_mes >= 0 else "#ef4444"
+            icone_saldo = "🟢" if saldo_mes >= 0 else "🔴"
+            
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                text-align: center;
+                border: 2px solid {cor_saldo};
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📊 Saldo</div>
+                <div style="font-size: 24px; font-weight: bold; color: {cor_saldo};">{icone_saldo} R$ {abs(saldo_mes):,.0f}</div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                    <i>{"Superavit" if saldo_mes >= 0 else "Deficit"}</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+                border-radius: 12px;
+                padding: 20px;
+                color: white;
+                text-align: center;
+                box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+            ">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📋 Total Lançamentos</div>
+                <div style="font-size: 28px; font-weight: bold;">{total_mes}</div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                    <i>Este mês</i>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ================= FORMULÁRIO DE NOVO LANÇAMENTO =================
+    st.markdown("### ➕ Novo Lançamento")
+    
+    with st.expander("📝 Clique para expandir o formulário", expanded=True):
+        with st.container():
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 24px;
+                border: 1px solid #374151;
+                margin-bottom: 20px;
+            ">
+            """, unsafe_allow_html=True)
+            
+            with st.form("form_novo_lancamento", clear_on_submit=True):
+                col1, col2, col3 = st.columns(3, gap="large")
+
+                with col1:
+                    st.markdown("#### 📅 Data e Tipo")
+                    data = st.date_input(
+                        "📅 **Data da Transação**",
+                        date.today(),
+                        help="Data em que a transação ocorreu"
+                    )
+                    
+                    tipo = st.selectbox(
+                        "📊 **Tipo de Transação**",
+                        ["Despesa", "Receita", "Investimento"],
+                        help="Despesa: Dinheiro que sai | Receita: Dinheiro que entra | Investimento: Aplicação financeira"
+                    )
+                    
+                    valor = st.number_input(
+                        "💰 **Valor (R$)**",
+                        min_value=0.0,
+                        step=10.0,
+                        value=100.0,
+                        format="%.2f",
+                        help="Valor da transação"
+                    )
+
+                with col2:
+                    st.markdown("#### 🏷️ Categorização")
+                    
+                    # Carregar categorias disponíveis
+                    categorias_disponiveis = []
+                    if not dados["categorias"].empty:
+                        df_categorias = dados["categorias"].copy()
+                        df_categorias.columns = df_categorias.columns.str.lower()
+                        
+                        if "ativa" in df_categorias.columns:
+                            df_categorias["ativa"] = pd.to_numeric(df_categorias["ativa"], errors='coerce').fillna(1).astype(bool)
+                            categorias_ativas = df_categorias[df_categorias["ativa"] == True]
+                        else:
+                            categorias_ativas = df_categorias
+                        
+                        if "nome" in categorias_ativas.columns:
+                            categorias_disponiveis = categorias_ativas["nome"].dropna().unique().tolist()
+                    
+                    if not categorias_disponiveis:
+                        categorias_disponiveis = ["Alimentação", "Transporte", "Moradia", "Lazer", "Saúde", "Educação", "Outros"]
+                    
+                    categoria = st.selectbox(
+                        "📂 **Categoria**",
+                        categorias_disponiveis,
+                        help="Classifique a transação para facilitar a organização"
+                    )
+                    
+                    subcategoria = st.text_input(
+                        "🏷️ **Subcategoria (opcional)**",
+                        placeholder="Ex: Supermercado, Combustível, Restaurante...",
+                        help="Detalhe adicional sobre a transação"
+                    )
+
+                with col3:
+                    st.markdown("#### 👥 Responsabilidade")
+                    
+                    responsavel = st.radio(
+                        "👤 **Responsável pela Transação**",
+                        ["🧔 Ele", "👩‍🦰 Ela", "👨‍👩‍👧‍👦 Compartilhado"],
+                        horizontal=True,
+                        help="Quem realizou ou é responsável por esta transação"
+                    )
+                    
+                    fixo = st.checkbox(
+                        "🔄 **É uma transação recorrente?**",
+                        help="Marque se esta transação se repete mensalmente"
+                    )
+                    
+                    # Espaçamento
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                descricao = st.text_input(
+                    "📝 **Descrição da Transação**",
+                    placeholder="Ex: Compra no supermercado, Salário mensal, Aporte em investimentos...",
+                    help="Descreva brevemente a transação"
+                )
+                
+                # Botão de envio
+                col_submit1, col_submit2, col_submit3 = st.columns([1, 2, 1])
+                with col_submit2:
+                    submitted = st.form_submit_button(
+                        "💾 **REGISTRAR TRANSAÇÃO**",
+                        type="primary",
+                        use_container_width=True
+                    )
+                
+                if submitted:
+                    if not descricao.strip():
+                        st.error("❌ Por favor, informe uma descrição para a transação.")
+                        st.stop()
+                    
+                    if valor <= 0:
+                        st.error("❌ O valor deve ser maior que zero.")
+                        st.stop()
+                    
+                    # Criar novo lançamento
+                    nova = pd.DataFrame([{
+                        "data": data,
+                        "tipo": tipo,
+                        "valor": valor,
+                        "categoria": categoria,
+                        "subcategoria": subcategoria.strip() if subcategoria else "",
+                        "descricao": descricao.strip(),
+                        "responsavel": responsavel,
+                        "fixo": "Sim" if fixo else "Não"
+                    }])
+                    
+                    # Concatenar com dados existentes
+                    df = dados["historico"].copy() if not dados["historico"].empty else pd.DataFrame()
+                    df = pd.concat([df, nova], ignore_index=True)
+                    
+                    # Atualizar dados na sessão
+                    dados["historico"] = df
+                    st.session_state["dados"] = dados
+                    
+                    # Salvar no banco de dados
+                    DatabaseManager.save("historico", df, usuario)
+                    
+                    # Mensagem de sucesso
+                    tipo_icon = {
+                        "Despesa": "📉",
+                        "Receita": "💰",
+                        "Investimento": "📈"
+                    }.get(tipo, "📝")
+                    
+                    st.session_state["msg"] = f"{tipo_icon} Transação de {tipo} registrada com sucesso!"
+                    st.session_state["msg_tipo"] = "success"
+                    st.rerun()
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    st.divider()
+
+    # ================= HISTÓRICO DE LANÇAMENTOS =================
+    st.markdown("### 📋 Histórico de Transações")
+    
+    if not dados["historico"].empty:
+        df_historico_total = dados["historico"].copy()
+        df_historico_total.columns = df_historico_total.columns.str.lower()
         
         # Ordenar por data (mais recente primeiro)
-        df_historico = df_historico.sort_values("data", ascending=False)
+        df_historico_total = df_historico_total.sort_values("data", ascending=False)
         
-        # Container para a lista
-        lista_container = st.container()
+        # Filtros
+        with st.expander("🔍 **Filtros e Busca**", expanded=False):
+            col_filtro1, col_filtro2, col_filtro3 = st.columns(3, gap="medium")
+            
+            with col_filtro1:
+                filtro_tipo = st.selectbox(
+                    "Filtrar por tipo",
+                    ["Todos", "Despesa", "Receita", "Investimento"],
+                    key="filtro_tipo_lanc"
+                )
+            
+            with col_filtro2:
+                # Filtro por período
+                filtro_periodo = st.selectbox(
+                    "Período",
+                    ["Todos", "Últimos 7 dias", "Últimos 30 dias", "Este mês", "Este ano"],
+                    key="filtro_periodo_lanc"
+                )
+            
+            with col_filtro3:
+                # Filtro por categoria
+                categorias_disponiveis_filtro = ["Todas"] + categorias_disponiveis
+                filtro_categoria = st.selectbox(
+                    "Categoria",
+                    categorias_disponiveis_filtro,
+                    key="filtro_categoria_lanc"
+                )
         
-        with lista_container:
-            for idx, row in df_historico.iterrows():
-                # Determinar cor baseada no tipo
-                if row['tipo'] == "Despesa":
-                    valor_color = "red"
-                    valor_prefix = "-"
-                elif row['tipo'] == "Receita":
-                    valor_color = "green"
-                    valor_prefix = "+"
-                else:
-                    valor_color = "white"
-                    valor_prefix = ""
+        # Aplicar filtros
+        df_filtrado = df_historico_total.copy()
+        
+        if filtro_tipo != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["tipo"] == filtro_tipo]
+        
+        if filtro_categoria != "Todas":
+            df_filtrado = df_filtrado[df_filtrado["categoria"] == filtro_categoria]
+        
+        if filtro_periodo != "Todos":
+            hoje = date.today()
+            if filtro_periodo == "Últimos 7 dias":
+                data_limite = hoje - timedelta(days=7)
+                df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["data"]) >= pd.Timestamp(data_limite)]
+            elif filtro_periodo == "Últimos 30 dias":
+                data_limite = hoje - timedelta(days=30)
+                df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["data"]) >= pd.Timestamp(data_limite)]
+            elif filtro_periodo == "Este mês":
+                df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["data"]).dt.strftime("%Y-%m") == mes_atual]
+            elif filtro_periodo == "Este ano":
+                df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["data"]).dt.year == hoje.year]
+        
+        # Contadores
+        total_filtrado = len(df_filtrado)
+        receitas_filtradas = df_filtrado[df_filtrado["tipo"] == "Receita"]["valor"].sum() if not df_filtrado.empty else 0
+        despesas_filtradas = df_filtrado[df_filtrado["tipo"] == "Despesa"]["valor"].sum() if not df_filtrado.empty else 0
+        
+        st.markdown(f"""
+        <div style="
+            background: #1f2937;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #374151;
+        ">
+            <div style="display: flex; justify-content: space-between;">
+                <div>
+                    <div style="font-size: 14px; color: #9ca3af;">📋 Total filtrado</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #f9fafb;">{total_filtrado} transações</div>
+                </div>
+                <div>
+                    <div style="font-size: 14px; color: #9ca3af;">💰 Receitas</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #10b981;">R$ {receitas_filtradas:,.2f}</div>
+                </div>
+                <div>
+                    <div style="font-size: 14px; color: #9ca3af;">📉 Despesas</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #ef4444;">R$ {despesas_filtradas:,.2f}</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Paginação
+        if "pagina_lancamentos" not in st.session_state:
+            st.session_state["pagina_lancamentos"] = 1
+        
+        itens_por_pagina = 10
+        total_paginas = (total_filtrado - 1) // itens_por_pagina + 1
+        
+        # Ajustar página atual se necessário
+        if st.session_state["pagina_lancamentos"] > total_paginas:
+            st.session_state["pagina_lancamentos"] = 1
+        
+        # Controle de página
+        col_pagina1, col_pagina2, col_pagina3 = st.columns([1, 2, 1])
+        with col_pagina2:
+            pagina_selecionada = st.number_input(
+                "📄 Página",
+                min_value=1,
+                max_value=total_paginas,
+                value=st.session_state["pagina_lancamentos"],
+                key="pagina_input_lanc"
+            )
+        
+        # Atualizar se o usuário mudou manualmente
+        if pagina_selecionada != st.session_state["pagina_lancamentos"]:
+            st.session_state["pagina_lancamentos"] = pagina_selecionada
+            st.rerun()
+        
+        inicio = (st.session_state["pagina_lancamentos"] - 1) * itens_por_pagina
+        fim = inicio + itens_por_pagina
+        
+        # Mostrar transações da página atual
+        df_pagina = df_filtrado.iloc[inicio:fim] if total_filtrado > 0 else pd.DataFrame()
+        
+        if not df_pagina.empty:
+            for idx, row in df_pagina.iterrows():
+                # Dados da transação
+                data_transacao = row['data']
+                tipo_transacao = row['tipo']
+                valor_transacao = row['valor']
+                categoria_transacao = row['categoria']
+                descricao_transacao = row['descricao']
+                responsavel_transacao = row['responsavel']
+                fixo_transacao = row.get('fixo', 'Não')
                 
                 # Formatar data
-                if isinstance(row['data'], str):
-                    data_str = row['data']
+                if isinstance(data_transacao, pd.Timestamp):
+                    data_formatada = data_transacao.strftime("%d/%m/%Y")
+                    dia_semana = data_transacao.strftime("%a")
                 else:
-                    data_str = row['data'].strftime("%d/%m/%Y")
+                    data_formatada = str(data_transacao)[:10]
+                    dia_semana = ""
                 
-                # Criar item compacto
-                col1, col2, col3, col4 = st.columns([3, 2, 1, 1], gap="small")
+                # Cores baseadas no tipo
+                if tipo_transacao == "Despesa":
+                    cor_tipo = "#ef4444"
+                    icone_tipo = "📉"
+                    prefixo_valor = "-"
+                elif tipo_transacao == "Receita":
+                    cor_tipo = "#10b981"
+                    icone_tipo = "💰"
+                    prefixo_valor = "+"
+                else:  # Investimento
+                    cor_tipo = "#3b82f6"
+                    icone_tipo = "📈"
+                    prefixo_valor = "↗️"
                 
-                with col1:
-                    st.markdown(f"**{row['descricao'][:30]}{'...' if len(row['descricao']) > 30 else ''}**")
-                    st.caption(f"{row['categoria']} • {row['responsavel']} • {data_str}")
-                
-                with col2:
-                    st.markdown(f"<span style='color: {valor_color}; font-weight: bold;'>{valor_prefix}R$ {row['valor']:,.2f}</span>", unsafe_allow_html=True)
-                
-                with col3:
-                    st.caption(row['tipo'])
-                
-                with col4:
-                    # Botão para excluir - mais compacto
-                    if st.button("🗑️", key=f"del_hist_{idx}", help="Excluir"):
-                        # Remover da lista
-                        df_historico = df_historico.drop(idx).reset_index(drop=True)
-                        dados["historico"] = df_historico
-                        st.session_state["dados"] = dados
-                        DatabaseManager.save("historico", df_historico, usuario)
-                        st.success("Lançamento excluído!")
-                        st.rerun()
-                
-                # Divisor fino
-                st.markdown("<hr style='margin: 6px 0; border-color: #1f2933;'>", unsafe_allow_html=True)
+                # Card para cada transação
+                with st.container():
+                    st.markdown(f"""
+                    <div style="
+                        background: #1f2937;
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-bottom: 16px;
+                        border-left: 4px solid {cor_tipo};
+                        border: 1px solid #374151;
+                    ">
+                    """, unsafe_allow_html=True)
+                    
+                    # Cabeçalho
+                    col_header1, col_header2 = st.columns([3, 1])
+                    
+                    with col_header1:
+                        st.markdown(f"""
+                        <div style="
+                            font-size: 18px;
+                            font-weight: bold;
+                            color: #f9fafb;
+                            margin-bottom: 4px;
+                        ">{icone_tipo} {descricao_transacao}</div>
+                        <div style="
+                            font-size: 14px;
+                            color: #9ca3af;
+                            margin-bottom: 8px;
+                        ">
+                            📂 {categoria_transacao} • 👤 {responsavel_transacao} • 📅 {data_formatada} {f'({dia_semana})' if dia_semana else ''}
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col_header2:
+                        st.markdown(f"""
+                        <div style="text-align: right;">
+                            <div style="
+                                font-size: 24px;
+                                font-weight: bold;
+                                color: {cor_tipo};
+                                margin-bottom: 4px;
+                            ">{prefixo_valor} R$ {valor_transacao:,.2f}</div>
+                            <div style="
+                                font-size: 12px;
+                                color: #6b7280;
+                            ">
+                                {tipo_transacao} {'• 🔄 Recorrente' if fixo_transacao == 'Sim' else ''}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Subcategoria se existir
+                    if 'subcategoria' in row and row['subcategoria']:
+                        st.markdown(f"""
+                        <div style="
+                            background: {cor_tipo}20;
+                            border-radius: 6px;
+                            padding: 8px 12px;
+                            margin-top: 8px;
+                            display: inline-block;
+                        ">
+                            <span style="font-size: 12px; color: {cor_tipo};">
+                                🏷️ {row['subcategoria']}
+                            </span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Ações
+                    st.markdown("<div style='margin-top: 16px;'></div>", unsafe_allow_html=True)
+                    
+                    col_acoes1, col_acoes2, col_acoes3 = st.columns(3, gap="small")
+                    
+                    with col_acoes1:
+                        # Botão para marcar como recorrente/não recorrente
+                        if fixo_transacao == 'Sim':
+                            if st.button("🔄 Não Recorrente", key=f"fixo_no_{idx}", use_container_width=True):
+                                df_historico_total.at[idx, 'fixo'] = 'Não'
+                                dados["historico"] = df_historico_total
+                                st.session_state["dados"] = dados
+                                DatabaseManager.save("historico", df_historico_total, usuario)
+                                st.success("Transação marcada como não recorrente!")
+                                st.rerun()
+                        else:
+                            if st.button("🔄 Tornar Recorrente", key=f"fixo_sim_{idx}", use_container_width=True):
+                                df_historico_total.at[idx, 'fixo'] = 'Sim'
+                                dados["historico"] = df_historico_total
+                                st.session_state["dados"] = dados
+                                DatabaseManager.save("historico", df_historico_total, usuario)
+                                st.success("Transação marcada como recorrente!")
+                                st.rerun()
+                    
+                    with col_acoes2:
+                        # Botão de edição rápida
+                        if st.button("✏️ Editar", key=f"edit_lanc_{idx}", use_container_width=True):
+                            st.session_state[f"editing_lanc_{idx}"] = True
+                            st.rerun()
+                    
+                    with col_acoes3:
+                        # Botão de exclusão com confirmação
+                        if st.button("🗑️ Excluir", key=f"del_lanc_{idx}", use_container_width=True, type="secondary"):
+                            st.session_state[f"confirm_del_lanc_{idx}"] = True
+                            st.rerun()
+                    
+                    # Confirmação de exclusão
+                    if st.session_state.get(f"confirm_del_lanc_{idx}", False):
+                        st.markdown("""
+                        <div style="
+                            background: #7f1d1d;
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin-top: 12px;
+                            border: 1px solid #ef4444;
+                        ">
+                        """, unsafe_allow_html=True)
+                        
+                        col_confirm1, col_confirm2 = st.columns([2, 1])
+                        
+                        with col_confirm1:
+                            st.warning(f"⚠️ **Confirmar exclusão da transação?**")
+                            st.caption(f"'{descricao_transacao[:50]}...' • {data_formatada} • R$ {valor_transacao:,.2f}")
+                        
+                        with col_confirm2:
+                            col_yes, col_no = st.columns(2)
+                            with col_yes:
+                                if st.button("✅ Sim", key=f"yes_del_lanc_{idx}", use_container_width=True):
+                                    # Excluir transação
+                                    df_historico_total = df_historico_total.drop(idx).reset_index(drop=True)
+                                    dados["historico"] = df_historico_total
+                                    st.session_state["dados"] = dados
+                                    DatabaseManager.save("historico", df_historico_total, usuario)
+                                    st.session_state["msg"] = f"✅ Transação excluída com sucesso!"
+                                    st.session_state["msg_tipo"] = "success"
+                                    st.session_state[f"confirm_del_lanc_{idx}"] = False
+                                    st.rerun()
+                            with col_no:
+                                if st.button("❌ Não", key=f"no_del_lanc_{idx}", use_container_width=True):
+                                    st.session_state[f"confirm_del_lanc_{idx}"] = False
+                                    st.rerun()
+                        
+                        st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    # Formulário de edição
+                    if st.session_state.get(f"editing_lanc_{idx}", False):
+                        st.markdown("""
+                        <div style="
+                            background: rgba(16, 185, 129, 0.1);
+                            border: 2px solid #10b981;
+                            border-radius: 12px;
+                            padding: 20px;
+                            margin-top: 12px;
+                        ">
+                        """, unsafe_allow_html=True)
+                        
+                        with st.form(f"form_edit_lanc_{idx}"):
+                            st.markdown(f"### ✏️ Editando: {descricao_transacao}")
+                            
+                            col_edit1, col_edit2 = st.columns(2, gap="small")
+                            
+                            with col_edit1:
+                                edit_data = st.date_input(
+                                    "Data",
+                                    value=pd.to_datetime(data_transacao).date() if isinstance(data_transacao, pd.Timestamp) else date.today(),
+                                    key=f"edit_data_lanc_{idx}"
+                                )
+                                
+                                edit_tipo = st.selectbox(
+                                    "Tipo",
+                                    ["Despesa", "Receita", "Investimento"],
+                                    index=["Despesa", "Receita", "Investimento"].index(tipo_transacao),
+                                    key=f"edit_tipo_lanc_{idx}"
+                                )
+                                
+                                edit_valor = st.number_input(
+                                    "Valor (R$)",
+                                    min_value=0.0,
+                                    step=10.0,
+                                    value=valor_transacao,
+                                    key=f"edit_valor_lanc_{idx}"
+                                )
+                            
+                            with col_edit2:
+                                edit_categoria = st.selectbox(
+                                    "Categoria",
+                                    categorias_disponiveis,
+                                    index=categorias_disponiveis.index(categoria_transacao) if categoria_transacao in categorias_disponiveis else 0,
+                                    key=f"edit_cat_lanc_{idx}"
+                                )
+                                
+                                edit_subcategoria = st.text_input(
+                                    "Subcategoria",
+                                    value=row.get('subcategoria', ''),
+                                    key=f"edit_subcat_lanc_{idx}"
+                                )
+                                
+                                edit_responsavel = st.radio(
+                                    "Responsável",
+                                    ["🧔 Ele", "👩‍🦰 Ela", "👨‍👩‍👧‍👦 Compartilhado"],
+                                    index=["🧔 Ele", "👩‍🦰 Ela", "👨‍👩‍👧‍👦 Compartilhado"].index(responsavel_transacao) if responsavel_transacao in ["🧔 Ele", "👩‍🦰 Ela", "👨‍👩‍👧‍👦 Compartilhado"] else 0,
+                                    horizontal=True,
+                                    key=f"edit_resp_lanc_{idx}"
+                                )
+                            
+                            edit_descricao = st.text_input(
+                                "Descrição",
+                                value=descricao_transacao,
+                                key=f"edit_desc_lanc_{idx}"
+                            )
+                            
+                            edit_fixo = st.checkbox(
+                                "Recorrente",
+                                value=fixo_transacao == 'Sim',
+                                key=f"edit_fixo_lanc_{idx}"
+                            )
+                            
+                            col_save, col_cancel = st.columns(2, gap="medium")
+                            with col_save:
+                                if st.form_submit_button(
+                                    "💾 Salvar Alterações",
+                                    use_container_width=True,
+                                    type="primary"
+                                ):
+                                    # Atualizar os dados
+                                    df_historico_total.at[idx, 'data'] = edit_data
+                                    df_historico_total.at[idx, 'tipo'] = edit_tipo
+                                    df_historico_total.at[idx, 'valor'] = float(edit_valor)
+                                    df_historico_total.at[idx, 'categoria'] = edit_categoria
+                                    df_historico_total.at[idx, 'subcategoria'] = edit_subcategoria.strip()
+                                    df_historico_total.at[idx, 'descricao'] = edit_descricao.strip()
+                                    df_historico_total.at[idx, 'responsavel'] = edit_responsavel
+                                    df_historico_total.at[idx, 'fixo'] = 'Sim' if edit_fixo else 'Não'
+                                    
+                                    dados["historico"] = df_historico_total
+                                    st.session_state["dados"] = dados
+                                    DatabaseManager.save("historico", df_historico_total, usuario)
+                                    
+                                    st.session_state[f"editing_lanc_{idx}"] = False
+                                    st.session_state["msg"] = f"✅ Transação atualizada com sucesso!"
+                                    st.session_state["msg_tipo"] = "success"
+                                    st.rerun()
+                            
+                            with col_cancel:
+                                if st.form_submit_button(
+                                    "❌ Cancelar",
+                                    use_container_width=True,
+                                    type="secondary"
+                                ):
+                                    st.session_state[f"editing_lanc_{idx}"] = False
+                                    st.rerun()
+                        
+                        st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    st.markdown("</div>", unsafe_allow_html=True)
+            
+            # Informação sobre total de páginas
+            st.caption(f"📄 Página {st.session_state['pagina_lancamentos']} de {total_paginas} • {total_filtrado} transações no total")
+        
+        else:
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 40px 20px;
+                text-align: center;
+                border: 2px dashed #374151;
+                margin: 20px 0;
+            ">
+                <div style="font-size: 48px; margin-bottom: 16px; color: #6b7280;">🔍</div>
+                <h4 style="color: #9ca3af; margin-bottom: 8px;">Nenhuma transação encontrada</h4>
+                <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                    Tente ajustar os filtros ou registre sua primeira transação acima.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
     else:
-        st.caption("Nenhum lançamento registrado.")
+        # Mensagem para quando não há lançamentos
+        st.markdown("""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            border: 2px dashed #374151;
+            margin: 20px 0;
+        ">
+            <div style="font-size: 64px; margin-bottom: 20px; color: #6b7280;">📝</div>
+            <h3 style="color: #9ca3af; margin-bottom: 12px;">Nenhum lançamento registrado</h3>
+            <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                Use o formulário acima para registrar suas primeiras transações e começar a acompanhar suas finanças!
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
+    st.divider()
+
+    # ================= ANÁLISE E EXPORTAÇÃO =================
+    if not dados["historico"].empty:
+        st.markdown("### 📊 Análise e Exportação")
+        
+        with st.container():
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid #374151;
+            ">
+                <div style="color: #d1d5db; margin-bottom: 16px;">
+                    Analise seus dados e exporte para uso externo.
+                </div>
+            """, unsafe_allow_html=True)
+            
+            col_analise1, col_analise2 = st.columns(2, gap="medium")
+            
+            with col_analise1:
+                # Gráfico de distribuição por tipo
+                st.markdown("#### 📈 Distribuição por Tipo")
+                
+                if not df_historico_total.empty:
+                    # Agrupar por tipo
+                    df_tipo = df_historico_total.groupby('tipo')['valor'].sum().reset_index()
+                    
+                    if not df_tipo.empty:
+                        fig_tipo = px.pie(
+                            df_tipo,
+                            values="valor",
+                            names="tipo",
+                            hole=0.4,
+                            color_discrete_map={
+                                "Despesa": "#ef4444",
+                                "Receita": "#10b981",
+                                "Investimento": "#3b82f6"
+                            }
+                        )
+                        fig_tipo.update_traces(
+                            textposition='inside',
+                            textinfo='percent+label',
+                            hovertemplate="<b>%{label}</b><br>R$ %{value:,.2f}<br>%{percent}<extra></extra>"
+                        )
+                        fig_tipo.update_layout(
+                            template="plotly_dark",
+                            paper_bgcolor="#0e1117",
+                            plot_bgcolor="#0e1117",
+                            font=dict(color="#e5e7eb"),
+                            showlegend=True,
+                            height=300,
+                            margin=dict(t=20, b=20, l=20, r=20)
+                        )
+                        st.plotly_chart(fig_tipo, use_container_width=True)
+            
+            with col_analise2:
+                # Exportação de dados
+                st.markdown("#### 📤 Exportar Dados")
+                
+                col_exp1, col_exp2 = st.columns(2, gap="small")
+                
+                with col_exp1:
+                    # Exportar CSV completo
+                    csv = df_historico_total.to_csv(index=False)
+                    st.download_button(
+                        label="📥 CSV Completo",
+                        data=csv,
+                        file_name=f"lancamentos_{date.today().strftime('%Y_%m_%d')}.csv",
+                        mime="text/csv",
+                        use_container_width=True,
+                        help="Baixe todos os lançamentos em formato CSV"
+                    )
+                
+                with col_exp2:
+                    # Exportar resumo
+                    total_transacoes = len(df_historico_total)
+                    receitas_total = df_historico_total[df_historico_total["tipo"] == "Receita"]["valor"].sum()
+                    despesas_total = df_historico_total[df_historico_total["tipo"] == "Despesa"]["valor"].sum()
+                    
+                    resumo = f"""📋 RESUMO DE LANÇAMENTOS - {date.today().strftime('%d/%m/%Y')}
+
+📊 Estatísticas Gerais:
+• Total de Transações: {total_transacoes}
+• Receitas Totais: R$ {receitas_total:,.2f}
+• Despesas Totais: R$ {despesas_total:,.2f}
+• Saldo Geral: R$ {receitas_total - despesas_total:,.2f}
+
+📈 Últimas 10 Transações:
+"""
+                    
+                    # Adicionar últimas 10 transações
+                    ultimas = df_historico_total.head(10)
+                    for _, row in ultimas.iterrows():
+                        data_str = row['data'].strftime("%d/%m/%Y") if isinstance(row['data'], pd.Timestamp) else str(row['data'])[:10]
+                        tipo_sigla = "DESP" if row['tipo'] == "Despesa" else "REC" if row['tipo'] == "Receita" else "INV"
+                        resumo += f"• {data_str} [{tipo_sigla}] {row['descricao'][:30]}... R$ {row['valor']:,.2f}\n"
+                    
+                    st.download_button(
+                        label="📄 Resumo (TXT)",
+                        data=resumo,
+                        file_name=f"resumo_lancamentos_{date.today().strftime('%Y_%m_%d')}.txt",
+                        mime="text/plain",
+                        use_container_width=True,
+                        help="Baixe um resumo executivo dos seus lançamentos"
+                    )
+            
+            st.markdown("</div>", unsafe_allow_html=True)
 
 
 # =========================================================
