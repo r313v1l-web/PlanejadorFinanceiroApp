@@ -1095,8 +1095,7 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
         },
         "💊 Saúde - Medicamento": {
             "palavras": ['remédio', 'medicamento', 'farmacia', 'drogaria'],
-            "cor": "#ef4444",
-            "emoji": "💊"
+            "cor": "#ef4444"
         },
         "❤️ Saúde - Plano": {
             "palavras": ['plano de saúde', 'unimed', 'amil', 'sulamerica'],
