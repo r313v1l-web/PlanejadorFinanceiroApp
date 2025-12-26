@@ -1017,12 +1017,116 @@ def mostrar_gasto_card(idx, row, df_gastos, unique_counter=0):
                     const descricao = `{row['descricao'].replace("'", "\\'")}`;
                     const valor = {row['valor']};
                     const data = `{data_formatada}`;
+                    const categoria = `{categoria}`;
                     
                     // Copiar para área de transferência
                     const text = `Descrição: ${descricao}\\nValor: R$ ${valor.toFixed(2)}\\nData: ${data}\\nCategoria: ${categoria}`;
-                    navigator.clipboard.writeText(text).then(() => {
-                        alert('Gasto copiado para a área de transferência!');
-                    });
+                    
+                    // Usar API moderna de clipboard
+                    if (navigator.clipboard && window.isSecureContext) {{
+                        navigator.clipboard.writeText(text).then(() => {{
+                            // Criar uma notificação mais amigável
+                            const notification = document.createElement('div');
+                            notification.style.cssText = `
+                                position: fixed;
+                                top: 20px;
+                                right: 20px;
+                                background: #10b981;
+                                color: white;
+                                padding: 12px 20px;
+                                border-radius: 8px;
+                                z-index: 10000;
+                                font-family: sans-serif;
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                                animation: fadeInOut 3s ease;
+                            `;
+                            notification.innerHTML = '✅ Gasto copiado para a área de transferência!';
+                            document.body.appendChild(notification);
+                            
+                            // Remover após 3 segundos
+                            setTimeout(() => {{
+                                if (notification.parentNode) {{
+                                    notification.parentNode.removeChild(notification);
+                                }}
+                            }}, 3000);
+                        }}).catch(err => {{
+                            console.error('Erro ao copiar:', err);
+                            // Fallback para método antigo
+                            const textArea = document.createElement('textarea');
+                            textArea.value = text;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            
+                            // Notificação de fallback
+                            const notification = document.createElement('div');
+                            notification.style.cssText = `
+                                position: fixed;
+                                top: 20px;
+                                right: 20px;
+                                background: #f59e0b;
+                                color: white;
+                                padding: 12px 20px;
+                                border-radius: 8px;
+                                z-index: 10000;
+                                font-family: sans-serif;
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                                animation: fadeInOut 3s ease;
+                            `;
+                            notification.innerHTML = '📋 Copiado! (método alternativo)';
+                            document.body.appendChild(notification);
+                            
+                            setTimeout(() => {{
+                                if (notification.parentNode) {{
+                                    notification.parentNode.removeChild(notification);
+                                }}
+                            }}, 3000);
+                        }});
+                    }} else {{
+                        // Método alternativo para navegadores mais antigos
+                        const textArea = document.createElement('textarea');
+                        textArea.value = text;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        
+                        const notification = document.createElement('div');
+                        notification.style.cssText = `
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: #3b82f6;
+                            color: white;
+                            padding: 12px 20px;
+                            border-radius: 8px;
+                            z-index: 10000;
+                            font-family: sans-serif;
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                            animation: fadeInOut 3s ease;
+                        `;
+                        notification.innerHTML = '📋 Conteúdo copiado!';
+                        document.body.appendChild(notification);
+                        
+                        setTimeout(() => {{
+                            if (notification.parentNode) {{
+                                notification.parentNode.removeChild(notification);
+                            }}
+                        }}, 3000);
+                    }}
+                    
+                    // Adicionar animação CSS
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @keyframes fadeInOut {{
+                            0% {{ opacity: 0; transform: translateY(-10px); }}
+                            10% {{ opacity: 1; transform: translateY(0); }}
+                            90% {{ opacity: 1; transform: translateY(0); }}
+                            100% {{ opacity: 0; transform: translateY(-10px); }}
+                        }}
+                    `;
+                    document.head.appendChild(style);
                 " style="
                     background: #374151;
                     border: none;
