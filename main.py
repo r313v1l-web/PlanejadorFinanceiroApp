@@ -917,157 +917,165 @@ df_projecao = projetar_patrimonio(
 
 
 # =========================================================
-# FUNÇÕES AUXILIARES (colocar ANTES do menu)
+# FUNÇÃO PARA MOSTRAR CARDS DE GASTOS (usa a MESMA categorização)
 # =========================================================
 
-def mostrar_gasto_card(idx, row, df_original, unique_counter):
-    """Função auxiliar para mostrar um card de gasto"""
-    # Usar um contador único em vez do índice do DataFrame
-    unique_key = f"del_btn_{unique_counter}"
+def mostrar_gasto_card(idx, row, df_gastos, unique_counter=0):
+    """Exibe um card bonito para cada gasto - usa a MESMA categorização"""
+    # Formatar data
+    data_formatada = row["data"].strftime("%d/%m/%Y") if pd.notnull(row["data"]) else "Sem data"
     
-    # Formatar data - APENAS DATA, SEM HORA
-    if isinstance(row['data'], pd.Timestamp):
-        data_str = row['data'].strftime("%d/%m")
-        dia_semana = row['data'].strftime("%a")
-        data_completa = row['data'].strftime("%d/%m/%Y")  # REMOVI A HORA
-    else:
-        # Se for string, extrair apenas a parte da data
-        data_str = str(row['data'])[:10] if row['data'] else ""
-        dia_semana = ""
-        data_completa = data_str
+    # Obter categoria usando a MESMA função
+    categoria = categorizar_gasto(row['descricao'])
     
-    # Determinar categoria
-    desc_lower = row['descricao'].lower()
-    if any(word in desc_lower for word in ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café']):
-        categoria = "🍔 Alimentação"
-        cor_categoria = "#f87171"
-    elif any(word in desc_lower for word in ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro']):
-        categoria = "🚗 Transporte"
-        cor_categoria = "#60a5fa"
-    elif any(word in desc_lower for word in ['mercado', 'supermercado', 'feira', 'padaria']):
-        categoria = "🛒 Compras"
-        cor_categoria = "#34d399"
-    elif any(word in desc_lower for word in ['cinema', 'shopping', 'parque', 'lazer', 'bar']):
-        categoria = "🎯 Lazer"
-        cor_categoria = "#a78bfa"
-    else:
-        categoria = "📝 Outros"
-        cor_categoria = "#9ca3af"
+    # Cores por categoria (opcional, mas fica bonito)
+    cores_categorias = {
+        "🍔 Alimentação": "#FF6B6B",
+        "🚗 Transporte": "#4ECDC4",
+        "🛒 Compras": "#FFD166",
+        "🏠 Moradia": "#06D6A0",
+        "💼 Trabalho": "#118AB2",
+        "🏥 Saúde": "#EF476F",
+        "🎓 Educação": "#073B4C",
+        "🎯 Lazer & Entretenimento": "#7209B7",
+        "👗 Vestuário": "#FF9E6D",
+        "💻 Tecnologia": "#3A86FF",
+        "📱 Serviços": "#8338EC",
+        "👨‍👩‍👧‍👦 Família": "#FF006E",
+        "🐾 Pets": "#FFBE0B",
+        "💄 Beleza & Cuidados": "#FB5607",
+        "🏋️ Fitness & Esportes": "#3A86FF",
+        "📝 Outros": "#8B8C89"
+    }
     
-    # Card para cada gasto
-    with st.container():
-        st.markdown(f"""
-        <div style="
-            background: #1f2937;
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border-left: 4px solid {cor_categoria};
-            border: 1px solid #374151;
-        ">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div style="flex: 1;">
-                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                        <div style="
-                            background: {cor_categoria}20;
-                            color: {cor_categoria};
-                            padding: 4px 12px;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: bold;
-                            margin-right: 12px;
-                        ">
-                            {categoria}
-                        </div>
-                        <div style="
-                            background: #374151;
-                            color: #d1d5db;
-                            padding: 4px 10px;
-                            border-radius: 6px;
-                            font-size: 12px;
-                            font-weight: bold;
-                        ">
-                            {data_str} • {dia_semana}
-                        </div>
-                    </div>
-                    <div style="font-size: 16px; font-weight: bold; color: #f9fafb; margin-bottom: 4px;">
-                        {row['descricao']}
-                    </div>
-                    <div style="font-size: 12px; color: #9ca3af;">
-                        {data_completa}
-                    </div>
+    cor_categoria = cores_categorias.get(categoria, "#8B8C89")
+    
+    # Criar o card
+    st.markdown(f"""
+    <div id="gasto_{idx}_{unique_counter}" style="
+        background: #1f2937;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border-left: 4px solid {cor_categoria};
+        border: 1px solid #374151;
+        transition: all 0.3s ease;
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                    <span style="
+                        background: {cor_categoria}20;
+                        color: {cor_categoria};
+                        border-radius: 8px;
+                        padding: 4px 10px;
+                        font-size: 12px;
+                        font-weight: bold;
+                        margin-right: 12px;
+                    ">
+                        {categoria}
+                    </span>
+                    <span style="color: #9ca3af; font-size: 12px;">
+                        📅 {data_formatada}
+                    </span>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 20px; font-weight: bold; color: #f87171; margin-bottom: 8px;">
-                        R$ {row['valor']:,.2f}
-                    </div>
-        """, unsafe_allow_html=True)
-        
-        # Botão de exclusão - usar chave única
-        if st.button("🗑️", key=unique_key, help="Excluir este gasto"):
-            st.session_state[f"confirm_delete_{unique_key}"] = True
-            st.rerun()
-        
-        st.markdown("""
+                <div style="
+                    color: #f9fafb;
+                    font-size: 16px;
+                    font-weight: 500;
+                    margin-bottom: 4px;
+                    word-break: break-word;
+                ">
+                    {row['descricao']}
+                </div>
+            </div>
+            
+            <div style="
+                text-align: right;
+                margin-left: 16px;
+            ">
+                <div style="
+                    color: #f87171;
+                    font-size: 18px;
+                    font-weight: bold;
+                ">
+                    R$ {row['valor']:,.2f}
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
         
-        # Confirmação de exclusão - usar chave única
-        if st.session_state.get(f"confirm_delete_{unique_key}", False):
-            with st.container():
-                st.warning(f"Excluir '{row['descricao'][:30]}...'?")
-                col_conf1, col_conf2 = st.columns(2)
-                with col_conf1:
-                    if st.button("✅ Sim", key=f"confirm_yes_{unique_key}", use_container_width=True):
-                        # CORREÇÃO: Comparar datas corretamente (apenas a parte da data)
-                        row_data = row['data']
-                        
-                        if isinstance(row_data, pd.Timestamp):
-                            row_data_date = row_data.date()
-                        elif isinstance(row_data, str):
-                            row_data_date = pd.to_datetime(row_data).date()
-                        else:
-                            row_data_date = row_data
-                        
-                        # Encontrar o índice real no DataFrame original
-                        for df_idx, df_row in df_original.iterrows():
-                            df_row_data = df_row['data']
-                            
-                            if isinstance(df_row_data, pd.Timestamp):
-                                df_row_data_date = df_row_data.date()
-                            elif isinstance(df_row_data, str):
-                                df_row_data_date = pd.to_datetime(df_row_data).date()
-                            else:
-                                df_row_data_date = df_row_data
-                            
-                            # Comparar datas, descrição e valor
-                            if (df_row_data_date == row_data_date and 
-                                df_row['descricao'] == row['descricao'] and 
-                                df_row['valor'] == row['valor']):
-                                
-                                # Encontrou o registro, excluir
-                                df_novo = df_original.drop(df_idx).reset_index(drop=True)
-                                dados["controle_gastos"] = df_novo
-                                st.session_state["dados"] = dados
-                                DatabaseManager.save("controle_gastos", df_novo, usuario)
-                                
-                                st.session_state[f"confirm_delete_{unique_key}"] = False
-                                st.success("Gasto excluído!")
-                                st.rerun()
-                                break
-                        
-                        st.session_state[f"confirm_delete_{unique_key}"] = False
-                        st.error("Não foi possível encontrar o gasto para exclusão.")
-                        st.rerun()
-                        
-                with col_conf2:
-                    if st.button("❌ Não", key=f"confirm_no_{unique_key}", use_container_width=True):
-                        st.session_state[f"confirm_delete_{unique_key}"] = False
-                        st.rerun()
-
-
+        <div style="
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid #374151;
+        ">
+            <div style="display: flex; gap: 8px;">
+                <button onclick="
+                    const idx = {idx};
+                    const descricao = `{row['descricao'].replace("'", "\\'")}`;
+                    const valor = {row['valor']};
+                    const data = `{data_formatada}`;
+                    
+                    // Copiar para área de transferência
+                    const text = `Descrição: ${descricao}\\nValor: R$ ${valor.toFixed(2)}\\nData: ${data}\\nCategoria: ${categoria}`;
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('Gasto copiado para a área de transferência!');
+                    });
+                " style="
+                    background: #374151;
+                    border: none;
+                    color: #9ca3af;
+                    border-radius: 6px;
+                    padding: 4px 12px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='#4B5563'; this.style.color='#d1d5db';"
+                onmouseout="this.style.background='#374151'; this.style.color='#9ca3af';">
+                    📋 Copiar
+                </button>
+                
+                <button onclick="
+                    if (confirm('Tem certeza que deseja excluir este gasto?')) {{
+                        // Esta função precisaria ser implementada no backend
+                        alert('Funcionalidade de exclusão precisa ser implementada no servidor');
+                    }}
+                " style="
+                    background: #7f1d1d;
+                    border: none;
+                    color: #fca5a5;
+                    border-radius: 6px;
+                    padding: 4px 12px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='#991b1b'; this.style.color='#fecaca';"
+                onmouseout="this.style.background='#7f1d1d'; this.style.color='#fca5a5';">
+                    🗑️ Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // Adicionar efeito de hover aos cards
+    document.addEventListener('DOMContentLoaded', function() {{
+        const card = document.getElementById('gasto_{idx}_{unique_counter}');
+        if (card) {{
+            card.addEventListener('mouseenter', function() {{
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+            }});
+            card.addEventListener('mouseleave', function() {{
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            }});
+        }}
+    }});
+    </script>
+    """, unsafe_allow_html=True)
 
 
 
@@ -3206,6 +3214,173 @@ elif menu == "🏢 FLUXOS FIXOS":
        
 
 
+    # =========================================================
+    # FUNÇÕES DE CATEGORIZAÇÃO (adicionar ANTES da seção de Controle de Gastos)
+    # =========================================================
+
+    def normalizar_texto(texto):
+        """Remove acentos e converte para minúsculo"""
+        if not isinstance(texto, str):
+            return ""
+        texto = texto.lower()
+        # Remove acentos
+        texto = unicodedata.normalize('NFKD', texto)
+        texto = ''.join([c for c in texto if not unicodedata.combining(c)])
+        return texto
+
+    def categorizar_gasto(descricao):
+        """Categoriza um gasto baseado na descrição (usa mesma lógica em TODAS as partes)"""
+        desc_normalizada = normalizar_texto(descricao)
+        
+        # Palavras-chave SEM ACENTOS (normalizadas) - MESMA LISTA EM TODOS OS LUGARES
+        palavras_chave = {
+            "🍔 Alimentação": [
+                'comida', 'restaurante', 'lanche', 'almoco', 'jantar', 'cafe', 'padaria', 'pizza', 
+                'hamburguer', 'sorvete', 'acai', 'ifood', 'rappi', 'delivery', 'mercado', 'supermercado',
+                'feira', 'quitanda', 'mercearia', 'sacolao', 'acougue', 'peixaria', 'padaria', 'confeitaria',
+                'bebida', 'refri', 'suco', 'cerveja', 'vinho', 'whisky', 'cafeteria', 'lanchonete',
+                'fast food', 'buffet', 'cesta basica', 'alimento', 'comestivel', 'lanchonete', 'pastelaria',
+                'cafezinho', 'cafeinho', 'cafezin', 'lanchinhos'  # Adicionadas variações
+            ],
+            
+            "🚗 Transporte": [
+                'uber', '99', 'taxi', 'gasolina', 'combustivel', 'alcool', 'diesel', 'onibus', 'metro',
+                'trem', 'passagem', 'bilhete', 'estacionamento', 'pedagio', 'multa', 'ipva', 'licenciamento',
+                'seguro auto', 'manutencao', 'mecanico', 'oficina', 'pneu', 'lavagem', 'troca de oleo',
+                'taxi', 'cabify', 'blablacar', 'uber eats', 'ifood moto', 'motoboy', 'entregador',
+                'transporte', 'locomocao', 'combustivel', 'posto', 'abastecimento', 'app transporte'
+            ],
+            
+            "🛒 Compras": [
+                'shopping', 'centro comercial', 'loja', 'compra online', 'amazon', 'mercado livre', 'shopee',
+                'aliexpress', 'magazine', 'atacado', 'varejo', 'eletrodomestico', 'moveis', 'decoracao',
+                'utensilio', 'ferramenta', 'material', 'produto', 'artigo', 'aquisição', 'adquirir',
+                'americanas', 'casas bahia', 'pontofrio', 'ricardo eletro', 'magalu'
+            ],
+            
+            "🏠 Moradia": [
+                'aluguel', 'condominio', 'luz', 'energia', 'agua', 'gas', 'internet', 'tv a cabo',
+                'netflix', 'disney', 'hbo', 'spotify', 'streaming', 'telefone', 'celular', 'fixo',
+                'iptu', 'taxa', 'reforma', 'manutencao', 'pintura', 'encanador', 'eletricista',
+                'limpeza', 'faxina', 'diarista', 'jardineiro', 'piscina', 'lixeiro', 'zelador',
+                'imobiliaria', 'financiamento', 'prestacao', 'seguro residencial', 'alarme',
+                'portao eletronico', 'camera', 'vigilancia', 'gas encanado', 'gas botijao',
+                'conta de agua', 'conta de luz', 'conta de gas'
+            ],
+            
+            "💼 Trabalho": [
+                'material escritorio', 'caneta', 'papel', 'impressora', 'cartucho', 'toner', 'notebook',
+                'computador', 'mouse', 'teclado', 'monitor', 'cadeira', 'mesa', 'estagio', 'freelance',
+                'profissional', 'consultoria', 'curso profissional', 'certificacao', 'conferencia',
+                'palestra', 'workshop', 'livro tecnico', 'revista especializada', 'assinatura revista',
+                'co-working', 'aluguel sala', 'material trabalho', 'uniforme', 'epi', 'software trabalho',
+                'ferramenta trabalho'
+            ],
+            
+            "🏥 Saúde": [
+                'medico', 'consulta', 'exame', 'laboratorio', 'farmacia', 'drogaria', 'remedio', 'medicamento',
+                'plano saude', 'unimed', 'amil', 'sulamerica', 'hospital', 'pronto socorro', 'emergencia',
+                'dentista', 'odontologo', 'ortodontista', 'clinica', 'psicologo', 'psiquiatra', 'terapia',
+                'fisioterapeuta', 'nutricionista', 'personal trainer', 'academia', 'suplemento', 'vitamina',
+                'oculos', 'lente', 'cirurgia', 'internacao', 'ambulancia', 'convenio', 'seguro saude',
+                'plano odontologico', 'ortopedia', 'cardiologista', 'pediatra', 'ginecologista'
+            ],
+            
+            "🎓 Educação": [
+                'escola', 'faculdade', 'universidade', 'curso', 'ingles', 'idioma', 'espanhol', 'frances',
+                'mensalidade', 'matricula', 'material escolar', 'livro didatico', 'caderno', 'mochila',
+                'uniforme', 'transporte escolar', 'lanche escolar', 'excursao', 'formatura', 'diploma',
+                'certificado', 'pos graduacao', 'mba', 'mestrado', 'doutorado', 'pesquisa', 'tcc',
+                'monografia', 'encadernacao', 'xerox', 'copia', 'impressao', 'biblioteca', 'revista',
+                'escola particular', 'curso online', 'ead', 'ensino a distancia'
+            ],
+            
+            "🎯 Lazer & Entretenimento": [
+                'cinema', 'teatro', 'show', 'concerto', 'festival', 'boate', 'balada', 'bar', 'pub',
+                'restaurante', 'viagem', 'hotel', 'pousada', 'airbnb', 'passagem aerea', 'onibus viagem',
+                'turismo', 'passeio', 'excursao', 'parque', 'aquario', 'zoologico', 'museu', 'exposicao',
+                'livro', 'revista', 'quadrinho', 'manga', 'jogo', 'video game', 'playstation', 'xbox',
+                'nintendo', 'steam', 'netflix', 'disney+', 'hbo max', 'prime video', 'spotify', 'youtube premium',
+                'streaming', 'assistir', 'filme', 'serie', 'pipoca', 'ingresso', 'entrada', 'parque de diversoes'
+            ],
+            
+            "👗 Vestuário": [
+                'roupa', 'camisa', 'calca', 'bermuda', 'short', 'vestido', 'saia', 'blusa', 'camiseta',
+                'casaco', 'jaqueta', 'moletom', 'pijama', 'cueca', 'calcinha', 'sutia', 'meia', 'meiao',
+                'tenis', 'sapato', 'sandalia', 'chinelo', 'bolsa', 'mochila', 'carteira', 'cinto',
+                'gravata', 'lenco', 'cachecol', 'luvas', 'bone', 'chapeu', 'oculos sol', 'relogio',
+                'joia', 'brinco', 'colar', 'pulseira', 'anel', 'perfume', 'cosmetico', 'moda', 'vestuario'
+            ],
+            
+            "💻 Tecnologia": [
+                'celular', 'smartphone', 'iphone', 'samsung', 'xiaomi', 'tablet', 'ipad', 'notebook',
+                'laptop', 'computador', 'pc', 'mac', 'impressora', 'monitor', 'mouse', 'teclado',
+                'headset', 'fone', 'caixa som', 'webcam', 'microfone', 'roteador', 'modem', 'cabo',
+                'pendrive', 'hd', 'ssd', 'memoria', 'processador', 'placa mae', 'placa de video',
+                'gabinete', 'fonte', 'cooler', 'ventoinha', 'software', 'app', 'aplicativo',
+                'assinatura app', 'jogo digital', 'assinatura jogo', 'pc gamer', 'notebook gamer'
+            ],
+            
+            "📱 Serviços": [
+                'assinatura', 'plano', 'taxa bancaria', 'anuidade cartao', 'tarifa', 'juros', 'multa',
+                'conserto', 'reparo', 'instalacao', 'montagem', 'entrega', 'frete', 'sedex', 'pac',
+                'correio', 'logistica', 'guincho', 'reboque', 'pintura', 'reforma', 'construcao',
+                'encanador', 'eletricista', 'pedreiro', 'carpinteiro', 'marceneiro', 'serralheiro',
+                'vidraceiro', 'gesseiro', 'piscineiro', 'jardineiro', 'faxineiro', 'diarista',
+                'baba', 'cuidador', 'professor particular', 'personal', 'personal trainer',
+                'coach', 'consultor', 'advogado', 'contador', 'arquiteto', 'engenheiro', 'encadernacao'
+            ],
+            
+            "👨‍👩‍👧‍👦 Família": [
+                'presente', 'aniversario', 'natal', 'dia das maes', 'dia dos pais', 'dia das criancas',
+                'pascoa', 'ceia', 'almoco familiar', 'jantar familiar', 'viagem familiar', 'parque familiar',
+                'brinquedo', 'boneca', 'carrinho', 'lego', 'jogo educativo', 'material escolar filhos',
+                'creche', 'bercario', 'baba', 'escola infantil', 'curso filho', 'natacao crianca',
+                'ballet', 'judo', 'karate', 'futebol', 'esporte filho', 'medico crianca', 'pediatra',
+                'dentista crianca', 'ortodontista', 'oculos crianca', 'roupa crianca', 'calcado crianca',
+                'presente filho', 'presente esposa', 'presente marido'
+            ],
+            
+            "🐾 Pets": [
+                'pet', 'cachorro', 'gato', 'veterinario', 'vacina', 'racao', 'petisco', 'brinquedo pet',
+                'coleira', 'guia', 'caminha', 'casinha', 'areia', 'tapete higienico', 'banho', 'tosa',
+                'hotel pet', 'creche pet', 'petsitter', 'adiestramento', 'adocao', 'castracao',
+                'medicamento pet', 'suplemento pet', 'seguro pet', 'plano saude pet', 'exame pet',
+                'cirurgia pet', 'pet shop', 'loja pet', 'gatil', 'canil', 'passeador', 'animal estimacao'
+            ],
+            
+            "💄 Beleza & Cuidados": [
+                'cabelo', 'corte', 'escova', 'progressiva', 'alisamento', 'tintura', 'luzes', 'mechas',
+                'salao', 'barbearia', 'barba', 'bigode', 'corte masculino', 'manicure', 'pedicure',
+                'unha', 'esmalte', 'alongamento', 'unha gel', 'spa', 'massagem', 'relaxante',
+                'drenagem', 'estetica', 'limpeza pele', 'peeling', 'botox', 'preenchimento',
+                'cosmetico', 'maquiagem', 'base', 'batom', 'sombra', 'rimel', 'delineador',
+                'perfume', 'colonia', 'desodorante', 'sabonete', 'shampoo', 'condicionador',
+                'creme', 'hidratante', 'protetor solar', 'filtro solar', 'depilacao', 'sobrancelha'
+            ],
+            
+            "🏋️ Fitness & Esportes": [
+                'academia', 'ginastica', 'musculacao', 'crossfit', 'natacao', 'hidroginastica',
+                'pilates', 'yoga', 'alongamento', 'personal trainer', 'roupa academia',
+                'tenis corrida', 'suplemento', 'whey protein', 'creatina', 'bcaa', 'vitamina',
+                'termogenico', 'pre treino', 'pos treino', 'garrafa', 'squeeze', 'toalha',
+                'luva', 'cinta', 'faixa', 'joelheira', 'cotoveleira', 'equipamento',
+                'halter', 'barra', 'anilha', 'esteira', 'bicicleta ergometrica', 'eliptico',
+                'esporte', 'futebol', 'volei', 'basquete', 'tenis', 'squash', 'badminton',
+                'equipamento esporte', 'bola', 'raquete', 'rede', 'uniforme esporte', 'academia'
+            ],
+            
+            "📝 Outros": []  # Esta fica vazia - pega tudo que não se encaixar nas outras
+        }
+        
+        # Verificar categoria
+        for categoria, palavras in palavras_chave.items():
+            for palavra in palavras:
+                if palavra in desc_normalizada:
+                    return categoria
+        
+        return "📝 Outros"
+
 
 # =========================================================
 # 💸 CONTROLE DE GASTOS - VERSÃO COM CARDS
@@ -3509,8 +3684,6 @@ elif menu == "💸 CONTROLE DE GASTOS":
     st.markdown("### ➕ Registrar Novo Gasto")
     
     with st.container():
-        
-        
         with st.form("form_gasto_rapido", clear_on_submit=True):
             col1, col2, col3 = st.columns([2, 1, 1], gap="medium")
             
@@ -3598,7 +3771,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 
                 # Mostrar gastos de hoje - usar enumerate para obter um contador único
                 for i, (idx, row) in enumerate(df_hoje.iterrows()):
-                    mostrar_gasto_card(idx, row, df_gastos, unique_counter=i)
+                    mostrar_gasto_card(idx, row, df_gastos, unique_counter=f"hoje_{i}")
             else:
                 st.info("Nenhum gasto registrado hoje.")
         
@@ -3658,14 +3831,12 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 inicio = (st.session_state["pagina_mes_atual"] - 1) * itens_por_pagina
                 fim = inicio + itens_por_pagina
                 
-                # Mostrar gastos da página atual - resetar índices para garantir unicidade
+                # Mostrar gastos da página atual
                 df_mes_pagina = df_mes.iloc[inicio:fim].reset_index(drop=True)
                 for i, (idx, row) in enumerate(df_mes_pagina.iterrows()):
                     # Encontrar o índice original correspondente
                     idx_original = df_mes.iloc[inicio:fim].index[i]
                     mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"mes_{st.session_state['pagina_mes_atual']}_{i}")
-                
-
                 
                 # Informação sobre total de páginas
                 st.caption(f"Página {st.session_state['pagina_mes_atual']} de {total_paginas} • {len(df_mes)} gastos no total")
@@ -3808,10 +3979,6 @@ elif menu == "💸 CONTROLE DE GASTOS":
                     # Encontrar o índice original correspondente
                     idx_original = df_filtrado.iloc[inicio_total:fim_total].index[i]
                     mostrar_gasto_card(idx_original, row, df_gastos, unique_counter=f"todos_{st.session_state['pagina_total_atual']}_{i}")
-                
-
-                        
-
         
         with tab4:
             # Análise por categorias
@@ -3829,38 +3996,30 @@ elif menu == "💸 CONTROLE DE GASTOS":
             </div>
             """, unsafe_allow_html=True)
             
-            # Detectar categorias automaticamente
+            # Detectar categorias automaticamente usando a FUNÇÃO ÚNICA
             categorias = {
                 "🍔 Alimentação": 0,
                 "🚗 Transporte": 0,
                 "🛒 Compras": 0,
-                "🎯 Lazer": 0,
-                "🏠 Casa": 0,
+                "🏠 Moradia": 0,
+                "💼 Trabalho": 0,
+                "🏥 Saúde": 0,
+                "🎓 Educação": 0,
+                "🎯 Lazer & Entretenimento": 0,
+                "👗 Vestuário": 0,
+                "💻 Tecnologia": 0,
                 "📱 Serviços": 0,
+                "👨‍👩‍👧‍👦 Família": 0,
+                "🐾 Pets": 0,
+                "💄 Beleza & Cuidados": 0,
+                "🏋️ Fitness & Esportes": 0,
                 "📝 Outros": 0
             }
             
-            palavras_chave = {
-                "🍔 Alimentação": ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café', 'padaria', 'pizza', 'hamburguer', 'sorvete'],
-                "🚗 Transporte": ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro', 'estacionamento', 'pedágio'],
-                "🛒 Compras": ['mercado', 'supermercado', 'feira', 'shopping', 'roupa', 'calçado', 'eletrônico', 'livro'],
-                "🎯 Lazer": ['cinema', 'parque', 'bar', 'show', 'viagem', 'hotel', 'play', 'jogo', 'streaming'],
-                "🏠 Casa": ['aluguel', 'condomínio', 'luz', 'água', 'gás', 'internet', 'manutenção', 'reforma'],
-                "📱 Serviços": ['celular', 'assinatura', 'plano', 'conserto', 'serviço', 'taxa', 'assinatura']
-            }
-            
+            # Usar a MESMA função de categorização
             for idx, row in df_gastos.iterrows():
-                desc_lower = row['descricao'].lower()
-                categoria_encontrada = False
-                
-                for categoria, palavras in palavras_chave.items():
-                    if any(palavra in desc_lower for palavra in palavras):
-                        categorias[categoria] += row['valor']
-                        categoria_encontrada = True
-                        break
-                
-                if not categoria_encontrada:
-                    categorias["📝 Outros"] += row['valor']
+                categoria = categorizar_gasto(row['descricao'])
+                categorias[categoria] += row['valor']
             
             # Mostrar gráfico de pizza
             df_categorias = pd.DataFrame({
@@ -3922,17 +4081,10 @@ elif menu == "💸 CONTROLE DE GASTOS":
             )
             
             if categoria_selecionada:
-                # Filtrar gastos por categoria
+                # Filtrar gastos por categoria usando a MESMA função
                 gastos_categoria = []
                 for idx, row in df_gastos.iterrows():
-                    desc_lower = row['descricao'].lower()
-                    palavras = palavras_chave.get(categoria_selecionada, [])
-                    
-                    if any(palavra in desc_lower for palavra in palavras) or \
-                    (categoria_selecionada == "📝 Outros" and not any(
-                        any(p in desc_lower for p in palavras_chave[cat]) 
-                        for cat in palavras_chave.keys()
-                    )):
+                    if categorizar_gasto(row['descricao']) == categoria_selecionada:
                         gastos_categoria.append((idx, row))
                 
                 if gastos_categoria:
