@@ -1167,7 +1167,7 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
     # Se não detectou, usar "Outros"
     if not categoria_detectada:
         categoria_detectada = {
-            "nome": "📝 Outros - Variados",
+            "nome": "Outros - Variados",
             "cor": "#9ca3af",
             "emoji": "📝"
         }
