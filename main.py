@@ -4056,15 +4056,6 @@ elif menu == "🏢 FLUXOS FIXOS":
     
     with st.expander("📝 Clique para expandir o formulário", expanded=False):
         with st.container():
-            st.markdown("""
-            <div style="
-                background: #1f2937;
-                border-radius: 12px;
-                padding: 24px;
-                border: 1px solid #374151;
-                margin-bottom: 20px;
-            ">
-            """, unsafe_allow_html=True)
             
             with st.form("form_novo_fluxo", clear_on_submit=True):
                 col1, col2 = st.columns(2, gap="large")
