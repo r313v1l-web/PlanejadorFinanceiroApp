@@ -4824,18 +4824,23 @@ elif menu == "🏢 FLUXOS FIXOS":
         with col_exp2:
             # Exportar resumo
             if not df_fluxo.empty:
+                # Calcular valores ANTES de formatar (forma mais segura)
+                receita_media = total_receitas / len(receitas) if not receitas.empty else 0
+                despesa_media = total_despesas / len(despesas) if not despesas.empty else 0
+                margem_seguranca = ((total_receitas - total_despesas) / total_receitas * 100) if total_receitas > 0 else 0
+                
                 resumo = f"""📋 RESUMO DE FLUXOS FIXOS - {date.today().strftime('%d/%m/%Y')}
 
-🏢 Total de Fluxos: {len(df_fluxo)}
-💰 Receitas Fixas: R$ {total_receitas:,.2f} ({len(receitas) if not receitas.empty else 0} itens)
-📉 Despesas Fixas: R$ {total_despesas:,.2f} ({len(despesas) if not despesas.empty else 0} itens)
-📊 Saldo Líquido: R$ {saldo_fixo:,.2f} ({"Superavit" if saldo_fixo >= 0 else "Deficit"})
+        🏢 Total de Fluxos: {len(df_fluxo)}
+        💰 Receitas Fixas: R$ {total_receitas:,.2f} ({len(receitas) if not receitas.empty else 0} itens)
+        📉 Despesas Fixas: R$ {total_despesas:,.2f} ({len(despesas) if not despesas.empty else 0} itens)
+        📊 Saldo Líquido: R$ {saldo_fixo:,.2f} ({"Superavit" if saldo_fixo >= 0 else "Deficit"})
 
-💡 Análise:
-- Receita média: R$ {(total_receitas/len(receitas) if not receitas.empty else 0):,.2f}
-- Despesa média: R$ {total_despesas/len(despesas):,.2f if not despesas.empty else 0}
-- Margem de segurança: {((total_receitas - total_despesas)/total_receitas*100):.1f if total_receitas > 0 else 0}%
-"""
+        💡 Análise:
+        - Receita média: R$ {receita_media:,.2f}
+        - Despesa média: R$ {despesa_media:,.2f}
+        - Margem de segurança: {margem_seguranca:.1f}%
+        """
                 
                 st.download_button(
                     label="📄 Baixar Resumo (TXT)",
