@@ -1864,6 +1864,7 @@ if menu == "📝 LANÇAMENTOS":
                         use_container_width=True
                     )
                 
+                # No formulário de novo lançamento, na parte do submitted:
                 if submitted:
                     if not descricao.strip():
                         st.error("❌ Por favor, informe uma descrição para a transação.")
@@ -1873,9 +1874,13 @@ if menu == "📝 LANÇAMENTOS":
                         st.error("❌ O valor deve ser maior que zero.")
                         st.stop()
                     
+                    # CORREÇÃO: Garantir que a data seja salva em formato consistente
+                    # Converta para string ISO ou mantenha como datetime
+                    data_para_salvar = data
+                    
                     # Criar novo lançamento
                     nova = pd.DataFrame([{
-                        "data": data,
+                        "data": data_para_salvar,  # Já é um date object do st.date_input
                         "tipo": tipo,
                         "valor": valor,
                         "categoria": categoria,
@@ -1917,6 +1922,19 @@ if menu == "📝 LANÇAMENTOS":
     if not dados["historico"].empty:
         df_historico_total = dados["historico"].copy()
         df_historico_total.columns = df_historico_total.columns.str.lower()
+        
+        # CORREÇÃO: Converter TODAS as datas para datetime ANTES de ordenar
+        # Isso resolve o erro "TypeError: '<' not supported between instances of 'str' and 'datetime.date'"
+        if "data" in df_historico_total.columns:
+            # Converter todas as datas para datetime
+            df_historico_total["data"] = pd.to_datetime(
+                df_historico_total["data"], 
+                errors='coerce',  # Se não conseguir converter, coloca NaT (Not a Time)
+                dayfirst=True     # Assume formato DD/MM/YYYY se ambiguo
+            )
+            
+            # Remover entradas com datas inválidas (opcional)
+            df_historico_total = df_historico_total.dropna(subset=["data"])
         
         # Ordenar por data (mais recente primeiro)
         df_historico_total = df_historico_total.sort_values("data", ascending=False)
@@ -1962,14 +1980,14 @@ if menu == "📝 LANÇAMENTOS":
             hoje = date.today()
             if filtro_periodo == "Últimos 7 dias":
                 data_limite = hoje - timedelta(days=7)
-                df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["data"]) >= pd.Timestamp(data_limite)]
+                df_filtrado = df_filtrado[df_filtrado["data"] >= pd.Timestamp(data_limite)]
             elif filtro_periodo == "Últimos 30 dias":
                 data_limite = hoje - timedelta(days=30)
-                df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["data"]) >= pd.Timestamp(data_limite)]
+                df_filtrado = df_filtrado[df_filtrado["data"] >= pd.Timestamp(data_limite)]
             elif filtro_periodo == "Este mês":
-                df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["data"]).dt.strftime("%Y-%m") == mes_atual]
+                df_filtrado = df_filtrado[df_filtrado["data"].dt.strftime("%Y-%m") == mes_atual]
             elif filtro_periodo == "Este ano":
-                df_filtrado = df_filtrado[pd.to_datetime(df_filtrado["data"]).dt.year == hoje.year]
+                df_filtrado = df_filtrado[df_filtrado["data"].dt.year == hoje.year]
         
         # Contadores
         total_filtrado = len(df_filtrado)
