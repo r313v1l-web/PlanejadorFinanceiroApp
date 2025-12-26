@@ -3834,19 +3834,152 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 "🍔 Alimentação": 0,
                 "🚗 Transporte": 0,
                 "🛒 Compras": 0,
-                "🎯 Lazer": 0,
-                "🏠 Casa": 0,
+                "🏠 Moradia": 0,
+                "💼 Trabalho": 0,
+                "🏥 Saúde": 0,
+                "🎓 Educação": 0,
+                "🎯 Lazer & Entretenimento": 0,
+                "👗 Vestuário": 0,
+                "💻 Tecnologia": 0,
                 "📱 Serviços": 0,
+                "👨‍👩‍👧‍👦 Família": 0,
+                "🐾 Pets": 0,
+                "💄 Beleza & Cuidados": 0,
+                "🏋️ Fitness & Esportes": 0,
                 "📝 Outros": 0
             }
             
             palavras_chave = {
-                "🍔 Alimentação": ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café', 'padaria', 'pizza', 'hamburguer', 'sorvete'],
-                "🚗 Transporte": ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro', 'estacionamento', 'pedágio'],
-                "🛒 Compras": ['mercado', 'supermercado', 'feira', 'shopping', 'roupa', 'calçado', 'eletrônico', 'livro'],
-                "🎯 Lazer": ['cinema', 'parque', 'bar', 'show', 'viagem', 'hotel', 'play', 'jogo', 'streaming'],
-                "🏠 Casa": ['aluguel', 'condomínio', 'luz', 'água', 'gás', 'internet', 'manutenção', 'reforma'],
-                "📱 Serviços": ['celular', 'assinatura', 'plano', 'conserto', 'serviço', 'taxa', 'assinatura']
+                "🍔 Alimentação": [
+                    'comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café', 'padaria', 'pizza', 
+                    'hamburguer', 'sorvete', 'açai', 'ifood', 'rappi', 'delivery', 'mercado', 'supermercado',
+                    'feira', 'quitanda', 'mercearia', 'sacolão', 'açougue', 'peixaria', 'padaria', 'confeitaria',
+                    'bebida', 'refri', 'suco', 'cerveja', 'vinho', 'whisky', 'cafeteria', 'lanchonete',
+                    'fast food', 'buffet', 'cesta básica', 'alimento', 'comestível'
+                ],
+                
+                "🚗 Transporte": [
+                    'uber', '99', 'táxi', 'gasolina', 'combustível', 'álcool', 'diesel', 'ônibus', 'metro',
+                    'trem', 'passagem', 'bilhete', 'estacionamento', 'pedágio', 'multa', 'ipva', 'licenciamento',
+                    'seguro auto', 'manutenção', 'mecânico', 'oficina', 'pneu', 'lavagem', 'troca de óleo',
+                    'taxi', 'cabify', 'blablacar', 'uber eats', 'ifood moto', 'motoboy', 'entregador',
+                    'transporte', 'locomoção', 'combustivel', 'posto', 'abastecimento'
+                ],
+                
+                "🛒 Compras": [
+                    'shopping', 'centro comercial', 'loja', 'compra online', 'amazon', 'mercado livre', 'shopee',
+                    'aliexpress', 'magazine', 'atacado', 'varejo', 'eletrodoméstico', 'móveis', 'decoração',
+                    'utensílio', 'ferramenta', 'material', 'produto', 'artigo', 'aquisição', 'adquirir'
+                ],
+                
+                "🏠 Moradia": [
+                    'aluguel', 'condomínio', 'luz', 'energia', 'água', 'gás', 'internet', 'tv a cabo',
+                    'netflix', 'disney', 'hbo', 'spotify', 'streaming', 'telefone', 'celular', 'fixo',
+                    'iptu', 'taxa', 'reforma', 'manutenção', 'pintura', 'encanador', 'eletricista',
+                    'limpeza', 'faxina', 'diarista', 'jardineiro', 'piscina', 'lixeiro', 'zelador',
+                    'imobiliária', 'financiamento', 'prestação', 'seguro residencial', 'alarme',
+                    'portão eletrônico', 'câmera', 'vigilância', 'gás encanado', 'gás botijão'
+                ],
+                
+                "💼 Trabalho": [
+                    'material escritório', 'caneta', 'papel', 'impressora', 'cartucho', 'toner', 'notebook',
+                    'computador', 'mouse', 'teclado', 'monitor', 'cadeira', 'mesa', 'estágio', 'freelance',
+                    'profissional', 'consultoria', 'curso profissional', 'certificação', 'conferência',
+                    'palestra', 'workshop', 'livro técnico', 'revista especializada', 'assinatura revista',
+                    'co-working', 'aluguel sala', 'material trabalho', 'uniforme', 'epi'
+                ],
+                
+                "🏥 Saúde": [
+                    'médico', 'consulta', 'exame', 'laboratório', 'farmacia', 'drogaria', 'remédio', 'medicamento',
+                    'plano saúde', 'unimed', 'amil', 'sulamerica', 'hospital', 'pronto socorro', 'emergência',
+                    'dentista', 'odontólogo', 'ortodontista', 'clínica', 'psicólogo', 'psiquiatra', 'terapia',
+                    'fisioterapeuta', 'nutricionista', 'personal trainer', 'academia', 'suplemento', 'vitamina',
+                    'óculos', 'lente', 'cirurgia', 'internação', 'ambulância', 'convênio', 'seguro saúde'
+                ],
+                
+                "🎓 Educação": [
+                    'escola', 'faculdade', 'universidade', 'curso', 'inglês', 'idioma', 'espanhol', 'francês',
+                    'mensalidade', 'matrícula', 'material escolar', 'livro didático', 'caderno', 'mochila',
+                    'uniforme', 'transporte escolar', 'lanche escolar', 'excursão', 'formatura', 'diploma',
+                    'certificado', 'pós graduação', 'mba', 'mestrado', 'doutorado', 'pesquisa', 'tcc',
+                    'monografia', 'encadernação', 'xerox', 'cópia', 'impressão', 'biblioteca', 'revista'
+                ],
+                
+                "🎯 Lazer & Entretenimento": [
+                    'cinema', 'teatro', 'show', 'concerto', 'festival', 'boate', 'balada', 'bar', 'pub',
+                    'restaurante', 'viagem', 'hotel', 'pousada', 'airbnb', 'passagem aérea', 'ônibus viagem',
+                    'turismo', 'passeio', 'excursão', 'parque', 'aquário', 'zoológico', 'museu', 'exposição',
+                    'livro', 'revista', 'quadrinho', 'manga', 'jogo', 'video game', 'playstation', 'xbox',
+                    'nintendo', 'steam', 'netflix', 'disney+', 'hbo max', 'prime video', 'spotify', 'youtube premium',
+                    'streaming', 'assistir', 'filme', 'série', 'pipoca', 'ingresso', 'entrada'
+                ],
+                
+                "👗 Vestuário": [
+                    'roupa', 'camisa', 'calça', 'bermuda', 'short', 'vestido', 'saia', 'blusa', 'camiseta',
+                    'casaco', 'jaqueta', 'moletom', 'pijama', 'cueca', 'calcinha', 'sutiã', 'meia', 'meião',
+                    'tênis', 'sapato', 'sandália', 'chinelo', 'bolsa', 'mochila', 'carteira', 'cinto',
+                    'gravata', 'lenço', 'cachecol', 'luvas', 'boné', 'chapéu', 'óculos sol', 'relógio',
+                    'joia', 'brinco', 'colar', 'pulseira', 'anel', 'perfume', 'cosmético'
+                ],
+                
+                "💻 Tecnologia": [
+                    'celular', 'smartphone', 'iphone', 'samsung', 'xiaomi', 'tablet', 'ipad', 'notebook',
+                    'laptop', 'computador', 'pc', 'mac', 'impressora', 'monitor', 'mouse', 'teclado',
+                    'headset', 'fone', 'caixa som', 'webcam', 'microfone', 'roteador', 'modem', 'cabo',
+                    'pendrive', 'hd', 'ssd', 'memória', 'processador', 'placa mãe', 'placa vídeo',
+                    'gabinete', 'fonte', 'cooler', 'ventoinha', 'software', 'app', 'aplicativo',
+                    'assinatura app', 'jogo digital', 'assinatura jogo'
+                ],
+                
+                "📱 Serviços": [
+                    'assinatura', 'plano', 'taxa bancária', 'anuidade cartão', 'tarifa', 'juros', 'multa',
+                    'conserto', 'reparo', 'instalação', 'montagem', 'entrega', 'frete', 'sedex', 'pac',
+                    'correio', 'logística', 'guincho', 'reboque', 'pintura', 'reforma', 'construção',
+                    'encanador', 'eletricista', 'pedreiro', 'carpinteiro', 'marceneiro', 'serralheiro',
+                    'vidraceiro', 'gesseiro', 'piscineiro', 'jardineiro', 'faxineiro', 'diarista',
+                    'babá', 'cuidador', 'professor particular', 'personal', 'personal trainer',
+                    'coach', 'consultor', 'advogado', 'contador', 'arquiteto', 'engenheiro'
+                ],
+                
+                "👨‍👩‍👧‍👦 Família": [
+                    'presente', 'aniversário', 'natal', 'dia das mães', 'dia dos pais', 'dia das crianças',
+                    'páscoa', 'ceia', 'almoço familiar', 'jantar familiar', 'viagem familiar', 'parque familiar',
+                    'brinquedo', 'boneca', 'carrinho', 'lego', 'jogo educativo', 'material escolar filhos',
+                    'creche', 'berçário', 'babá', 'escola infantil', 'curso filho', 'natação criança',
+                    'ballet', 'judô', 'karatê', 'futebol', 'esporte filho', 'médico criança', 'pediatra',
+                    'dentista criança', 'ortodontista', 'óculos criança', 'roupa criança', 'calçado criança'
+                ],
+                
+                "🐾 Pets": [
+                    'pet', 'cachorro', 'gato', 'veterinário', 'vacina', 'ração', 'petisco', 'brinquedo pet',
+                    'coleira', 'guia', 'caminha', 'casinha', 'areia', 'tapete higiênico', 'banho', 'tosa',
+                    'hotel pet', 'creche pet', 'petsitter', 'adiestramento', 'adoção', 'castração',
+                    'medicamento pet', 'suplemento pet', 'seguro pet', 'plano saúde pet', 'exame pet',
+                    'cirurgia pet', 'pet shop', 'loja pet', 'gatil', 'canil', 'passeador'
+                ],
+                
+                "💄 Beleza & Cuidados": [
+                    'cabelo', 'corte', 'escova', 'progressiva', 'alisamento', 'tintura', 'luzes', 'mechas',
+                    'salão', 'barbearia', 'barba', 'bigode', 'corte masculino', 'manicure', 'pedicure',
+                    'unha', 'esmalte', 'alongamento', 'unha gel', 'spa', 'massagem', 'relaxante',
+                    'drenagem', 'estética', 'limpeza pele', 'peeling', 'botox', 'preenchimento',
+                    'cosmético', 'maquiagem', 'base', 'batom', 'sombra', 'rimel', 'delineador',
+                    'perfume', 'colônia', 'desodorante', 'sabonete', 'shampoo', 'condicionador',
+                    'creme', 'hidratante', 'protetor solar', 'filtro solar'
+                ],
+                
+                "🏋️ Fitness & Esportes": [
+                    'academia', 'ginástica', 'musculação', 'crossfit', 'natação', 'hidroginástica',
+                    'pilates', 'yoga', 'alongamento', 'personal trainer', 'roupa academia',
+                    'tênis corrida', 'suplemento', 'whey protein', 'creatina', 'bcaa', 'vitamina',
+                    'termogênico', 'pré treino', 'pós treino', 'garrafa', 'squeeze', 'toalha',
+                    'luva', 'cinta', 'faixa', 'joelheira', 'cotoveleira', 'equipamento',
+                    'halter', 'barra', 'anilha', 'esteira', 'bicicleta ergométrica', 'eliptico',
+                    'esporte', 'futebol', 'vôlei', 'basquete', 'tênis', 'squash', 'badminton',
+                    'equipamento esporte', 'bola', 'raquete', 'rede', 'uniforme esporte'
+                ],
+                
+                "📝 Outros": []  # Esta fica vazia - pega tudo que não se encaixar nas outras
             }
             
             for idx, row in df_gastos.iterrows():
