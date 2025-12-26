@@ -916,10 +916,6 @@ df_projecao = projetar_patrimonio(
 )
 
 
-# =========================================================
-# FUNÇÕES AUXILIARES (colocar ANTES do menu)
-# =========================================================
-
 def mostrar_gasto_card(idx, row, df_original, unique_counter):
     """Função auxiliar para mostrar um card de gasto"""
     # Usar um contador único em vez do índice do DataFrame
@@ -929,30 +925,252 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
     if isinstance(row['data'], pd.Timestamp):
         data_str = row['data'].strftime("%d/%m")
         dia_semana = row['data'].strftime("%a")
-        data_completa = row['data'].strftime("%d/%m/%Y")  # REMOVI A HORA
+        data_completa = row['data'].strftime("%d/%m/%Y")
     else:
         # Se for string, extrair apenas a parte da data
         data_str = str(row['data'])[:10] if row['data'] else ""
         dia_semana = ""
         data_completa = data_str
     
-    # Determinar categoria
+    # 🔥 SISTEMA DE CATEGORIAS AVANÇADO
+    # Definir todas as categorias com palavras-chave
+    CATEGORIAS_DETALHADAS = {
+        # 🍔 ALIMENTAÇÃO
+        "🍔 Alimentação - Restaurante": {
+            "palavras": ['restaurante', 'lanche', 'fast food', 'pizza', 'hamburguer', 'mcdonald', 'bk', 'subway'],
+            "cor": "#ef4444",
+            "emoji": "🍔"
+        },
+        "🍎 Alimentação - Supermercado": {
+            "palavras": ['mercado', 'supermercado', 'atacadão', 'atacadista', 'extra', 'carrefour', 'pão de açúcar'],
+            "cor": "#dc2626",
+            "emoji": "🛒"
+        },
+        "☕ Alimentação - Café": {
+            "palavras": ['café', 'cafeteria', 'starbucks', 'padaria', 'padoca', 'confeitaria'],
+            "cor": "#92400e",
+            "emoji": "☕"
+        },
+        "🥩 Alimentação - Açougue": {
+            "palavras": ['açougue', 'carnes', 'frango', 'peixe', 'peixaria', 'frutos do mar'],
+            "cor": "#b91c1c",
+            "emoji": "🥩"
+        },
+        "🍎 Alimentação - Hortifruti": {
+            "palavras": ['feira', 'hortifruti', 'fruta', 'legume', 'verdura', 'sacolão'],
+            "cor": "#16a34a",
+            "emoji": "🍎"
+        },
+        
+        # 🚗 TRANSPORTE
+        "🚗 Transporte - Combustível": {
+            "palavras": ['gasolina', 'combustível', 'posto', 'shell', 'ipiranga', 'etanol', 'diesel'],
+            "cor": "#3b82f6",
+            "emoji": "⛽"
+        },
+        "🚕 Transporte - Táxi/Uber": {
+            "palavras": ['uber', 'táxi', '99', 'cabify', 'corrida', 'transporte'],
+            "cor": "#1d4ed8",
+            "emoji": "🚕"
+        },
+        "🚌 Transporte - Público": {
+            "palavras": ['ônibus', 'metro', 'trem', 'bilhete', 'passagem', 'recarga', 'cartão transporte'],
+            "cor": "#1e40af",
+            "emoji": "🚌"
+        },
+        "🅿️ Transporte - Estacionamento": {
+            "palavras": ['estacionamento', 'parking', 'garagem', 'zona azul'],
+            "cor": "#0ea5e9",
+            "emoji": "🅿️"
+        },
+        "🛠️ Transporte - Manutenção": {
+            "palavras": ['oficina', 'mecânico', 'troca de óleo', 'pneu', 'lavagem', 'manutenção carro'],
+            "cor": "#6366f1",
+            "emoji": "🛠️"
+        },
+        
+        # 🏠 CASA
+        "🏠 Casa - Aluguel": {
+            "palavras": ['aluguel', 'condomínio', 'iptu', 'taxa condominial'],
+            "cor": "#8b5cf6",
+            "emoji": "🏠"
+        },
+        "💡 Casa - Energia": {
+            "palavras": ['luz', 'energia', 'conta de luz', 'energisa', 'enel', 'light'],
+            "cor": "#f59e0b",
+            "emoji": "💡"
+        },
+        "💧 Casa - Água": {
+            "palavras": ['água', 'conta de água', 'sabesp', 'cedae', 'caesb'],
+            "cor": "#0ea5e9",
+            "emoji": "💧"
+        },
+        "🔥 Casa - Gás": {
+            "palavras": ['gás', 'botijão', 'gás natural', 'conta de gás'],
+            "cor": "#ef4444",
+            "emoji": "🔥"
+        },
+        "📡 Casa - Internet/TV": {
+            "palavras": ['internet', 'net', 'claro', 'vivo', 'oi', 'sky', 'tv a cabo'],
+            "cor": "#8b5cf6",
+            "emoji": "📡"
+        },
+        
+        # 🛒 COMPRAS
+        "🛍️ Compras - Roupas": {
+            "palavras": ['roupa', 'calçado', 'sapato', 'tenis', 'camiseta', 'loja de roupa', 'renner', 'c&a'],
+            "cor": "#ec4899",
+            "emoji": "👕"
+        },
+        "📱 Compras - Eletrônicos": {
+            "palavras": ['celular', 'notebook', 'tablet', 'tv', 'eletrônico', 'informática'],
+            "cor": "#6b7280",
+            "emoji": "📱"
+        },
+        "💄 Compras - Beleza": {
+            "palavras": ['farmácia', 'drogaria', 'perfume', 'maquiagem', 'cosmético', 'beleza'],
+            "cor": "#f472b6",
+            "emoji": "💄"
+        },
+        "📚 Compras - Livros": {
+            "palavras": ['livro', 'revista', 'jornal', 'leitura', 'livraria', 'saraiva', 'cultura'],
+            "cor": "#84cc16",
+            "emoji": "📚"
+        },
+        "🎁 Compras - Presentes": {
+            "palavras": ['presente', 'aniversário', 'natal', 'dia das mães', 'dia dos pais'],
+            "cor": "#a855f7",
+            "emoji": "🎁"
+        },
+        
+        # 🎯 LAZER
+        "🎬 Lazer - Cinema": {
+            "palavras": ['cinema', 'filme', 'ingresso', 'netflix', 'prime video', 'disney+'],
+            "cor": "#a78bfa",
+            "emoji": "🎬"
+        },
+        "🍻 Lazer - Bar": {
+            "palavras": ['bar', 'boteco', 'cerveja', 'drink', 'happy hour', 'balada'],
+            "cor": "#f59e0b",
+            "emoji": "🍻"
+        },
+        "✈️ Lazer - Viagem": {
+            "palavras": ['viagem', 'hotel', 'passagem', 'turismo', 'resort', 'pousada'],
+            "cor": "#3b82f6",
+            "emoji": "✈️"
+        },
+        "🎮 Lazer - Games": {
+            "palavras": ['jogo', 'game', 'playstation', 'xbox', 'steam', 'nintendo'],
+            "cor": "#8b5cf6",
+            "emoji": "🎮"
+        },
+        "🏋️ Lazer - Esportes": {
+            "palavras": ['academia', 'ginásio', 'esporte', 'natação', 'futebol', 'personal trainer'],
+            "cor": "#10b981",
+            "emoji": "🏋️"
+        },
+        
+        # 💼 TRABALHO
+        "💼 Trabalho - Material": {
+            "palavras": ['material', 'escritório', 'caneta', 'papel', 'impressão', 'toner'],
+            "cor": "#6b7280",
+            "emoji": "📎"
+        },
+        "💻 Trabalho - Software": {
+            "palavras": ['software', 'assinatura', 'licença', 'app', 'aplicativo', 'programa'],
+            "cor": "#3b82f6",
+            "emoji": "💻"
+        },
+        "📞 Trabalho - Telefone": {
+            "palavras": ['telefone', 'celular empresa', 'recarga', 'plano empresarial'],
+            "cor": "#10b981",
+            "emoji": "📞"
+        },
+        
+        # 🧑‍⚕️ SAÚDE
+        "🏥 Saúde - Consulta": {
+            "palavras": ['consulta', 'médico', 'dentista', 'psicólogo', 'terapia', 'clínica'],
+            "cor": "#10b981",
+            "emoji": "🏥"
+        },
+        "💊 Saúde - Medicamento": {
+            "palavras": ['remédio', 'medicamento', 'farmacia', 'drogaria'],
+            "cor": "#ef4444",
+            "emoji": "💊"
+        },
+        "❤️ Saúde - Plano": {
+            "palavras": ['plano de saúde', 'unimed', 'amil', 'sulamerica'],
+            "cor": "#dc2626",
+            "emoji": "❤️"
+        },
+        
+        # 🧾 FINANÇAS
+        "🏦 Finanças - Taxa Bancária": {
+            "palavras": ['taxa', 'tarifa', 'anuidade', 'banco', 'cartão', 'empréstimo'],
+            "cor": "#059669",
+            "emoji": "🏦"
+        },
+        "📊 Finanças - Investimento": {
+            "palavras": ['investimento', 'ações', 'fii', 'tesouro', 'cdb', 'bolsa'],
+            "cor": "#84cc16",
+            "emoji": "📈"
+        },
+        "🧾 Finanças - Seguro": {
+            "palavras": ['seguro', 'apólice', 'previdência', 'resgate'],
+            "cor": "#3b82f6",
+            "emoji": "🛡️"
+        },
+        
+        # 👨‍👩‍👧‍👦 FAMÍLIA
+        "👶 Família - Filhos": {
+            "palavras": ['creche', 'escola', 'material escolar', 'uniforme', 'curso', 'aula'],
+            "cor": "#f472b6",
+            "emoji": "👶"
+        },
+        "🐕 Família - Pets": {
+            "palavras": ['pet', 'veterinário', 'ração', 'gato', 'cachorro', 'animal'],
+            "cor": "#f59e0b",
+            "emoji": "🐕"
+        },
+        "🎉 Família - Eventos": {
+            "palavras": ['festa', 'casamento', 'formatura', 'comemoração', 'confraternização'],
+            "cor": "#8b5cf6",
+            "emoji": "🎉"
+        },
+        
+        # 💰 OUTROS
+        "🎫 Outros - Assinaturas": {
+            "palavras": ['assinatura', 'streaming', 'spotify', 'youtube premium'],
+            "cor": "#6b7280",
+            "emoji": "🎫"
+        },
+        "📝 Outros - Variados": {
+            "palavras": [],
+            "cor": "#9ca3af",
+            "emoji": "📝"
+        }
+    }
+    
+    # Determinar categoria automaticamente
     desc_lower = row['descricao'].lower()
-    if any(word in desc_lower for word in ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café']):
-        categoria = "🍔 Alimentação"
-        cor_categoria = "#f87171"
-    elif any(word in desc_lower for word in ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro']):
-        categoria = "🚗 Transporte"
-        cor_categoria = "#60a5fa"
-    elif any(word in desc_lower for word in ['mercado', 'supermercado', 'feira', 'padaria']):
-        categoria = "🛒 Compras"
-        cor_categoria = "#34d399"
-    elif any(word in desc_lower for word in ['cinema', 'shopping', 'parque', 'lazer', 'bar']):
-        categoria = "🎯 Lazer"
-        cor_categoria = "#a78bfa"
-    else:
-        categoria = "📝 Outros"
-        cor_categoria = "#9ca3af"
+    categoria_detectada = None
+    
+    for cat_nome, cat_info in CATEGORIAS_DETALHADAS.items():
+        if any(palavra in desc_lower for palavra in cat_info["palavras"]):
+            categoria_detectada = {
+                "nome": cat_nome,
+                "cor": cat_info["cor"],
+                "emoji": cat_info["emoji"]
+            }
+            break
+    
+    # Se não detectou, usar "Outros"
+    if not categoria_detectada:
+        categoria_detectada = {
+            "nome": "📝 Outros - Variados",
+            "cor": "#9ca3af",
+            "emoji": "📝"
+        }
     
     # Card para cada gasto
     with st.container():
@@ -962,22 +1180,22 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
             border-radius: 10px;
             padding: 16px;
             margin-bottom: 12px;
-            border-left: 4px solid {cor_categoria};
+            border-left: 4px solid {categoria_detectada['cor']};
             border: 1px solid #374151;
         ">
             <div style="display: flex; justify-content: space-between; align-items: start;">
                 <div style="flex: 1;">
                     <div style="display: flex; align-items: center; margin-bottom: 8px;">
                         <div style="
-                            background: {cor_categoria}20;
-                            color: {cor_categoria};
+                            background: {categoria_detectada['cor']}20;
+                            color: {categoria_detectada['cor']};
                             padding: 4px 12px;
                             border-radius: 20px;
                             font-size: 12px;
                             font-weight: bold;
                             margin-right: 12px;
                         ">
-                            {categoria}
+                            {categoria_detectada['emoji']} {categoria_detectada['nome'].split(' - ')[0]}
                         </div>
                         <div style="
                             background: #374151;
@@ -993,8 +1211,11 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
                     <div style="font-size: 16px; font-weight: bold; color: #f9fafb; margin-bottom: 4px;">
                         {row['descricao']}
                     </div>
-                    <div style="font-size: 12px; color: #9ca3af;">
-                        {data_completa}
+                    <div style="font-size: 12px; color: #9ca3af; display: flex; align-items: center; gap: 8px;">
+                        <span>{data_completa}</span>
+                        <span style="color: {categoria_detectada['cor']};">
+                            • {categoria_detectada['nome'].split(' - ')[1] if ' - ' in categoria_detectada['nome'] else categoria_detectada['nome']}
+                        </span>
                     </div>
                 </div>
                 <div style="text-align: right;">
@@ -1014,14 +1235,13 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
         </div>
         """, unsafe_allow_html=True)
         
-        # Confirmação de exclusão - usar chave única
+        # Confirmação de exclusão (mantenha o mesmo código)
         if st.session_state.get(f"confirm_delete_{unique_key}", False):
             with st.container():
                 st.warning(f"Excluir '{row['descricao'][:30]}...'?")
                 col_conf1, col_conf2 = st.columns(2)
                 with col_conf1:
                     if st.button("✅ Sim", key=f"confirm_yes_{unique_key}", use_container_width=True):
-                        # CORREÇÃO: Comparar datas corretamente (apenas a parte da data)
                         row_data = row['data']
                         
                         if isinstance(row_data, pd.Timestamp):
@@ -1031,7 +1251,6 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
                         else:
                             row_data_date = row_data
                         
-                        # Encontrar o índice real no DataFrame original
                         for df_idx, df_row in df_original.iterrows():
                             df_row_data = df_row['data']
                             
@@ -1042,12 +1261,10 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
                             else:
                                 df_row_data_date = df_row_data
                             
-                            # Comparar datas, descrição e valor
                             if (df_row_data_date == row_data_date and 
                                 df_row['descricao'] == row['descricao'] and 
                                 df_row['valor'] == row['valor']):
                                 
-                                # Encontrou o registro, excluir
                                 df_novo = df_original.drop(df_idx).reset_index(drop=True)
                                 dados["controle_gastos"] = df_novo
                                 st.session_state["dados"] = dados
@@ -3813,8 +4030,10 @@ elif menu == "💸 CONTROLE DE GASTOS":
                         
 
         
+        # Substitua TODO o conteúdo da aba 4 (🏷️ Categorias) por:
+
         with tab4:
-            # Análise por categorias
+            # Análise por categorias AVANÇADA
             st.markdown("""
             <div style="
                 background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
@@ -3824,124 +4043,495 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 margin-bottom: 20px;
                 border: 1px solid #a78bfa;
             ">
-                <div style="font-size: 16px; font-weight: bold;">🏷️ Análise por Categorias</div>
-                <div style="font-size: 14px;">Distribuição dos seus gastos</div>
+                <div style="font-size: 16px; font-weight: bold;">🏷️ Análise Detalhada por Categorias</div>
+                <div style="font-size: 14px;">Visualize como seu dinheiro está sendo distribuído</div>
             </div>
             """, unsafe_allow_html=True)
             
+            # Sistema de categorias hierárquico
+            CATEGORIAS_HIERARQUICAS = {
+                "🍔 Alimentação": {
+                    "subcategorias": {
+                        "🍔 Alimentação - Restaurante": "#ef4444",
+                        "🍎 Alimentação - Supermercado": "#dc2626",
+                        "☕ Alimentação - Café": "#92400e",
+                        "🥩 Alimentação - Açougue": "#b91c1c",
+                        "🍎 Alimentação - Hortifruti": "#16a34a"
+                    },
+                    "cor": "#ef4444"
+                },
+                "🚗 Transporte": {
+                    "subcategorias": {
+                        "🚗 Transporte - Combustível": "#3b82f6",
+                        "🚕 Transporte - Táxi/Uber": "#1d4ed8",
+                        "🚌 Transporte - Público": "#1e40af",
+                        "🅿️ Transporte - Estacionamento": "#0ea5e9",
+                        "🛠️ Transporte - Manutenção": "#6366f1"
+                    },
+                    "cor": "#3b82f6"
+                },
+                "🏠 Casa": {
+                    "subcategorias": {
+                        "🏠 Casa - Aluguel": "#8b5cf6",
+                        "💡 Casa - Energia": "#f59e0b",
+                        "💧 Casa - Água": "#0ea5e9",
+                        "🔥 Casa - Gás": "#ef4444",
+                        "📡 Casa - Internet/TV": "#8b5cf6"
+                    },
+                    "cor": "#8b5cf6"
+                },
+                "🛒 Compras": {
+                    "subcategorias": {
+                        "🛍️ Compras - Roupas": "#ec4899",
+                        "📱 Compras - Eletrônicos": "#6b7280",
+                        "💄 Compras - Beleza": "#f472b6",
+                        "📚 Compras - Livros": "#84cc16",
+                        "🎁 Compras - Presentes": "#a855f7"
+                    },
+                    "cor": "#ec4899"
+                },
+                "🎯 Lazer": {
+                    "subcategorias": {
+                        "🎬 Lazer - Cinema": "#a78bfa",
+                        "🍻 Lazer - Bar": "#f59e0b",
+                        "✈️ Lazer - Viagem": "#3b82f6",
+                        "🎮 Lazer - Games": "#8b5cf6",
+                        "🏋️ Lazer - Esportes": "#10b981"
+                    },
+                    "cor": "#a78bfa"
+                },
+                "🧑‍⚕️ Saúde": {
+                    "subcategorias": {
+                        "🏥 Saúde - Consulta": "#10b981",
+                        "💊 Saúde - Medicamento": "#ef4444",
+                        "❤️ Saúde - Plano": "#dc2626"
+                    },
+                    "cor": "#10b981"
+                },
+                "💼 Trabalho": {
+                    "subcategorias": {
+                        "💼 Trabalho - Material": "#6b7280",
+                        "💻 Trabalho - Software": "#3b82f6",
+                        "📞 Trabalho - Telefone": "#10b981"
+                    },
+                    "cor": "#6b7280"
+                },
+                "🧾 Finanças": {
+                    "subcategorias": {
+                        "🏦 Finanças - Taxa Bancária": "#059669",
+                        "📊 Finanças - Investimento": "#84cc16",
+                        "🧾 Finanças - Seguro": "#3b82f6"
+                    },
+                    "cor": "#059669"
+                },
+                "👨‍👩‍👧‍👦 Família": {
+                    "subcategorias": {
+                        "👶 Família - Filhos": "#f472b6",
+                        "🐕 Família - Pets": "#f59e0b",
+                        "🎉 Família - Eventos": "#8b5cf6"
+                    },
+                    "cor": "#f472b6"
+                },
+                "💰 Outros": {
+                    "subcategorias": {
+                        "🎫 Outros - Assinaturas": "#6b7280",
+                        "📝 Outros - Variados": "#9ca3af"
+                    },
+                    "cor": "#6b7280"
+                }
+            }
+            
             # Detectar categorias automaticamente
-            categorias = {
-                "🍔 Alimentação": 0,
-                "🚗 Transporte": 0,
-                "🛒 Compras": 0,
-                "🎯 Lazer": 0,
-                "🏠 Casa": 0,
-                "📱 Serviços": 0,
-                "📝 Outros": 0
+            categorias_detalhadas = {}
+            palavras_chave_detalhadas = {
+                "🍔 Alimentação - Restaurante": ['restaurante', 'lanche', 'fast food', 'pizza', 'hamburguer'],
+                "🍎 Alimentação - Supermercado": ['mercado', 'supermercado', 'atacadão'],
+                "☕ Alimentação - Café": ['café', 'cafeteria', 'starbucks', 'padaria'],
+                "🥩 Alimentação - Açougue": ['açougue', 'carnes', 'frango', 'peixe'],
+                "🍎 Alimentação - Hortifruti": ['feira', 'hortifruti', 'fruta', 'legume'],
+                "🚗 Transporte - Combustível": ['gasolina', 'combustível', 'posto'],
+                "🚕 Transporte - Táxi/Uber": ['uber', 'táxi', '99', 'cabify'],
+                "🚌 Transporte - Público": ['ônibus', 'metro', 'trem', 'bilhete'],
+                "🅿️ Transporte - Estacionamento": ['estacionamento', 'parking', 'garagem'],
+                "🛠️ Transporte - Manutenção": ['oficina', 'mecânico', 'troca de óleo'],
+                "🏠 Casa - Aluguel": ['aluguel', 'condomínio', 'iptu'],
+                "💡 Casa - Energia": ['luz', 'energia', 'conta de luz'],
+                "💧 Casa - Água": ['água', 'conta de água', 'sabesp'],
+                "🔥 Casa - Gás": ['gás', 'botijão', 'gás natural'],
+                "📡 Casa - Internet/TV": ['internet', 'net', 'claro', 'vivo'],
+                "🛍️ Compras - Roupas": ['roupa', 'calçado', 'sapato', 'tenis'],
+                "📱 Compras - Eletrônicos": ['celular', 'notebook', 'tablet', 'tv'],
+                "💄 Compras - Beleza": ['farmácia', 'drogaria', 'perfume', 'maquiagem'],
+                "📚 Compras - Livros": ['livro', 'revista', 'jornal', 'leitura'],
+                "🎁 Compras - Presentes": ['presente', 'aniversário', 'natal'],
+                "🎬 Lazer - Cinema": ['cinema', 'filme', 'ingresso', 'netflix'],
+                "🍻 Lazer - Bar": ['bar', 'boteco', 'cerveja', 'drink'],
+                "✈️ Lazer - Viagem": ['viagem', 'hotel', 'passagem', 'turismo'],
+                "🎮 Lazer - Games": ['jogo', 'game', 'playstation', 'xbox'],
+                "🏋️ Lazer - Esportes": ['academia', 'ginásio', 'esporte', 'natação'],
+                "💼 Trabalho - Material": ['material', 'escritório', 'caneta', 'papel'],
+                "💻 Trabalho - Software": ['software', 'assinatura', 'licença', 'app'],
+                "📞 Trabalho - Telefone": ['telefone', 'celular empresa', 'recarga'],
+                "🏥 Saúde - Consulta": ['consulta', 'médico', 'dentista', 'psicólogo'],
+                "💊 Saúde - Medicamento": ['remédio', 'medicamento', 'farmacia'],
+                "❤️ Saúde - Plano": ['plano de saúde', 'unimed', 'amil'],
+                "🏦 Finanças - Taxa Bancária": ['taxa', 'tarifa', 'anuidade', 'banco'],
+                "📊 Finanças - Investimento": ['investimento', 'ações', 'fii', 'tesouro'],
+                "🧾 Finanças - Seguro": ['seguro', 'apólice', 'previdência'],
+                "👶 Família - Filhos": ['creche', 'escola', 'material escolar', 'uniforme'],
+                "🐕 Família - Pets": ['pet', 'veterinário', 'ração', 'gato'],
+                "🎉 Família - Eventos": ['festa', 'casamento', 'formatura', 'comemoração'],
+                "🎫 Outros - Assinaturas": ['assinatura', 'streaming', 'spotify', 'youtube'],
+                "📝 Outros - Variados": []
             }
             
-            palavras_chave = {
-                "🍔 Alimentação": ['comida', 'restaurante', 'lanche', 'almoço', 'jantar', 'café', 'padaria', 'pizza', 'hamburguer', 'sorvete'],
-                "🚗 Transporte": ['uber', 'táxi', 'gasolina', 'combustível', 'ônibus', 'metro', 'estacionamento', 'pedágio'],
-                "🛒 Compras": ['mercado', 'supermercado', 'feira', 'shopping', 'roupa', 'calçado', 'eletrônico', 'livro'],
-                "🎯 Lazer": ['cinema', 'parque', 'bar', 'show', 'viagem', 'hotel', 'play', 'jogo', 'streaming'],
-                "🏠 Casa": ['aluguel', 'condomínio', 'luz', 'água', 'gás', 'internet', 'manutenção', 'reforma'],
-                "📱 Serviços": ['celular', 'assinatura', 'plano', 'conserto', 'serviço', 'taxa', 'assinatura']
-            }
-            
+            # Processar todos os gastos
             for idx, row in df_gastos.iterrows():
                 desc_lower = row['descricao'].lower()
                 categoria_encontrada = False
                 
-                for categoria, palavras in palavras_chave.items():
+                for categoria, palavras in palavras_chave_detalhadas.items():
                     if any(palavra in desc_lower for palavra in palavras):
-                        categorias[categoria] += row['valor']
+                        if categoria not in categorias_detalhadas:
+                            categorias_detalhadas[categoria] = 0
+                        categorias_detalhadas[categoria] += row['valor']
                         categoria_encontrada = True
                         break
                 
                 if not categoria_encontrada:
-                    categorias["📝 Outros"] += row['valor']
+                    if "📝 Outros - Variados" not in categorias_detalhadas:
+                        categorias_detalhadas["📝 Outros - Variados"] = 0
+                    categorias_detalhadas["📝 Outros - Variados"] += row['valor']
             
-            # Mostrar gráfico de pizza
-            df_categorias = pd.DataFrame({
-                'Categoria': list(categorias.keys()),
-                'Valor': list(categorias.values())
-            })
-            df_categorias = df_categorias[df_categorias['Valor'] > 0]
+            # Criar abas para navegação entre categorias principais
+            categorias_principais = list(CATEGORIAS_HIERARQUICAS.keys())
             
-            if not df_categorias.empty:
-                col_graf1, col_graf2 = st.columns([2, 1])
+            if categorias_detalhadas:
+                # Seção 1: Visão Geral
+                st.markdown("#### 📊 Visão Geral por Categoria Principal")
                 
-                with col_graf1:
-                    fig = px.pie(
-                        df_categorias,
+                # Agrupar por categoria principal
+                totais_principais = {}
+                for cat_detalhada, valor in categorias_detalhadas.items():
+                    # Encontrar categoria principal
+                    for cat_principal, info in CATEGORIAS_HIERARQUICAS.items():
+                        if cat_detalhada in info["subcategorias"]:
+                            if cat_principal not in totais_principais:
+                                totais_principais[cat_principal] = 0
+                            totais_principais[cat_principal] += valor
+                            break
+                
+                # Gráfico de pizza por categoria principal
+                if totais_principais:
+                    df_principais = pd.DataFrame({
+                        'Categoria': list(totais_principais.keys()),
+                        'Valor': list(totais_principais.values())
+                    })
+                    
+                    # Adicionar cores
+                    df_principais['Cor'] = df_principais['Categoria'].apply(
+                        lambda x: CATEGORIAS_HIERARQUICAS[x]["cor"]
+                    )
+                    
+                    fig1 = px.pie(
+                        df_principais,
                         values='Valor',
                         names='Categoria',
-                        title='Distribuição por Categoria',
-                        color_discrete_sequence=px.colors.qualitative.Set3
+                        title='Distribuição por Categoria Principal',
+                        color='Cor',
+                        color_discrete_map={row['Cor']: row['Cor'] for _, row in df_principais.iterrows()}
                     )
-                    fig.update_layout(
-                        height=400,
+                    fig1.update_traces(
+                        textposition='inside',
+                        textinfo='percent+label',
+                        hovertemplate="<b>%{label}</b><br>R$ %{value:,.2f}<br>%{percent}<extra></extra>"
+                    )
+                    fig1.update_layout(
+                        height=500,
                         showlegend=True,
                         plot_bgcolor='#0e1117',
                         paper_bgcolor='#0e1117',
-                        font=dict(color='#e5e7eb')
+                        font=dict(color='#e5e7eb'),
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.2,
+                            xanchor="center",
+                            x=0.5
+                        )
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig1, use_container_width=True)
                 
-                with col_graf2:
-                    # Tabela de resumo
-                    st.markdown("**📊 Resumo por Categoria**")
+                # Seção 2: Navegação Detalhada
+                st.markdown("#### 🔍 Análise Detalhada por Subcategoria")
+                
+                # Seletor de categoria principal
+                categoria_selecionada = st.selectbox(
+                    "Selecione uma categoria para detalhar:",
+                    categorias_principais,
+                    key="categoria_principal"
+                )
+                
+                if categoria_selecionada:
+                    # Filtrar subcategorias da categoria selecionada
+                    subcategorias_info = CATEGORIAS_HIERARQUICAS[categoria_selecionada]["subcategorias"]
+                    cor_principal = CATEGORIAS_HIERARQUICAS[categoria_selecionada]["cor"]
                     
-                    for categoria, valor in categorias.items():
-                        if valor > 0:
-                            percentual = (valor / df_gastos['valor'].sum()) * 100
+                    # Card da categoria principal
+                    st.markdown(f"""
+                    <div style="
+                        background: {cor_principal}20;
+                        border: 2px solid {cor_principal};
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span style="font-size: 32px;">{categoria_selecionada.split(' ')[0]}</span>
+                            <div>
+                                <div style="font-size: 18px; font-weight: bold; color: {cor_principal};">
+                                    {categoria_selecionada}
+                                </div>
+                                <div style="color: #d1d5db;">
+                                    {len(subcategorias_info)} subcategorias disponíveis
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Calcular totais por subcategoria
+                    subcategorias_totais = {}
+                    for subcat in subcategorias_info.keys():
+                        if subcat in categorias_detalhadas:
+                            subcategorias_totais[subcat] = categorias_detalhadas[subcat]
+                    
+                    if subcategorias_totais:
+                        # Gráfico de barras por subcategoria
+                        df_subcategorias = pd.DataFrame({
+                            'Subcategoria': list(subcategorias_totais.keys()),
+                            'Valor': list(subcategorias_totais.values())
+                        })
+                        
+                        # Extrair nome curto para exibição
+                        df_subcategorias['Nome Curto'] = df_subcategorias['Subcategoria'].apply(
+                            lambda x: x.split(' - ')[1] if ' - ' in x else x
+                        )
+                        
+                        fig2 = px.bar(
+                            df_subcategorias.sort_values('Valor', ascending=False),
+                            x='Nome Curto',
+                            y='Valor',
+                            color='Subcategoria',
+                            color_discrete_map=subcategorias_info,
+                            title=f'Distribuição em {categoria_selecionada}',
+                            text='Valor'
+                        )
+                        fig2.update_traces(
+                            texttemplate='R$ %{text:,.0f}',
+                            textposition='outside',
+                            marker=dict(
+                                line=dict(width=2, color='#1f2937')
+                            )
+                        )
+                        fig2.update_layout(
+                            height=400,
+                            showlegend=False,
+                            plot_bgcolor='#0e1117',
+                            paper_bgcolor='#0e1117',
+                            font=dict(color='#e5e7eb'),
+                            xaxis=dict(
+                                title="",
+                                tickfont=dict(size=12),
+                                tickangle=45
+                            ),
+                            yaxis=dict(
+                                title="Valor (R$)",
+                                tickfont=dict(size=12),
+                                gridcolor="#374151"
+                            )
+                        )
+                        st.plotly_chart(fig2, use_container_width=True)
+                        
+                        # Tabela detalhada
+                        st.markdown("##### 📋 Detalhamento por Subcategoria")
+                        
+                        for subcat, valor in sorted(subcategorias_totais.items(), key=lambda x: x[1], reverse=True):
+                            subcat_nome = subcat.split(' - ')[1] if ' - ' in subcat else subcat
+                            percentual = (valor / sum(subcategorias_totais.values())) * 100
+                            cor_sub = subcategorias_info[subcat]
+                            
                             st.markdown(f"""
                             <div style="
                                 background: #1f2937;
-                                border-radius: 8px;
-                                padding: 10px;
-                                margin-bottom: 8px;
-                                border-left: 4px solid #3b82f6;
+                                border-radius: 10px;
+                                padding: 16px;
+                                margin-bottom: 10px;
+                                border-left: 4px solid {cor_sub};
                             ">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="font-weight: bold;">{categoria}</span>
-                                    <span style="color: #f87171;">R$ {valor:,.2f}</span>
-                                </div>
-                                <div style="font-size: 12px; color: #9ca3af;">
-                                    {percentual:.1f}% do total
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="
+                                            background: {cor_sub}20;
+                                            width: 40px;
+                                            height: 40px;
+                                            border-radius: 8px;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                        ">
+                                            <span style="font-size: 20px;">{subcat[0]}</span>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: bold; color: #f9fafb;">{subcat_nome}</div>
+                                            <div style="font-size: 12px; color: #9ca3af;">{subcat}</div>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 18px; font-weight: bold; color: #f87171;">
+                                            R$ {valor:,.2f}
+                                        </div>
+                                        <div style="font-size: 12px; color: #9ca3af;">
+                                            {percentual:.1f}% da categoria
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
-            
-            # Gastos por categoria específica
-            categoria_selecionada = st.selectbox(
-                "Ver gastos por categoria",
-                [cat for cat, valor in categorias.items() if valor > 0],
-                key="categoria_selecionada"
-            )
-            
-            if categoria_selecionada:
-                # Filtrar gastos por categoria
-                gastos_categoria = []
-                for idx, row in df_gastos.iterrows():
-                    desc_lower = row['descricao'].lower()
-                    palavras = palavras_chave.get(categoria_selecionada, [])
-                    
-                    if any(palavra in desc_lower for palavra in palavras) or \
-                    (categoria_selecionada == "📝 Outros" and not any(
-                        any(p in desc_lower for p in palavras_chave[cat]) 
-                        for cat in palavras_chave.keys()
-                    )):
-                        gastos_categoria.append((idx, row))
+                        
+                        # Gastos específicos da subcategoria selecionada
+                        subcategoria_selecionada = st.selectbox(
+                            "Ver gastos específicos de:",
+                            [f"{subcat} (R$ {valor:,.2f})" for subcat, valor in subcategorias_totais.items()],
+                            key=f"subcat_{categoria_selecionada}"
+                        )
+                        
+                        if subcategoria_selecionada:
+                            # Extrair nome da subcategoria
+                            subcat_nome = subcategoria_selecionada.split(' (R$')[0]
+                            
+                            # Filtrar gastos por subcategoria
+                            gastos_subcategoria = []
+                            for idx, row in df_gastos.iterrows():
+                                desc_lower = row['descricao'].lower()
+                                palavras = palavras_chave_detalhadas.get(subcat_nome, [])
+                                
+                                if any(palavra in desc_lower for palavra in palavras) or \
+                                (subcat_nome == "📝 Outros - Variados" and not any(
+                                    any(p in desc_lower for p in palavras_chave_detalhadas[cat]) 
+                                    for cat in palavras_chave_detalhadas.keys()
+                                )):
+                                    gastos_subcategoria.append((idx, row))
+                            
+                            if gastos_subcategoria:
+                                st.markdown(f"### 💸 Gastos em {subcat_nome}")
+                                for i, (idx, row) in enumerate(gastos_subcategoria):
+                                    mostrar_gasto_card(idx, row, df_gastos, unique_counter=f"subcat_{subcat_nome}_{i}")
+                            else:
+                                st.info(f"Nenhum gasto encontrado em {subcat_nome}")
+                    else:
+                        st.info(f"Nenhum gasto registrado em {categoria_selecionada}")
                 
-                if gastos_categoria:
-                    st.markdown(f"### Gastos em {categoria_selecionada}")
-                    for i, (idx, row) in enumerate(gastos_categoria):
-                        mostrar_gasto_card(idx, row, df_gastos, unique_counter=f"cat_{categoria_selecionada}_{i}")
-                else:
-                    st.info(f"Nenhum gasto encontrado na categoria {categoria_selecionada}")
-
+                # Seção 3: Insights e Recomendações
+                st.markdown("#### 💡 Insights e Recomendações")
+                
+                # Encontrar categoria com maior gasto
+                if categorias_detalhadas:
+                    maior_categoria = max(categorias_detalhadas.items(), key=lambda x: x[1])
+                    categoria_maior = maior_categoria[0]
+                    valor_maior = maior_categoria[1]
+                    percentual_maior = (valor_maior / gasto_total * 100) if gasto_total > 0 else 0
+                    
+                    # Encontrar categoria principal do maior gasto
+                    categoria_principal_maior = ""
+                    for cat_principal, info in CATEGORIAS_HIERARQUICAS.items():
+                        if categoria_maior in info["subcategorias"]:
+                            categoria_principal_maior = cat_principal
+                            break
+                    
+                    col_insight1, col_insight2 = st.columns(2)
+                    
+                    with col_insight1:
+                        st.markdown(f"""
+                        <div style="
+                            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                            border-radius: 12px;
+                            padding: 20px;
+                            color: white;
+                            height: 100%;
+                        ">
+                            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 12px;">📌 Maior Gasto</div>
+                            <div style="font-size: 20px; font-weight: bold; color: #f87171; margin-bottom: 8px;">
+                                {categoria_maior.split(' - ')[1] if ' - ' in categoria_maior else categoria_maior}
+                            </div>
+                            <div style="font-size: 24px; font-weight: bold;">R$ {valor_maior:,.2f}</div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                                {percentual_maior:.1f}% do total • {categoria_principal_maior}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col_insight2:
+                        # Recomendação baseada no maior gasto
+                        recomendacao = ""
+                        if percentual_maior > 30:
+                            recomendacao = "Considere reduzir gastos nesta categoria"
+                        elif percentual_maior > 20:
+                            recomendacao = "Monitorar gastos nesta área"
+                        else:
+                            recomendacao = "Gastos equilibrados nesta categoria"
+                        
+                        st.markdown(f"""
+                        <div style="
+                            background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+                            border-radius: 12px;
+                            padding: 20px;
+                            color: white;
+                            height: 100%;
+                        ">
+                            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 12px;">💡 Recomendação</div>
+                            <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">
+                                {recomendacao}
+                            </div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-top: 8px;">
+                                Baseado na distribuição atual dos gastos
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Distribuição saudável sugerida
+                    st.markdown("##### 📊 Distribuição Saudável Sugerida")
+                    
+                    distribuicao_saudavel = {
+                        "🍔 Alimentação": "25-35%",
+                        "🏠 Casa": "25-35%",
+                        "🚗 Transporte": "10-15%",
+                        "🧑‍⚕️ Saúde": "5-10%",
+                        "🎯 Lazer": "5-10%",
+                        "💰 Outros": "10-15%"
+                    }
+                    
+                    col1, col2, col3 = st.columns(3)
+                    cols = [col1, col2, col3]
+                    
+                    for idx, (cat, percentual) in enumerate(distribuicao_saudavel.items()):
+                        with cols[idx % 3]:
+                            st.markdown(f"""
+                            <div style="
+                                background: #1f2937;
+                                border-radius: 10px;
+                                padding: 16px;
+                                text-align: center;
+                                border: 1px solid #374151;
+                            ">
+                                <div style="font-size: 24px; margin-bottom: 8px;">{cat.split(' ')[0]}</div>
+                                <div style="font-size: 14px; color: #9ca3af; margin-bottom: 4px;">{cat}</div>
+                                <div style="font-size: 16px; font-weight: bold; color: #10b981;">{percentual}</div>
+                                <div style="font-size: 11px; color: #6b7280;">do orçamento</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+            else:
+                st.info("Nenhum gasto registrado para análise de categorias.")
     else:
         # Card para estado vazio
         with st.container():
