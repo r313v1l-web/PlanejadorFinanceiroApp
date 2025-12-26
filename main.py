@@ -1099,6 +1099,9 @@ def mostrar_gasto_card(idx, row, df_gastos, unique_counter=0):
     # Obter categoria usando a MESMA função
     categoria = categorizar_gasto(row['descricao'])
     
+    # Formatando o valor para string ANTES de passar para JavaScript
+    valor_formatado = f"R$ {row['valor']:,.2f}"
+    
     # Cores por categoria (opcional, mas fica bonito)
     cores_categorias = {
         "🍔 Alimentação": "#FF6B6B",
@@ -1170,7 +1173,7 @@ def mostrar_gasto_card(idx, row, df_gastos, unique_counter=0):
                     font-size: 18px;
                     font-weight: bold;
                 ">
-                    R$ {row['valor']:,.2f}
+                    {valor_formatado}
                 </div>
             </div>
         </div>
@@ -1186,12 +1189,12 @@ def mostrar_gasto_card(idx, row, df_gastos, unique_counter=0):
                 <button onclick="
                     const idx = {idx};
                     const descricao = `{row['descricao'].replace("'", "\\'")}`;
-                    const valor = {row['valor']};
+                    const valor = '{valor_formatado}';
                     const data = `{data_formatada}`;
                     const categoria = `{categoria}`;
                     
                     // Copiar para área de transferência
-                    const text = `Descrição: ${descricao}\\nValor: R$ ${valor.toFixed(2)}\\nData: ${data}\\nCategoria: ${categoria}`;
+                    const text = `Descrição: ${descricao}\\nValor: ${valor}\\nData: ${data}\\nCategoria: ${categoria}`;
                     
                     // Usar API moderna de clipboard
                     if (navigator.clipboard && window.isSecureContext) {{
@@ -2039,6 +2042,7 @@ elif menu == "💰 INVESTIMENTOS":
                     with col2:
                         # Valor e rendimento
                         valor_formatado = f"R$ {valor_atual_val:,.2f}"
+                        
                         rend_formatado = f"{rendimento_val:.2%} ao mês" if rendimento_val != 0 else "N/A"
                         
                         st.markdown(f"""
