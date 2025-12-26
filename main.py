@@ -4000,9 +4000,17 @@ elif menu == "💸 CONTROLE DE GASTOS":
                 "📝 Outros": []  # Esta fica vazia - pega tudo que não se encaixar nas outras
             }
 
+            # DEBUG: Adicione para verificar se está funcionando
+            st.write("### Debug - Verificando categorização")
+            
+            # Processar categorias
             for idx, row in df_gastos.iterrows():
                 desc_normalizada = normalizar_texto(row['descricao'])
                 categoria_encontrada = False
+                
+                # DEBUG: Mostrar o que está sendo processado
+                if idx < 5:  # Mostrar apenas os primeiros 5 para debug
+                    st.write(f"Descrição: '{row['descricao']}' -> Normalizada: '{desc_normalizada}'")
                 
                 for categoria, palavras in palavras_chave.items():
                     # Verificar se qualquer palavra está na descrição normalizada
@@ -4010,12 +4018,24 @@ elif menu == "💸 CONTROLE DE GASTOS":
                         if palavra in desc_normalizada:
                             categorias[categoria] += row['valor']
                             categoria_encontrada = True
+                            # DEBUG: Mostrar qual categoria encontrou
+                            if idx < 5:
+                                st.write(f"  → Categoria encontrada: {categoria} (palavra: '{palavra}')")
                             break
                     if categoria_encontrada:
                         break
                 
                 if not categoria_encontrada:
                     categorias["📝 Outros"] += row['valor']
+                    # DEBUG: Mostrar se foi para "Outros"
+                    if idx < 5:
+                        st.write(f"  → Vai para 'Outros'")
+            
+            # Mostrar resumo das categorias encontradas
+            st.write("### Categorias encontradas:")
+            for cat, valor in categorias.items():
+                if valor > 0:
+                    st.write(f"{cat}: R$ {valor:,.2f}")
             
             # Mostrar gráfico de pizza
             df_categorias = pd.DataFrame({
@@ -4069,7 +4089,7 @@ elif menu == "💸 CONTROLE DE GASTOS":
                             </div>
                             """, unsafe_allow_html=True)
             
-            # Gastos por categoria específica
+            # Gastos por categoria específica - CORREÇÃO AQUI
             categoria_selecionada = st.selectbox(
                 "Ver gastos por categoria",
                 [cat for cat, valor in categorias.items() if valor > 0],
@@ -4077,100 +4097,45 @@ elif menu == "💸 CONTROLE DE GASTOS":
             )
             
             if categoria_selecionada:
-                # Filtrar gastos por categoria
+                # Filtrar gastos por categoria - USAR MESMA LÓGICA DO INÍCIO
                 gastos_categoria = []
+                
                 for idx, row in df_gastos.iterrows():
-                    desc_lower = row['descricao'].lower()
-                    palavras = palavras_chave.get(categoria_selecionada, [])
+                    desc_normalizada = normalizar_texto(row['descricao'])
+                    encontrou = False
                     
-                    if any(palavra in desc_lower for palavra in palavras) or \
-                    (categoria_selecionada == "📝 Outros" and not any(
-                        any(p in desc_lower for p in palavras_chave[cat]) 
-                        for cat in palavras_chave.keys()
-                    )):
+                    if categoria_selecionada != "📝 Outros":
+                        # Para categorias normais, verificar palavras-chave
+                        palavras = palavras_chave.get(categoria_selecionada, [])
+                        for palavra in palavras:
+                            if palavra in desc_normalizada:
+                                encontrou = True
+                                break
+                    else:
+                        # Para "Outros", verificar se NÃO encontrou em nenhuma categoria
+                        encontrou_em_outra = False
+                        for cat, palavras_cat in palavras_chave.items():
+                            if cat == "📝 Outros":
+                                continue
+                            for palavra in palavras_cat:
+                                if palavra in desc_normalizada:
+                                    encontrou_em_outra = True
+                                    break
+                            if encontrou_em_outra:
+                                break
+                        # Se não encontrou em nenhuma, vai para "Outros"
+                        encontrou = not encontrou_em_outra
+                    
+                    if encontrou:
                         gastos_categoria.append((idx, row))
                 
                 if gastos_categoria:
                     st.markdown(f"### Gastos em {categoria_selecionada}")
+                    st.write(f"Total encontrado: {len(gastos_categoria)} gastos")
                     for i, (idx, row) in enumerate(gastos_categoria):
                         mostrar_gasto_card(idx, row, df_gastos, unique_counter=f"cat_{categoria_selecionada}_{i}")
                 else:
                     st.info(f"Nenhum gasto encontrado na categoria {categoria_selecionada}")
-
-    else:
-        # Card para estado vazio
-        with st.container():
-            st.markdown("""
-            <div style="
-                background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-                border-radius: 12px;
-                padding: 60px 20px;
-                text-align: center;
-                border: 2px dashed #374151;
-                margin: 20px 0;
-            ">
-                <div style="font-size: 64px; margin-bottom: 20px; color: #6b7280;">📭</div>
-                <h3 style="color: #9ca3af; margin-bottom: 12px;">Nenhum gasto registrado</h3>
-                <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
-                    Use o formulário acima para registrar seus primeiros gastos e começar seu controle financeiro!
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Card de dicas
-        with st.expander("💡 Dicas para um bom controle de gastos", expanded=True):
-            col_tip1, col_tip2, col_tip3 = st.columns(3)
-            
-            with col_tip1:
-                st.markdown("""
-                <div style="
-                    background: #1f2937;
-                    border-radius: 10px;
-                    padding: 16px;
-                    height: 100%;
-                    border: 1px solid #374151;
-                ">
-                    <div style="font-size: 24px; margin-bottom: 12px;">⏰</div>
-                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Registre imediatamente</div>
-                    <div style="font-size: 14px; color: #9ca3af;">
-                        Anote cada gasto logo após ocorrer para não esquecer
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col_tip2:
-                st.markdown("""
-                <div style="
-                    background: #1f2937;
-                    border-radius: 10px;
-                    padding: 16px;
-                    height: 100%;
-                    border: 1px solid #374151;
-                ">
-                    <div style="font-size: 24px; margin-bottom: 12px;">🏷️</div>
-                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Categorize seus gastos</div>
-                    <div style="font-size: 14px; color: #9ca3af;">
-                        Use descrições claras para identificar padrões de consumo
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col_tip3:
-                st.markdown("""
-                <div style="
-                    background: #1f2937;
-                    border-radius: 10px;
-                    padding: 16px;
-                    height: 100%;
-                    border: 1px solid #374151;
-                ">
-                    <div style="font-size: 24px; margin-bottom: 12px;">📈</div>
-                    <div style="font-weight: bold; color: #f9fafb; margin-bottom: 8px;">Revise semanalmente</div>
-                    <div style="font-size: 14px; color: #9ca3af;">
-                        Analise seus gastos regularmente para ajustar hábitos
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
 
     # ---------- CARDS PARA ESTATÍSTICAS AVANÇADAS ----------
     if not df_gastos.empty and len(df_gastos) > 5:
