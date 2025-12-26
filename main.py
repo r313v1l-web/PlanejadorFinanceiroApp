@@ -1190,7 +1190,7 @@ def mostrar_gasto_card(idx, row, df_gastos, unique_counter=0):
                     const idx = {idx};
                     const descricao = `{row['descricao'].replace("'", "\\'")}`;
                     const valor = '{valor_formatado}';
-                    const data = `{data_formatada}`;
+                    const data = '{data_formatada}';
                     const categoria = `{categoria}`;
                     
                     // Copiar para área de transferência
