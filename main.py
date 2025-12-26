@@ -936,159 +936,159 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
     # Definir todas as categorias com palavras-chave
     CATEGORIAS_DETALHADAS = {
         # 🍔 ALIMENTAÇÃO
-        "🍔 Alimentação - Restaurante": {
+        "Alimentação - Restaurante": {
             "palavras": ['restaurante', 'lanche', 'fast food', 'pizza', 'hamburguer', 'mcdonald', 'bk', 'subway'],
             "cor": "#ef4444",
             "emoji": "🍔"
         },
-        "🍎 Alimentação - Supermercado": {
+        "Alimentação - Supermercado": {
             "palavras": ['mercado', 'supermercado', 'atacadão', 'atacadista', 'extra', 'carrefour', 'pão de açúcar'],
             "cor": "#dc2626",
             "emoji": "🛒"
         },
-        "☕ Alimentação - Café": {
+        "Alimentação - Café": {
             "palavras": ['café', 'cafeteria', 'starbucks', 'padaria', 'padoca', 'confeitaria'],
             "cor": "#92400e",
             "emoji": "☕"
         },
-        "🥩 Alimentação - Açougue": {
+        "Alimentação - Açougue": {
             "palavras": ['açougue', 'carnes', 'frango', 'peixe', 'peixaria', 'frutos do mar'],
             "cor": "#b91c1c",
             "emoji": "🥩"
         },
-        "🍎 Alimentação - Hortifruti": {
+        "Alimentação - Hortifruti": {
             "palavras": ['feira', 'hortifruti', 'fruta', 'legume', 'verdura', 'sacolão'],
             "cor": "#16a34a",
             "emoji": "🍎"
         },
         
         # 🚗 TRANSPORTE
-        "🚗 Transporte - Combustível": {
+        "Transporte - Combustível": {
             "palavras": ['gasolina', 'combustível', 'posto', 'shell', 'ipiranga', 'etanol', 'diesel'],
             "cor": "#3b82f6",
             "emoji": "⛽"
         },
-        "🚕 Transporte - Táxi/Uber": {
+        "Transporte - Táxi/Uber": {
             "palavras": ['uber', 'táxi', '99', 'cabify', 'corrida', 'transporte'],
             "cor": "#1d4ed8",
             "emoji": "🚕"
         },
-        "🚌 Transporte - Público": {
+        "Transporte - Público": {
             "palavras": ['ônibus', 'metro', 'trem', 'bilhete', 'passagem', 'recarga', 'cartão transporte'],
             "cor": "#1e40af",
             "emoji": "🚌"
         },
-        "🅿️ Transporte - Estacionamento": {
+        "Transporte - Estacionamento": {
             "palavras": ['estacionamento', 'parking', 'garagem', 'zona azul'],
             "cor": "#0ea5e9",
             "emoji": "🅿️"
         },
-        "🛠️ Transporte - Manutenção": {
+        "Transporte - Manutenção": {
             "palavras": ['oficina', 'mecânico', 'troca de óleo', 'pneu', 'lavagem', 'manutenção carro'],
             "cor": "#6366f1",
             "emoji": "🛠️"
         },
         
         # 🏠 CASA
-        "🏠 Casa - Aluguel": {
+        "Casa - Aluguel": {
             "palavras": ['aluguel', 'condomínio', 'iptu', 'taxa condominial'],
             "cor": "#8b5cf6",
             "emoji": "🏠"
         },
-        "💡 Casa - Energia": {
+        "Casa - Energia": {
             "palavras": ['luz', 'energia', 'conta de luz', 'energisa', 'enel', 'light'],
             "cor": "#f59e0b",
             "emoji": "💡"
         },
-        "💧 Casa - Água": {
+        "Casa - Água": {
             "palavras": ['água', 'conta de água', 'sabesp', 'cedae', 'caesb'],
             "cor": "#0ea5e9",
             "emoji": "💧"
         },
-        "🔥 Casa - Gás": {
+        "Casa - Gás": {
             "palavras": ['gás', 'botijão', 'gás natural', 'conta de gás'],
             "cor": "#ef4444",
             "emoji": "🔥"
         },
-        "📡 Casa - Internet/TV": {
+        "Casa - Internet/TV": {
             "palavras": ['internet', 'net', 'claro', 'vivo', 'oi', 'sky', 'tv a cabo'],
             "cor": "#8b5cf6",
             "emoji": "📡"
         },
         
         # 🛒 COMPRAS
-        "🛍️ Compras - Roupas": {
+        "Compras - Roupas": {
             "palavras": ['roupa', 'calçado', 'sapato', 'tenis', 'camiseta', 'loja de roupa', 'renner', 'c&a'],
             "cor": "#ec4899",
             "emoji": "👕"
         },
-        "📱 Compras - Eletrônicos": {
+        "Compras - Eletrônicos": {
             "palavras": ['celular', 'notebook', 'tablet', 'tv', 'eletrônico', 'informática'],
             "cor": "#6b7280",
             "emoji": "📱"
         },
-        "💄 Compras - Beleza": {
+        "Compras - Beleza": {
             "palavras": ['farmácia', 'drogaria', 'perfume', 'maquiagem', 'cosmético', 'beleza'],
             "cor": "#f472b6",
             "emoji": "💄"
         },
-        "📚 Compras - Livros": {
+        "Compras - Livros": {
             "palavras": ['livro', 'revista', 'jornal', 'leitura', 'livraria', 'saraiva', 'cultura'],
             "cor": "#84cc16",
             "emoji": "📚"
         },
-        "🎁 Compras - Presentes": {
+        "Compras - Presentes": {
             "palavras": ['presente', 'aniversário', 'natal', 'dia das mães', 'dia dos pais'],
             "cor": "#a855f7",
             "emoji": "🎁"
         },
         
         # 🎯 LAZER
-        "🎬 Lazer - Cinema": {
+        "Lazer - Cinema": {
             "palavras": ['cinema', 'filme', 'ingresso', 'netflix', 'prime video', 'disney+'],
             "cor": "#a78bfa",
             "emoji": "🎬"
         },
-        "🍻 Lazer - Bar": {
+        "Lazer - Bar": {
             "palavras": ['bar', 'boteco', 'cerveja', 'drink', 'happy hour', 'balada'],
             "cor": "#f59e0b",
             "emoji": "🍻"
         },
-        "✈️ Lazer - Viagem": {
+        "Lazer - Viagem": {
             "palavras": ['viagem', 'hotel', 'passagem', 'turismo', 'resort', 'pousada'],
             "cor": "#3b82f6",
             "emoji": "✈️"
         },
-        "🎮 Lazer - Games": {
+        "Lazer - Games": {
             "palavras": ['jogo', 'game', 'playstation', 'xbox', 'steam', 'nintendo'],
             "cor": "#8b5cf6",
             "emoji": "🎮"
         },
-        "🏋️ Lazer - Esportes": {
+        "Lazer - Esportes": {
             "palavras": ['academia', 'ginásio', 'esporte', 'natação', 'futebol', 'personal trainer'],
             "cor": "#10b981",
             "emoji": "🏋️"
         },
         
         # 💼 TRABALHO
-        "💼 Trabalho - Material": {
+        "Trabalho - Material": {
             "palavras": ['material', 'escritório', 'caneta', 'papel', 'impressão', 'toner'],
             "cor": "#6b7280",
             "emoji": "📎"
         },
-        "💻 Trabalho - Software": {
+        "Trabalho - Software": {
             "palavras": ['software', 'assinatura', 'licença', 'app', 'aplicativo', 'programa'],
             "cor": "#3b82f6",
             "emoji": "💻"
         },
-        "📞 Trabalho - Telefone": {
+        "Trabalho - Telefone": {
             "palavras": ['telefone', 'celular empresa', 'recarga', 'plano empresarial'],
             "cor": "#10b981",
             "emoji": "📞"
         },
         
         # 🧑‍⚕️ SAÚDE
-        "🏥 Saúde - Consulta": {
+        "Saúde - Consulta": {
             "palavras": ['consulta', 'médico', 'dentista', 'psicólogo', 'terapia', 'clínica'],
             "cor": "#10b981",
             "emoji": "🏥"
@@ -1098,53 +1098,53 @@ def mostrar_gasto_card(idx, row, df_original, unique_counter):
             "cor": "#ef4444",
             "emoji": "💊"
         },
-        "❤️ Saúde - Plano": {
+        "Saúde - Plano": {
             "palavras": ['plano de saúde', 'unimed', 'amil', 'sulamerica'],
             "cor": "#dc2626",
             "emoji": "❤️"
         },
         
         # 🧾 FINANÇAS
-        "🏦 Finanças - Taxa Bancária": {
+        "Finanças - Taxa Bancária": {
             "palavras": ['taxa', 'tarifa', 'anuidade', 'banco', 'cartão', 'empréstimo'],
             "cor": "#059669",
             "emoji": "🏦"
         },
-        "📊 Finanças - Investimento": {
+        "Finanças - Investimento": {
             "palavras": ['investimento', 'ações', 'fii', 'tesouro', 'cdb', 'bolsa'],
             "cor": "#84cc16",
             "emoji": "📈"
         },
-        "🧾 Finanças - Seguro": {
+        "Finanças - Seguro": {
             "palavras": ['seguro', 'apólice', 'previdência', 'resgate'],
             "cor": "#3b82f6",
             "emoji": "🛡️"
         },
         
         # 👨‍👩‍👧‍👦 FAMÍLIA
-        "👶 Família - Filhos": {
+        "Família - Filhos": {
             "palavras": ['creche', 'escola', 'material escolar', 'uniforme', 'curso', 'aula'],
             "cor": "#f472b6",
             "emoji": "👶"
         },
-        "🐕 Família - Pets": {
+        "Família - Pets": {
             "palavras": ['pet', 'veterinário', 'ração', 'gato', 'cachorro', 'animal'],
             "cor": "#f59e0b",
             "emoji": "🐕"
         },
-        "🎉 Família - Eventos": {
+        "Família - Eventos": {
             "palavras": ['festa', 'casamento', 'formatura', 'comemoração', 'confraternização'],
             "cor": "#8b5cf6",
             "emoji": "🎉"
         },
         
         # 💰 OUTROS
-        "🎫 Outros - Assinaturas": {
+        "Outros - Assinaturas": {
             "palavras": ['assinatura', 'streaming', 'spotify', 'youtube premium'],
             "cor": "#6b7280",
             "emoji": "🎫"
         },
-        "📝 Outros - Variados": {
+        "Outros - Variados": {
             "palavras": [],
             "cor": "#9ca3af",
             "emoji": "📝"
