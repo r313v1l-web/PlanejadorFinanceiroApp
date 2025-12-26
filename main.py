@@ -5601,56 +5601,699 @@ elif menu == "🏷️ CATEGORIAS":
     st.divider()
 
 # =========================================================
-# ⚙️ CONFIGURAÇÕES
+# ⚙️ CONFIGURAÇÕES - VERSÃO PASSO A PASSO EXPLICATIVA
 # =========================================================
-
-
 elif menu == "⚙️ CONFIGURAÇÕES":
+    
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        border: 1px solid #334155;
+    ">
+        <h1 style="
+            color: white;
+            margin: 0 0 8px;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        ">
+            <span style="
+                background: #f59e0b;
+                border-radius: 10px;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">⚙️</span>
+            Configurações do Sistema
+        </h1>
+        <p style="color: #94a3b8; margin: 0;">
+            Configure seu planejamento financeiro passo a passo
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("⚙️ Configurações do Sistema")
+    # Mensagens de feedback
     if st.session_state.get("msg"):
-        if st.session_state.get("msg_tipo") == "error":
-            st.error(st.session_state["msg"])
-        elif st.session_state.get("msg_tipo") == "warning":
-            st.warning(st.session_state["msg"])
-        else:
-            st.success(st.session_state["msg"])
-
+        msg_tipo = st.session_state.get("msg_tipo", "info")
+        msg_icon = {"error": "❌", "warning": "⚠️", "success": "✅", "info": "ℹ️"}.get(msg_tipo, "ℹ️")
+        msg_color = {"error": "#ef4444", "warning": "#f59e0b", "success": "#10b981", "info": "#3b82f6"}.get(msg_tipo, "#3b82f6")
+        
+        st.markdown(f"""
+        <div style="
+            background: {msg_color}15;
+            border: 1px solid {msg_color}30;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #e5e7eb;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 20px;">{msg_icon}</span>
+                <div>{st.session_state["msg"]}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         st.session_state["msg"] = None
 
-    with st.form("form_config", clear_on_submit=False):
+    # ================= PASSO A PASSO DE CONFIGURAÇÃO =================
+    st.markdown("### 🚀 Configuração Guiada do Seu Planejamento")
+    
+    # Barra de progresso
+    total_passos = 6
+    passo_atual = 1
+    
+    # Contêiner principal
+    with st.container():
+        
+        # =========== PASSO 1: NOME DA FAMÍLIA ===========
+        with st.expander(f"📝 **PASSO {passo_atual}/6 - Nome da Família**", expanded=True):
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 16px;
+                border-left: 4px solid #3b82f6;
+            ">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="
+                        background: #3b82f6;
+                        border-radius: 8px;
+                        width: 36px;
+                        height: 36px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <span style="color: white; font-weight: bold;">1</span>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #f9fafb;">
+                        Comece com um nome para sua família
+                    </div>
+                </div>
+                <div style="color: #d1d5db; font-size: 14px; margin-bottom: 16px;">
+                    Este nome será usado em todos os relatórios e dashboard. Pode ser seu sobrenome, 
+                    um apelido familiar ou qualquer nome que represente seu grupo familiar.
+                </div>
+            """, unsafe_allow_html=True)
+            
+            col_nome1, col_nome2 = st.columns([2, 1])
+            with col_nome1:
+                nome_familia = st.text_input(
+                    "👨‍👩‍👧‍👦 **Nome da Família**",
+                    value=nome_familia,
+                    placeholder="Ex: Família Silva, Casa do João, Nossa Família...",
+                    help="Escolha um nome que represente seu grupo familiar"
+                )
+            
+            with col_nome2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("✅ Salvar Nome", key="salvar_nome", use_container_width=True):
+                    if nome_familia.strip():
+                        # Salvar nome no config
+                        st.session_state["config_nome_salvo"] = nome_familia
+                        st.success(f"Nome '{nome_familia}' salvo!")
+                        passo_atual = 2
+                    else:
+                        st.error("Por favor, informe um nome válido")
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        st.divider()
+        
+        # =========== PASSO 2: META DE PATRIMÔNIO ===========
+        passo_atual = 2
+        with st.expander(f"🎯 **PASSO {passo_atual}/6 - Meta de Patrimônio**", expanded=True):
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 16px;
+                border-left: 4px solid #8b5cf6;
+            ">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="
+                        background: #8b5cf6;
+                        border-radius: 8px;
+                        width: 36px;
+                        height: 36px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <span style="color: white; font-weight: bold;">2</span>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #f9fafb;">
+                        Defina sua meta financeira
+                    </div>
+                </div>
+                <div style="color: #d1d5db; font-size: 14px; margin-bottom: 16px;">
+                    **Por que definir uma meta?**<br>
+                    Uma meta clara de patrimônio ajuda a manter o foco, medir progresso e tomar 
+                    decisões financeiras mais conscientes. É o seu objetivo financeiro de longo prazo.
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Exemplos de metas
+            col_meta1, col_meta2, col_meta3 = st.columns(3)
+            with col_meta1:
+                if st.button("💰 R$ 500 mil", use_container_width=True):
+                    st.session_state["meta_sugerida"] = 500000
+            with col_meta2:
+                if st.button("🏡 R$ 1 milhão", use_container_width=True):
+                    st.session_state["meta_sugerida"] = 1000000
+            with col_meta3:
+                if st.button("🚀 R$ 2 milhões", use_container_width=True):
+                    st.session_state["meta_sugerida"] = 2000000
+            
+            meta_sugerida = st.session_state.get("meta_sugerida", meta_patrimonio)
+            
+            col_meta_input1, col_meta_input2 = st.columns([2, 1])
+            with col_meta_input1:
+                meta = st.number_input(
+                    "**💰 Qual é sua meta de patrimônio? (R$)**",
+                    min_value=0.0,
+                    value=float(meta_sugerida),
+                    step=10000.0,
+                    format="%.2f",
+                    help="Valor total que você deseja acumular ao longo do tempo"
+                )
+            
+            with col_meta_input2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("🎯 Definir Meta", key="salvar_meta", use_container_width=True):
+                    if meta > 0:
+                        st.session_state["config_meta_salva"] = meta
+                        st.success(f"Meta de R$ {meta:,.2f} definida!")
+                        passo_atual = 3
+                    else:
+                        st.error("A meta deve ser maior que zero")
+            
+            # Card explicativo
+            st.markdown("""
+            <div style="
+                background: rgba(139, 92, 246, 0.1);
+                border: 1px solid #8b5cf6;
+                border-radius: 10px;
+                padding: 16px;
+                margin-top: 16px;
+            ">
+                <div style="font-size: 14px; color: #a78bfa; font-weight: bold; margin-bottom: 8px;">
+                    💡 Dica sobre metas
+                </div>
+                <div style="font-size: 13px; color: #d1d5db;">
+                    Considere fatores como: idade atual, tempo até a aposentadoria, 
+                    estilo de vida desejado e objetivos pessoais (casa própria, educação dos filhos, viagens).
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        st.divider()
+        
+        # =========== PASSO 3: ORÇAMENTO MENSAL ===========
+        passo_atual = 3
+        with st.expander(f"📊 **PASSO {passo_atual}/6 - Orçamento Mensal**", expanded=True):
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 16px;
+                border-left: 4px solid #10b981;
+            ">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="
+                        background: #10b981;
+                        border-radius: 8px;
+                        width: 36px;
+                        height: 36px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <span style="color: white; font-weight: bold;">3</span>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #f9fafb;">
+                        Estabeleça seu orçamento mensal
+                    </div>
+                </div>
+                <div style="color: #d1d5db; font-size: 14px; margin-bottom: 16px;">
+                    **O que é orçamento mensal?**<br>
+                    É o valor total que sua família recebe (ou planeja receber) por mês. 
+                    Esta informação é fundamental para calcular quanto pode ser poupado e investido.
+                </div>
+            """, unsafe_allow_html=True)
+            
+            col_orc1, col_orc2 = st.columns([2, 1])
+            with col_orc1:
+                orcamento = st.number_input(
+                    "**📊 Qual é seu orçamento mensal? (R$)**",
+                    min_value=0.0,
+                    value=orcamento_mensal,
+                    step=500.0,
+                    format="%.2f",
+                    help="Soma de todas as receitas mensais da família"
+                )
+            
+            with col_orc2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("💼 Definir Orçamento", key="salvar_orcamento", use_container_width=True):
+                    if orcamento > 0:
+                        st.session_state["config_orcamento_salvo"] = orcamento
+                        st.success(f"Orçamento de R$ {orcamento:,.2f} definido!")
+                        passo_atual = 4
+                    else:
+                        st.error("O orçamento deve ser maior que zero")
+            
+            # Calculadora de porcentagem da meta
+            if meta > 0 and orcamento > 0:
+                meses_para_meta = meta / orcamento if orcamento > 0 else 0
+                anos_para_meta = meses_para_meta / 12
+                
+                st.markdown(f"""
+                <div style="
+                    background: rgba(16, 185, 129, 0.1);
+                    border: 1px solid #10b981;
+                    border-radius: 10px;
+                    padding: 16px;
+                    margin-top: 16px;
+                ">
+                    <div style="font-size: 14px; color: #34d399; font-weight: bold; margin-bottom: 8px;">
+                    📈 Projeção com base no orçamento
+                    </div>
+                    <div style="font-size: 13px; color: #d1d5db;">
+                    Com este orçamento mensal, você atingiria sua meta em aproximadamente:<br>
+                    <strong>{meses_para_meta:,.0f} meses</strong> ({anos_para_meta:,.1f} anos)
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        st.divider()
+        
+        # =========== PASSO 4: RENDIMENTO ESPERADO ===========
+        passo_atual = 4
+        with st.expander(f"📈 **PASSO {passo_atual}/6 - Rendimento dos Investimentos**", expanded=True):
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 16px;
+                border-left: 4px solid #f59e0b;
+            ">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="
+                        background: #f59e0b;
+                        border-radius: 8px;
+                        width: 36px;
+                        height: 36px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <span style="color: white; font-weight: bold;">4</span>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #f9fafb;">
+                        Estime o rendimento dos seus investimentos
+                    </div>
+                </div>
+                <div style="color: #d1d5db; font-size: 14px; margin-bottom: 16px;">
+                    **Por que isso é importante?**<br>
+                    O rendimento real (acima da inflação) determina quanto seu dinheiro cresce ao longo do tempo. 
+                    Este valor é usado nas projeções de patrimônio.
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Opções pré-definidas
+            st.markdown("**💡 Escolha um perfil de investidor:**")
+            
+            col_perfil1, col_perfil2, col_perfil3 = st.columns(3)
+            with col_perfil1:
+                if st.button("🛡️ Conservador", use_container_width=True):
+                    st.session_state["rendimento_sugerido"] = 0.5
+                    st.session_state["perfil_selecionado"] = "Conservador"
+            with col_perfil2:
+                if st.button("⚖️ Moderado", use_container_width=True):
+                    st.session_state["rendimento_sugerido"] = 0.8
+                    st.session_state["perfil_selecionado"] = "Moderado"
+            with col_perfil3:
+                if st.button("🚀 Arrojado", use_container_width=True):
+                    st.session_state["rendimento_sugerido"] = 1.2
+                    st.session_state["perfil_selecionado"] = "Arrojado"
+            
+            rendimento_sugerido = st.session_state.get("rendimento_sugerido", rendimento_mensal * 100)
+            
+            col_rend1, col_rend2 = st.columns([2, 1])
+            with col_rend1:
+                rendimento = st.number_input(
+                    "**📈 Qual rendimento mensal REAL você espera? (%)**",
+                    min_value=0.0,
+                    max_value=100.0,
+                    value=float(rendimento_sugerido),
+                    step=0.1,
+                    help="Rendimento mensal acima da inflação (líquido de impostos e taxas)"
+                ) / 100
+            
+            with col_rend2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("💰 Definir Rendimento", key="salvar_rendimento", use_container_width=True):
+                    if rendimento > 0:
+                        st.session_state["config_rendimento_salvo"] = rendimento
+                        st.success(f"Rendimento de {rendimento*100:.1f}% ao mês definido!")
+                        passo_atual = 5
+                    else:
+                        st.error("O rendimento deve ser maior que zero")
+            
+            # Explicação sobre rendimento real vs nominal
+            st.markdown("""
+            <div style="
+                background: rgba(245, 158, 11, 0.1);
+                border: 1px solid #f59e0b;
+                border-radius: 10px;
+                padding: 16px;
+                margin-top: 16px;
+            ">
+                <div style="font-size: 14px; color: #fbbf24; font-weight: bold; margin-bottom: 8px;">
+                    📚 Entenda o rendimento REAL
+                </div>
+                <div style="font-size: 13px; color: #d1d5db;">
+                    <strong>Rendimento REAL = Rendimento Nominal - Inflação</strong><br>
+                    Exemplo: Se seus investimentos rendem 1% ao mês e a inflação é 0.3%, 
+                    seu rendimento real é de 0.7% ao mês.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        st.divider()
+        
+        # =========== PASSO 5: RESERVA PARA GASTOS ===========
+        passo_atual = 5
+        with st.expander(f"💸 **PASSO {passo_atual}/6 - Reserva para Gastos**", expanded=True):
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 16px;
+                border-left: 4px solid #ec4899;
+            ">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="
+                        background: #ec4899;
+                        border-radius: 8px;
+                        width: 36px;
+                        height: 36px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <span style="color: white; font-weight: bold;">5</span>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #f9fafb;">
+                        Defina sua reserva para gastos do dia a dia
+                    </div>
+                </div>
+                <div style="color: #d1d5db; font-size: 14px; margin-bottom: 16px;">
+                    **O que é esta reserva?**<br>
+                    É o valor mensal que você separa para gastos variáveis (alimentação, transporte, 
+                    lazer, etc.). O sistema ajudará a controlar para não ultrapassar este limite.
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Sugestão baseada no orçamento
+            if orcamento > 0:
+                sugestao_reserva = orcamento * 0.3  # 30% do orçamento
+                st.info(f"💡 **Sugestão:** Reserve cerca de 30% do seu orçamento para gastos variáveis: **R$ {sugestao_reserva:,.2f}**")
+            
+            col_res1, col_res2 = st.columns([2, 1])
+            with col_res1:
+                reserva = st.number_input(
+                    "**💸 Quanto reservar para gastos mensais? (R$)**",
+                    min_value=0.0,
+                    value=float(config_dict.get("reserva_gastos", sugestao_reserva if orcamento > 0 else 1000)),
+                    step=50.0,
+                    format="%.2f",
+                    help="Valor disponível para gastos do dia a dia (alimentação, transporte, lazer)"
+                )
+            
+            with col_res2:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("💳 Definir Reserva", key="salvar_reserva", use_container_width=True):
+                    if reserva > 0:
+                        st.session_state["config_reserva_salva"] = reserva
+                        st.success(f"Reserva de R$ {reserva:,.2f} definida!")
+                        passo_atual = 6
+                    else:
+                        st.error("A reserva deve ser maior que zero")
+            
+            # Explicação sobre categorias de gastos
+            st.markdown("""
+            <div style="
+                background: rgba(236, 72, 153, 0.1);
+                border: 1px solid #ec4899;
+                border-radius: 10px;
+                padding: 16px;
+                margin-top: 16px;
+            ">
+                <div style="font-size: 14px; color: #f472b6; font-weight: bold; margin-bottom: 8px;">
+                    🏷️ Como usar esta reserva
+                </div>
+                <div style="font-size: 13px; color: #d1d5db;">
+                    Na aba <strong>"💸 Controle de Gastos"</strong> você poderá registrar cada gasto e 
+                    o sistema mostrará quanto ainda pode gastar no mês, organizando por categorias como:
+                    Alimentação, Transporte, Lazer, Saúde, etc.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        st.divider()
+        
+        # =========== PASSO 6: REVISÃO E CONFIRMAÇÃO ===========
+        passo_atual = 6
+        with st.expander(f"✅ **PASSO {passo_atual}/6 - Revisão e Confirmação**", expanded=True):
+            st.markdown("""
+            <div style="
+                background: #1f2937;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 16px;
+                border-left: 4px solid #10b981;
+            ">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="
+                        background: #10b981;
+                        border-radius: 8px;
+                        width: 36px;
+                        height: 36px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <span style="color: white; font-weight: bold;">6</span>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #f9fafb;">
+                        Revise e confirme suas configurações
+                    </div>
+                </div>
+                <div style="color: #d1d5db; font-size: 14px; margin-bottom: 16px;">
+                    **Última etapa!**<br>
+                    Confira todas as informações abaixo e salve para começar a usar o sistema.
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Resumo das configurações
+            st.markdown("### 📋 Resumo do Seu Planejamento")
+            
+            col_resumo1, col_resumo2 = st.columns(2)
+            
+            with col_resumo1:
+                st.markdown(f"""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    margin-bottom: 12px;
+                    border: 1px solid #374151;
+                ">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="font-size: 20px;">👨‍👩‍👧‍👦</span>
+                        <div style="font-size: 14px; color: #d1d5db;">Nome da Família</div>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #f9fafb;">{nome_familia}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown(f"""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    margin-bottom: 12px;
+                    border: 1px solid #374151;
+                ">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="font-size: 20px;">🎯</span>
+                        <div style="font-size: 14px; color: #d1d5db;">Meta de Patrimônio</div>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #8b5cf6;">R$ {meta:,.2f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown(f"""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    margin-bottom: 12px;
+                    border: 1px solid #374151;
+                ">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="font-size: 20px;">📈</span>
+                        <div style="font-size: 14px; color: #d1d5db;">Rendimento Esperado</div>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #f59e0b;">{rendimento*100:.1f}% ao mês</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_resumo2:
+                st.markdown(f"""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    margin-bottom: 12px;
+                    border: 1px solid #374151;
+                ">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="font-size: 20px;">💼</span>
+                        <div style="font-size: 14px; color: #d1d5db;">Orçamento Mensal</div>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #10b981;">R$ {orcamento:,.2f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown(f"""
+                <div style="
+                    background: #1f2937;
+                    border-radius: 10px;
+                    padding: 16px;
+                    margin-bottom: 12px;
+                    border: 1px solid #374151;
+                ">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="font-size: 20px;">💸</span>
+                        <div style="font-size: 14px; color: #d1d5db;">Reserva para Gastos</div>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold; color: #ec4899;">R$ {reserva:,.2f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Projeção rápida
+                if meta > 0 and orcamento > 0 and rendimento > 0:
+                    # Cálculo simplificado
+                    poupanca_mensal = orcamento * 0.3  # Supondo 30% de poupança
+                    patrimonio_projetado = 0
+                    meses = 0
+                    
+                    while patrimonio_projetado < meta and meses < 600:  # 50 anos máximo
+                        patrimonio_projetado = (patrimonio_projetado + poupanca_mensal) * (1 + rendimento)
+                        meses += 1
+                    
+                    anos = meses / 12
+                    
+                    st.markdown(f"""
+                    <div style="
+                        background: #1f2937;
+                        border-radius: 10px;
+                        padding: 16px;
+                        border: 1px solid #374151;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 20px;">⏱️</span>
+                            <div style="font-size: 14px; color: #d1d5db;">Projeção da Meta</div>
+                        </div>
+                        <div style="font-size: 16px; font-weight: bold; color: #3b82f6;">
+                            {meses} meses ({anos:.1f} anos)
+                        </div>
+                        <div style="font-size: 12px; color: #9ca3af;">
+                            Tempo estimado para atingir sua meta
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # Botão final para salvar tudo
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            col_save1, col_save2, col_save3 = st.columns([1, 2, 1])
+            with col_save2:
+                if st.button("🚀 **SALVAR TODAS AS CONFIGURAÇÕES**", 
+                           type="primary", 
+                           use_container_width=True,
+                           key="salvar_tudo"):
+                    
+                    # Inflação padrão (pode ser ajustada depois)
+                    inflacao = 0.003  # 0.3% ao mês (padrão)
+                    
+                    df_config = pd.DataFrame([
+                        {"chave": "meta_patrimonio", "valor": meta, "descricao": "Meta total de patrimônio"},
+                        {"chave": "orcamento_mensal", "valor": orcamento, "descricao": "Orçamento mensal"},
+                        {"chave": "nome_familia", "valor": nome_familia, "descricao": "Nome da família"},
+                        {"chave": "rendimento_mensal", "valor": rendimento, "descricao": "Rendimento mensal real"},
+                        {"chave": "inflacao_mensal", "valor": inflacao, "descricao": "Inflação mensal esperada"},
+                        {"chave": "reserva_gastos", "valor": reserva, "descricao": "Reserva mensal de gastos rápidos"}
+                    ])
 
-        col1, col2 = st.columns(2, gap="large")
+                    # Normalizar colunas
+                    df_config.columns = df_config.columns.str.lower()
 
-        with col1:
-            meta = st.number_input(
-                "💰 Meta de Patrimônio (R$)",
-                min_value=0.0,
-                value=meta_patrimonio,
-                step=10000.0
-            )
+                    dados["config"] = df_config
+                    st.session_state["dados"] = dados
 
-            orcamento = st.number_input(
-                "📊 Orçamento Mensal (R$)",
-                min_value=0.0,
-                value=orcamento_mensal,
-                step=500.0
-            )
+                    DatabaseManager.save("config", df_config, st.session_state["usuario"])
 
-            nome = st.text_input(
-                "👨‍👩‍👧 Nome da Família",
-                value=nome_familia
-            )
-
-        with col2:
-            rendimento = st.number_input(
-                "📈 Rendimento Mensal Esperado (%)",
-                min_value=0.0,
-                max_value=100.0,
-                value=rendimento_mensal * 100,
-                step=0.1
-            ) / 100
-
+                    st.session_state["msg"] = "✅ Configurações salvas com sucesso! Seu planejamento está pronto."
+                    st.session_state["msg_tipo"] = "success"
+                    st.rerun()
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # ================= CONFIGURAÇÕES AVANÇADAS =================
+    with st.expander("⚙️ **Configurações Avançadas**", expanded=False):
+        st.markdown("""
+        <div style="
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid #374151;
+        ">
+            <div style="color: #d1d5db; font-size: 14px; margin-bottom: 16px;">
+                Ajustes técnicos e configurações específicas do sistema.
+            </div>
+        """, unsafe_allow_html=True)
+        
+        col_adv1, col_adv2 = st.columns(2)
+        
+        with col_adv1:
             inflacao = st.number_input(
                 "💸 Inflação Mensal Esperada (%)",
                 min_value=0.0,
@@ -5658,37 +6301,23 @@ elif menu == "⚙️ CONFIGURAÇÕES":
                 value=inflacao_mensal * 100,
                 step=0.1
             ) / 100
-            reserva = st.number_input(
-                "💸 Reserva mensal para gastos rápidos (R$)",
-                min_value=0.0,
-                value=float(config_dict.get("reserva_gastos", 0)),
-                step=50.0
-            )
-
-        submitted = st.form_submit_button("💾 SALVAR CONFIGURAÇÕES")
-
-        if submitted:
-            df_config = pd.DataFrame([
-                {"chave": "meta_patrimonio", "valor": meta, "descricao": "Meta total de patrimônio"},
-                {"chave": "orcamento_mensal", "valor": orcamento, "descricao": "Orçamento mensal"},
-                {"chave": "nome_familia", "valor": nome, "descricao": "Nome da família"},
-                {"chave": "rendimento_mensal", "valor": rendimento, "descricao": "Rendimento mensal"},
-                {"chave": "inflacao_mensal", "valor": inflacao, "descricao": "Inflação mensal"},
-                {"chave": "reserva_gastos", "valor": reserva, "descricao": "Reserva mensal de gastos rápidos"}
-            ])
-
-            # Normaliza colunas ANTES de salvar
-            df_config.columns = df_config.columns.str.lower()
-
-            dados["config"] = df_config
-            st.session_state["dados"] = dados
-
-            DatabaseManager.save("config", df_config, st.session_state["usuario"])
-
-            st.session_state["msg"] = "Salvo"
-            st.session_state["msg_tipo"] = "success"
-            st.rerun()
-
+        
+        with col_adv2:
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("💾 Salvar Configurações Avançadas", use_container_width=True):
+                # Atualizar apenas a inflação no config existente
+                if not dados["config"].empty:
+                    df_config = dados["config"].copy()
+                    df_config.loc[df_config["chave"] == "inflacao_mensal", "valor"] = inflacao
+                    
+                    dados["config"] = df_config
+                    st.session_state["dados"] = dados
+                    DatabaseManager.save("config", df_config, st.session_state["usuario"])
+                    
+                    st.success("Configurações avançadas salvas!")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
 # =========================================================
 # 📄 USUÁRIOS
 # =========================================================
