@@ -1925,21 +1925,30 @@ if menu == "📝 LANÇAMENTOS":
         # CORREÇÃO ROBUSTA: Função para converter QUALQUER formato de data para datetime
         def converter_data_para_datetime(data_value):
             """Converte qualquer formato de data para datetime pandas"""
-            if pd.isna(data_value):
+            # Se for NaN ou None
+            if pd.isna(data_value) or data_value is None:
                 return pd.NaT
             
-            # Se já for datetime ou Timestamp, retorna como está
-            if isinstance(data_value, (pd.Timestamp, datetime.datetime)):
+            # Se já for pandas Timestamp, retorna como está
+            if isinstance(data_value, pd.Timestamp):
+                return data_value
+            
+            # Se for datetime.datetime, converte para Timestamp
+            if isinstance(data_value, datetime):  # CORREÇÃO AQUI: apenas datetime
                 return pd.Timestamp(data_value)
             
             # Se for date object, converte
-            if isinstance(data_value, datetime.date):
+            if isinstance(data_value, date):
                 return pd.Timestamp(data_value)
             
             # Se for string, tenta vários formatos
             if isinstance(data_value, str):
                 # Remove espaços extras
                 data_str = data_value.strip()
+                
+                # Se string vazia
+                if not data_str:
+                    return pd.NaT
                 
                 # Tenta diferentes formatos de data
                 formatos = [
@@ -1948,6 +1957,8 @@ if menu == "📝 LANÇAMENTOS":
                     '%d-%m-%Y',      # 26-01-2024
                     '%Y/%m/%d',      # 2024/01/26
                     '%d.%m.%Y',      # 26.01.2024
+                    '%Y-%m-%d %H:%M:%S',  # Com hora
+                    '%d/%m/%Y %H:%M:%S',  # Com hora
                 ]
                 
                 for formato in formatos:
