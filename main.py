@@ -1874,13 +1874,12 @@ if menu == "📝 LANÇAMENTOS":
                         st.error("❌ O valor deve ser maior que zero.")
                         st.stop()
                     
-                    # CORREÇÃO: Garantir que a data seja salva em formato consistente
-                    # Converta para string ISO ou mantenha como datetime
-                    data_para_salvar = data
+                    # CORREÇÃO: Garantir que a data seja salva como string ISO para consistência
+                    data_iso = data.isoformat()  # Converte date para string no formato YYYY-MM-DD
                     
                     # Criar novo lançamento
                     nova = pd.DataFrame([{
-                        "data": data_para_salvar,  # Já é um date object do st.date_input
+                        "data": data_iso,  # Salva como string ISO
                         "tipo": tipo,
                         "valor": valor,
                         "categoria": categoria,
@@ -1923,20 +1922,63 @@ if menu == "📝 LANÇAMENTOS":
         df_historico_total = dados["historico"].copy()
         df_historico_total.columns = df_historico_total.columns.str.lower()
         
-        # CORREÇÃO: Converter TODAS as datas para datetime ANTES de ordenar
-        # Isso resolve o erro "TypeError: '<' not supported between instances of 'str' and 'datetime.date'"
-        if "data" in df_historico_total.columns:
-            # Converter todas as datas para datetime
-            df_historico_total["data"] = pd.to_datetime(
-                df_historico_total["data"], 
-                errors='coerce',  # Se não conseguir converter, coloca NaT (Not a Time)
-                dayfirst=True     # Assume formato DD/MM/YYYY se ambiguo
-            )
+        # CORREÇÃO ROBUSTA: Função para converter QUALQUER formato de data para datetime
+        def converter_data_para_datetime(data_value):
+            """Converte qualquer formato de data para datetime pandas"""
+            if pd.isna(data_value):
+                return pd.NaT
             
-            # Remover entradas com datas inválidas (opcional)
+            # Se já for datetime ou Timestamp, retorna como está
+            if isinstance(data_value, (pd.Timestamp, datetime.datetime)):
+                return pd.Timestamp(data_value)
+            
+            # Se for date object, converte
+            if isinstance(data_value, datetime.date):
+                return pd.Timestamp(data_value)
+            
+            # Se for string, tenta vários formatos
+            if isinstance(data_value, str):
+                # Remove espaços extras
+                data_str = data_value.strip()
+                
+                # Tenta diferentes formatos de data
+                formatos = [
+                    '%Y-%m-%d',      # 2024-01-26
+                    '%d/%m/%Y',      # 26/01/2024
+                    '%d-%m-%Y',      # 26-01-2024
+                    '%Y/%m/%d',      # 2024/01/26
+                    '%d.%m.%Y',      # 26.01.2024
+                ]
+                
+                for formato in formatos:
+                    try:
+                        return pd.to_datetime(data_str, format=formato)
+                    except:
+                        continue
+                
+                # Se nenhum formato funcionar, tenta conversão genérica
+                try:
+                    return pd.to_datetime(data_str, errors='coerce')
+                except:
+                    return pd.NaT
+            
+            # Para qualquer outro tipo, tenta converter
+            try:
+                return pd.to_datetime(data_value, errors='coerce')
+            except:
+                return pd.NaT
+        
+        # Aplicar a conversão a TODAS as datas
+        if "data" in df_historico_total.columns:
+            df_historico_total["data"] = df_historico_total["data"].apply(converter_data_para_datetime)
+            
+            # Remover entradas com datas inválidas
             df_historico_total = df_historico_total.dropna(subset=["data"])
         
-        # Ordenar por data (mais recente primeiro)
+        # CORREÇÃO: Garantir que o tipo seja datetime64[ns]
+        df_historico_total["data"] = pd.to_datetime(df_historico_total["data"])
+        
+        # Agora sim pode ordenar
         df_historico_total = df_historico_total.sort_values("data", ascending=False)
         
         # Filtros
