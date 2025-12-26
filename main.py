@@ -3290,12 +3290,16 @@ elif menu == "💸 CONTROLE DE GASTOS":
     # ---------- CARREGAR GASTOS ----------
     if "controle_gastos" not in dados or dados["controle_gastos"].empty:
         df_gastos = pd.DataFrame(columns=["data", "descricao", "valor"])
+        # Criar coluna datetime mesmo vazia
+        df_gastos["data"] = pd.to_datetime(df_gastos["data"], errors='coerce')
     else:
         df_gastos = dados["controle_gastos"].copy()
         
-        # Converter 'data' para datetime
-        if "data" in df_gastos.columns and not df_gastos.empty:
-            df_gastos["data"] = pd.to_datetime(df_gastos["data"], errors='coerce')
+        # Converter 'data' para datetime SEMPRE
+        df_gastos["data"] = pd.to_datetime(df_gastos["data"], errors='coerce')
+        
+        # Remover valores NaT (datas inválidas)
+        if not df_gastos.empty:
             df_gastos = df_gastos.dropna(subset=["data"])
 
     # Cálculos
