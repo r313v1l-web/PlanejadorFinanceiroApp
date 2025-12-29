@@ -12,7 +12,8 @@ class DatabaseManager:
     def _get_client():
         return create_client(
             st.secrets["SUPABASE_URL"],
-            st.secrets["SUPABASE_KEY"]
+            st.secrets["SUPABASE_KEY"],
+            st.secrets["API_KEY"]
         )
 
     # ===============================

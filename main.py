@@ -10,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 import io
 import os
 import bcrypt
+import google.generativeai as genai
 
 
 # Adicione este CSS no início do arquivo, logo após os outros estilos
