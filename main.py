@@ -548,7 +548,7 @@ def consultar_ia_financeira(dados):
 
     # 4. Chamar a IA
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash') # Modelo rápido e gratuito
+        model = genai.GenerativeModel('gemini-pro') # Modelo rápido e gratuito
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
