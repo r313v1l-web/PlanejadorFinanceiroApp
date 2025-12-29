@@ -2843,64 +2843,71 @@ elif menu == "🐷 Meu Dinheiro Guardado":
 
     st.divider()
 
-    # ---------------- FORM ADICIONAR ESTILIZADO ----------------
+    # ---------------- FORM ADICIONAR SIMPLIFICADO ----------------
     with st.expander("➕ Adicionar Novo Investimento", expanded=False):
         with st.container():
-
             
+            # Texto explicativo simples
+            st.caption("Preencha apenas o básico. O resto nós configuramos para você.")
+
             with st.form("form_investimento", clear_on_submit=True):
-                col1, col2 = st.columns(2, gap="large")
-
-                with col1:
-                    st.markdown("#### 📋 Informações Básicas")
-                    instituicao = st.text_input("🏦 Instituição", placeholder="Ex: XP Investimentos")
-                    ativo = st.text_input("📈 Ativo", placeholder="Ex: PETR4, CDB, FII")
-                    tipo = st.selectbox(
-                        "📊 Tipo",
-                        ["Renda Fixa", "Ações", "FIIs", "ETF", "Fundos", "Tesouro", "Outros"]
-                    )
-
-                with col2:
-                    st.markdown("#### 💰 Valores e Características")
+                # 1. O BÁSICO (O que todo mundo sabe)
+                col_basico1, col_basico2 = st.columns(2, gap="medium")
+                
+                with col_basico1:
+                    instituicao = st.text_input("🏦 Onde está o dinheiro?", placeholder="Ex: Nubank, Caixa, Debaixo do colchão", help="O banco ou corretora onde o dinheiro está guardado.")
+                    ativo = st.text_input("📝 Nome do Investimento", placeholder="Ex: Guardadinho, Poupança, CDB", help="Um nome para você identificar depois.")
+                
+                with col_basico2:
                     valor_atual = st.number_input(
-                        "💰 Valor Atual (R$)", 
+                        "💰 Quanto tem lá hoje? (R$)", 
                         min_value=0.0, 
                         step=100.0,
-                        value=1000.0
+                        value=1000.0,
+                        help="O saldo atual bruto."
                     )
-                    rendimento = st.number_input(
-                        "📈 Rendimento Mensal (%)",
-                        min_value=0.0,
-                        max_value=100.0,
-                        value=0.8,
-                        step=0.1
-                    ) / 100
-                    categoria = st.selectbox(
-                        "🎯 Perfil",
-                        ["Conservador", "Moderado", "Arrojado", "Especulativo"]
+                    tipo = st.selectbox(
+                        "📊 Tipo (Se não souber, escolha 'Outros')",
+                        ["Renda Fixa", "Poupança", "Ações", "FIIs", "Tesouro Direto", "Criptomoedas", "Outros"],
+                        help="Tenta classificar. Se for conta corrente ou Nubank, pode por 'Renda Fixa' ou 'Poupança'."
                     )
 
-                st.markdown("#### 📅 Detalhes Adicionais")
-                col_data, col_obs = st.columns([1, 2], gap="large")
-                
-                with col_data:
-                    data_entrada = st.date_input("📅 Data de Entrada", date.today())
-                
-                with col_obs:
-                    observacao = st.text_area(
-                        "📝 Observações", 
-                        placeholder="Observações importantes sobre o investimento...",
-                        height=80
-                    )
+                # 2. O AVANÇADO (Escondido num expander dentro do form)
+                with st.expander("⚙️ Detalhes Avançados (Opcional)", expanded=False):
+                    st.caption("Só mexa aqui se você souber o que está fazendo. Senão, deixe como está.")
+                    
+                    col_adv1, col_adv2 = st.columns(2)
+                    with col_adv1:
+                        # Padrão: 0.8% ao mês (média da renda fixa hoje)
+                        rendimento = st.number_input(
+                            "📈 Rendimento Mensal (%)",
+                            min_value=0.0,
+                            max_value=100.0,
+                            value=0.8, 
+                            step=0.1,
+                            help="Quanto rende por mês? Se não sabe, deixe 0.8% (média aproximada)."
+                        ) / 100
+                        
+                        data_entrada = st.date_input("📅 Quando você aplicou?", date.today())
 
+                    with col_adv2:
+                        categoria = st.selectbox(
+                            "🎯 Perfil de Risco",
+                            ["Conservador", "Moderado", "Arrojado", "Especulativo"],
+                            help="Conservador: Não quer perder dinheiro nunca. Arrojado: Aceita risco para ganhar mais."
+                        )
+                        observacao = st.text_area("📝 Notas", height=80, placeholder="Ex: Dinheiro da reserva de emergência")
+
+                st.markdown("<br>", unsafe_allow_html=True)
+                
                 submitted = st.form_submit_button(
-                    "💾 SALVAR INVESTIMENTO",
+                    "💾 SALVAR MEU DINHEIRO",
                     use_container_width=True,
                     type="primary"
                 )
 
                 if submitted:
-                    # Criar novo registro com nomes de colunas consistentes
+                    # Lógica de salvamento (igual a anterior, mas adaptada ao layout novo)
                     novo = pd.DataFrame([{
                         "instituicao": instituicao,
                         "ativo": ativo,
@@ -2912,38 +2919,28 @@ elif menu == "🐷 Meu Dinheiro Guardado":
                         "observacao": observacao
                     }])
                     
-                    # Concatenar com os dados existentes
                     if df_investimentos.empty:
                         df_atualizado = novo
                     else:
-                        # Garantir que todas as colunas existam
                         for col in novo.columns:
                             if col not in df_investimentos.columns:
                                 df_investimentos[col] = None
                         
-                        # Converter tipos para evitar problemas
+                        # Converter tipos para evitar erros
                         df_investimentos = df_investimentos.astype({
-                            'valor_atual': 'float64',
+                            'valor_atual': 'float64', 
                             'rendimento_mensal': 'float64'
                         }, errors='ignore')
                         
                         df_atualizado = pd.concat([df_investimentos, novo], ignore_index=True)
                     
-                    # Atualizar dados na sessão
                     dados["investimentos"] = df_atualizado
                     st.session_state["dados"] = dados
-                    
-                    # Salvar no banco de dados
                     DatabaseManager.save("investimentos", df_atualizado, usuario)
                     
-                    # Mensagem de sucesso
-                    st.session_state["msg"] = "✅ Investimento salvo com sucesso!"
+                    st.session_state["msg"] = "✅ Dinheiro guardado com sucesso!"
                     st.session_state["msg_tipo"] = "success"
                     st.rerun()
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    st.divider()
 
     # ---------------- LISTA DE INVESTIMENTOS ESTILIZADA ----------------
     st.markdown("### 📋 Meus Investimentos")
