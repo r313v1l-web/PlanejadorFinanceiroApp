@@ -242,7 +242,7 @@ def tela_login():
 def tela_admin_usuarios():
     st.markdown("👥 Gestão de Usuários")
 
-    df = DatabaseManager.load_users()
+    df = DatabaseManager.list_all_users()
 
     # ===============================
     # ➕ CRIAR NOVO USUÁRIO
