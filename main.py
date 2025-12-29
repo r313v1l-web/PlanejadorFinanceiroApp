@@ -499,7 +499,8 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 def consultar_ia_financeira(dados):
     # 1. Configurar a API
     try:
-        genai.configure(api_key=st.secrets["google"]["API_KEY"])
+        # Repare que agora é apenas st.secrets["API_KEY"]
+        genai.configure(api_key=st.secrets["API_KEY"])
     except:
         return "⚠️ Erro: Chave da API do Google não configurada."
 

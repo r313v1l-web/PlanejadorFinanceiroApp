@@ -10,6 +10,7 @@ class DatabaseManager:
     # ===============================
     @staticmethod
     def _get_client():
+        # O Supabase só precisa destas duas chaves:
         return create_client(
             st.secrets["SUPABASE_URL"],
             st.secrets["SUPABASE_KEY"]
