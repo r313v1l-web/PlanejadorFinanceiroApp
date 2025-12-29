@@ -492,6 +492,89 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 
 
 # =========================================================
+# FUNÇÃO: GERAR LANÇAMENTOS AUTOMÁTICOS
+# =========================================================
+def processar_lancamentos_automaticos(dados, usuario):
+    # 1. Carregar dados
+    df_fluxo = dados.get("fluxo_fixo", pd.DataFrame())
+    df_historico = dados.get("historico", pd.DataFrame())
+    
+    if df_fluxo.empty:
+        return False, "Não há contas mensais cadastradas para gerar."
+
+    # Garantir datetime no histórico para comparação
+    if not df_historico.empty:
+        df_historico["data"] = pd.to_datetime(df_historico["data"], errors='coerce')
+
+    hoje = date.today()
+    mes_atual_str = hoje.strftime("%Y-%m") # Ex: "2023-10"
+    
+    novos_registros = []
+    contagem = 0
+
+    # 2. Percorrer cada conta fixa
+    for _, row in df_fluxo.iterrows():
+        nome = row.get("nome", "Sem nome")
+        valor = float(row.get("valor", 0))
+        tipo = row.get("tipo", "Despesa")
+        categoria = row.get("categoria", "Outros")
+        
+        # Verificar validade (Data de início e fim)
+        data_inicio = row.get("data_inicio")
+        data_fim = row.get("data_fim")
+        
+        # Se tiver data de início no futuro, pula
+        if data_inicio:
+            dt_ini = pd.to_datetime(data_inicio).date()
+            if dt_ini > hoje:
+                continue
+                
+        # Se tiver data de fim e já passou, pula
+        if data_fim:
+            dt_fim = pd.to_datetime(data_fim).date()
+            if dt_fim < hoje:
+                continue
+
+        # 3. VERIFICAÇÃO DE DUPLICIDADE INTELIGENTE
+        # Verifica se já existe um lançamento com MESMO nome e MESMO mês no histórico
+        ja_lancado = False
+        if not df_historico.empty:
+            filtro = (
+                (df_historico["descricao"] == nome) & 
+                (df_historico["data"].dt.strftime("%Y-%m") == mes_atual_str)
+            )
+            if not df_historico[filtro].empty:
+                ja_lancado = True
+        
+        # 4. Se não foi lançado, cria o registro
+        if not ja_lancado:
+            novos_registros.append({
+                "data": hoje.isoformat(), # Cria com a data de hoje
+                "descricao": nome,
+                "valor": valor,
+                "tipo": tipo,
+                "categoria": categoria,
+                "responsavel": "Automático", # Marca como automático
+                "fixo": "Sim"
+            })
+            contagem += 1
+
+    # 5. Salvar se houver novidades
+    if novos_registros:
+        df_novos = pd.DataFrame(novos_registros)
+        df_final = pd.concat([df_historico, df_novos], ignore_index=True)
+        
+        # Atualiza sessão e banco
+        dados["historico"] = df_final
+        st.session_state["dados"] = dados
+        DatabaseManager.save("historico", df_final, usuario)
+        
+        return True, f"✅ {contagem} lançamentos gerados com sucesso para este mês!"
+    else:
+        return False, "👍 Todas as contas deste mês já foram lançadas!"
+    
+
+# =========================================================
 # FUNÇÃO: SALVAR RELATÓRIO MENSAL
 # =========================================================
 
@@ -4050,7 +4133,7 @@ elif menu == "📅 Contas Mensais":
                 align-items: center;
                 justify-content: center;
             ">🏢</span>
-            Fluxos Fixos Mensais
+            Contas Mensais
         </h1>
         <p style="color: #e5e7eb; margin: 0; opacity: 0.9;">
             Controle suas receitas e despesas recorrentes
@@ -4100,7 +4183,40 @@ elif menu == "📅 Contas Mensais":
         df_fluxo["tipo"] = df_fluxo["tipo"].astype(str).str.strip().str.title()
     else:
         df_fluxo = pd.DataFrame(columns=["tipo", "valor", "nome", "categoria", "recorrencia", "data_inicio", "data_fim", "observacao"])
-
+    # ================= BOTÃO DE AUTOMAÇÃO =================
+    with st.container():
+        st.markdown("""
+        <div style="
+            background: linear-gradient(90deg, #1e3a8a 0%, #172554 100%);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        ">
+            <div style="color: white;">
+                <div style="font-weight: bold; font-size: 16px;">⚡ Automação Mensal</div>
+                <div style="font-size: 12px; opacity: 0.8;">Lançar todas as contas ativas no histórico deste mês</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        col_auto1, col_auto2 = st.columns([3, 1])
+        with col_auto2:
+            if st.button("🚀 Gerar Agora", use_container_width=True):
+                sucesso, mensagem = processar_lancamentos_automaticos(dados, usuario)
+                if sucesso:
+                    st.success(mensagem)
+                    st.balloons() # Efeito visual legal!
+                    # Força recarregamento dos dados para atualizar os gráficos
+                    st.session_state["dados"] = DatabaseManager.load_all(usuario)
+                    st.rerun()
+                else:
+                    st.info(mensagem)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+    # ======================================================
     # ================= RESUMO ESTILIZADO =================
     # Separar receitas e despesas
     receitas = df_fluxo[df_fluxo["tipo"] == "Receita"] if not df_fluxo.empty else pd.DataFrame()
