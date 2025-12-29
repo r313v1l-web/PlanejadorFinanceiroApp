@@ -1518,8 +1518,8 @@ with st.sidebar:
             "bg_color": "rgba(239, 68, 68, 0.1)"
         },
         {
-            "emoji": "📝",
-            "label": "LANÇAMENTOS",
+            "emoji": "💸",
+            "label": "Anotar Gasto",
             "color": "#10b981",
             "bg_color": "rgba(16, 185, 129, 0.1)"
         },
