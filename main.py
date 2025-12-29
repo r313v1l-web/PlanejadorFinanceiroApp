@@ -420,8 +420,8 @@ def verificar_e_mostrar_onboarding(dados, usuario):
                         {"chave": "meta_patrimonio", "valor": meta_patrimonio},
                         {"chave": "orcamento_mensal", "valor": orcamento_mensal},
                         {"chave": "reserva_gastos", "valor": reserva_gastos},
-                        {"chave": "rendimento_mensal", "valor": 0.008}, # 0.8% padrão
-                        {"chave": "inflacao_mensal", "valor": 0.004}    # 0.4% padrão
+                        {"chave": "rendimento_mensal", "valor": 0.008},
+                        {"chave": "inflacao_mensal", "valor": 0.004}
                     ])
                     DatabaseManager.save("config", df_config, usuario)
 
@@ -440,7 +440,7 @@ def verificar_e_mostrar_onboarding(dados, usuario):
                         df_cats = pd.DataFrame(cats)
                         DatabaseManager.save("categorias", df_cats, usuario)
 
-                    # 3. Criar Fluxo Fixo (Salário)
+                    # 3. Criar Fluxo Fixo (Salário e Despesas)
                     fluxos = []
                     if criar_salario and orcamento_mensal > 0:
                         fluxos.append({
@@ -476,6 +476,13 @@ def verificar_e_mostrar_onboarding(dados, usuario):
                     if fluxos:
                         df_fluxo = pd.DataFrame(fluxos)
                         DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+
+                    # 🔥 A CORREÇÃO ESTÁ AQUI EMBAIXO 🔥
+                    # Força o sistema a baixar os dados novos do banco antes de recarregar a página
+                    st.session_state["dados"] = DatabaseManager.load_all(usuario)
+                    # Normalizar os novos dados baixados para evitar erros
+                    for chave in st.session_state["dados"]:
+                        st.session_state["dados"][chave] = normalizar_df(st.session_state["dados"][chave])
 
                     st.success("Tudo pronto! Carregando seu painel...")
                     st.rerun()
