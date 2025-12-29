@@ -4020,7 +4020,7 @@ elif menu == "🎯 Sonhos & Metas":
 
 
 # =========================================================
-# 📅 Contas Mensais - VERSÃO ESTILIZADA COMPLETA
+# 📅 Contas Mensais - VERSÃO ESTILIZADA COMPLETA (ANTIGO FLUXO FIXO)
 # =========================================================
 
 elif menu == "📅 Contas Mensais":
@@ -4208,11 +4208,11 @@ elif menu == "📅 Contas Mensais":
                 col1, col2 = st.columns(2, gap="large")
 
                 with col1:
-                    st.markdown("#### 📋 Informações Básicas")
+                    st.markdown("#### 📋 O que é isso?")
                     nome = st.text_input(
-                        "🏷️ **Nome do Fluxo**",
-                        placeholder="Ex: Salário, Aluguel, Energia Elétrica...",
-                        help="Dê um nome claro e descritivo para este fluxo"
+                        "🏷️ **Nome da Conta**",
+                        placeholder="Ex: Aluguel, Netflix, Salário, Academia...",
+                        help="Dê um nome fácil de lembrar. Ex: 'Faculdade' ou 'Salário da Esposa'."
                     )
                     
                     valor = st.number_input(
@@ -4221,17 +4221,17 @@ elif menu == "📅 Contas Mensais":
                         step=10.0,
                         value=1000.0,
                         format="%.2f",
-                        help="Valor que será debitado/creditado mensalmente"
+                        help="Qual o valor dessa conta? Se variar um pouco (como luz), coloque uma média."
                     )
                     
                     tipo = st.selectbox(
-                        "📊 **Tipo**",
+                        "📊 **É dinheiro que entra ou sai?**",
                         ["Receita", "Despesa"],
-                        help="Receita: dinheiro que entra | Despesa: dinheiro que sai"
+                        help="Receita: Salário, Vendas, Pensão (Dinheiro entrando).\nDespesa: Contas a pagar (Dinheiro saindo)."
                     )
 
                 with col2:
-                    st.markdown("#### 🏷️ Categorização")
+                    st.markdown("#### 🏷️ Detalhes")
                     
                     # Carregar categorias disponíveis
                     categorias_disponiveis = []
@@ -4253,14 +4253,14 @@ elif menu == "📅 Contas Mensais":
                     
                     categoria = st.selectbox(
                         "📂 **Categoria**",
-                        categorias_disponiveis,
-                        help="Classifique este fluxo para facilitar a organização"
+                        categorias_disponiveis, # Certifique-se que a variável existe como no código anterior
+                        help="Agrupar ajuda a saber onde você gasta mais. Ex: 'Casa', 'Lazer'."
                     )
                     
                     recorrencia = st.selectbox(
-                        "🔄 **Recorrência**",
+                        "🔄 **Repete quando?**",
                         ["Mensal", "Anual", "Trimestral", "Semestral"],
-                        help="Com que frequência este fluxo ocorre"
+                        help="Mensal: Todo mês tem (Aluguel, Luz).\nAnual: Uma vez por ano (IPTU, IPVA)."
                     )
 
                 st.markdown("#### 📅 Período de Vigência")
@@ -7590,7 +7590,7 @@ elif menu == "⚙️ Planejamento":
                     value=float(meta_sugerida),
                     step=10000.0,
                     format="%.2f",
-                    help="Valor total que você deseja acumular ao longo do tempo"
+                    help="Quanto dinheiro você quer ter acumulado no futuro para se sentir seguro ou rico? Ex: R$ 100.000 para começar."
                 )
             
             with col_meta_input2:
@@ -7663,12 +7663,12 @@ elif menu == "⚙️ Planejamento":
             col_orc1, col_orc2 = st.columns([2, 1])
             with col_orc1:
                 orcamento = st.number_input(
-                    "**📊 Qual é seu orçamento mensal? (R$)**",
+                    "**📊 Qual é a renda TOTAL da família? (R$)**",
                     min_value=0.0,
                     value=orcamento_mensal,
                     step=500.0,
                     format="%.2f",
-                    help="Soma de todas as receitas mensais da família"
+                    help="Some todos os salários líquidos, vales, rendas extras e pensões que caem na conta todo mês."
                 )
             
             with col_orc2:
@@ -7848,12 +7848,12 @@ elif menu == "⚙️ Planejamento":
             col_res1, col_res2 = st.columns([2, 1])
             with col_res1:
                 reserva = st.number_input(
-                    "**💸 Quanto reservar para gastos mensais? (R$)**",
+                    "**💸 Limite para 'Gastar Vivendo' (R$)**",
                     min_value=0.0,
                     value=float(config_dict.get("reserva_gastos", sugestao_reserva if orcamento > 0 else 1000)),
                     step=50.0,
                     format="%.2f",
-                    help="Valor disponível para gastos do dia a dia (alimentação, transporte, lazer)"
+                    help="Tirando as contas fixas (aluguel, luz), quanto sobra para você gastar com mercado, Uber, iFood e lazer? Esse será seu limite mensal."
                 )
             
             with col_res2:
