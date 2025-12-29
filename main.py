@@ -700,7 +700,8 @@ def consultar_ia_financeira(dados):
     """
 
     # Tenta modelos em ordem
-    modelos_para_tentar = ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-pro']
+    modelos_para_tentar = [        'gemini-2.5-flash-lite',
+        'gemini-2.5-flash'   ]
     
     for modelo in modelos_para_tentar:
         try:
