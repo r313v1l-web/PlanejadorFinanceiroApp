@@ -575,7 +575,8 @@ def consultar_ia_financeira(dados):
     """
 
     # 4. TENTATIVA DE MODELOS
-    modelos_para_tentar = [  'gemini-2.5-flash-native-audio-dialog']
+    modelos_para_tentar = [        'gemini-2.5-flash-lite',
+        'gemini-2.5-flash'   ]
 
     for modelo in modelos_para_tentar:
         try:
