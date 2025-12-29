@@ -678,7 +678,7 @@ def mostrar_analise_ia_estilizada(analise_texto):
     analise_limpa = analise_texto
     
     # Converte títulos
-    analise_limpa = analise_limpa.replace("📊 **SITUAÇÃO ATUAL**", """
+    analise_limpa = analise_limpa.replace("📊 SITUAÇÃO ATUAL", """
     <div style="
         color: #3b82f6;
         font-size: 18px;
@@ -691,7 +691,7 @@ def mostrar_analise_ia_estilizada(analise_texto):
     </div>
     """)
     
-    analise_limpa = analise_limpa.replace("🚩 **PRINCIPAIS PONTOS**", """
+    analise_limpa = analise_limpa.replace("🚩 PRINCIPAIS PONTOS", """
     <div style="
         color: #ef4444;
         font-size: 18px;
@@ -704,7 +704,7 @@ def mostrar_analise_ia_estilizada(analise_texto):
     </div>
     """)
     
-    analise_limpa = analise_limpa.replace("🎯 **ONDE SEU DINHEIRO VAI**", """
+    analise_limpa = analise_limpa.replace("🎯 ONDE SEU DINHEIRO VAI", """
     <div style="
         color: #10b981;
         font-size: 18px;
@@ -717,7 +717,7 @@ def mostrar_analise_ia_estilizada(analise_texto):
     </div>
     """)
     
-    analise_limpa = analise_limpa.replace("⚡ **PLANO DE 3 PASSOS**", """
+    analise_limpa = analise_limpa.replace("⚡ PLANO DE 3 PASSOS", """
     <div style="
         color: #f59e0b;
         font-size: 18px;
@@ -730,7 +730,7 @@ def mostrar_analise_ia_estilizada(analise_texto):
     </div>
     """)
     
-    analise_limpa = analise_limpa.replace("💡 **DICA DO DIA**", """
+    analise_limpa = analise_limpa.replace("💡 DICA DO DIA", """
     <div style="
         background: rgba(59, 130, 246, 0.1);
         border-radius: 10px;
