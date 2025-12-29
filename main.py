@@ -592,13 +592,13 @@ def consultar_ia_financeira(dados):
 
     FAMÍLIA: {config["nome_familia"]}
     
-    {emoji_principal} **VISÃO GERAL**
+    {emoji_principal} VISÃO GERAL
     👛 Patrimônio: R$ {patrimonio:,.0f} ({perc_meta:.1f}% da meta)
     💰 Saldo Livre/Mês: R$ {saldo_fixo:,.0f}
     📈 Taxa de Poupança: {taxa_poupanca:.1f}%
     🎯 Saúde Financeira: {tom.upper()}
 
-    ⚠️ **PONTOS DE ATENÇÃO**
+    ⚠️ PONTOS DE ATENÇÃO
     1. 📉 Comprometimento: {comprometimento:.1f}% da renda (ideal <50%)
     2. 💳 Uso da Reserva: {uso_reserva:.1f}% (limite: R$ {config["reserva"]:.0f})
     3. 🔥 Maiores Gastos Fixos:
