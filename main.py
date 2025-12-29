@@ -494,99 +494,223 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 
 
 # =========================================================
-# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (AUDITOR DE GASTOS)
+# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI) - VERSÃO PRO
 # =========================================================
-def consultar_ia_financeira(dados):
-    # 1. Configurar a API
+# NOVO PROMPT DE ENGENHARIA AVANÇADA
+def consultar_ia_financeira_avancada(dados):
     try:
         genai.configure(api_key=st.secrets["API_KEY"])
     except:
         return "⚠️ Erro: Chave da API do Google não configurada."
 
-    # --- PREPARAÇÃO DOS DADOS PARA ANÁLISE DETALHADA ---
+    # --- PREPARAÇÃO DE DADOS AVANÇADA ---
     
-    # A. Informações Gerais
-    orcamento_mensal = 0.0
+    # 1. Dados Básicos da Configuração
     if not dados["config"].empty:
         df_c = dados["config"].set_index("chave")
-        if "orcamento_mensal" in df_c.index: orcamento_mensal = float(df_c.loc["orcamento_mensal"]["valor"])
+        orcamento_mensal = float(df_c.loc["orcamento_mensal"]["valor"]) if "orcamento_mensal" in df_c.index else 0
+        reserva_gastos = float(df_c.loc["reserva_gastos"]["valor"]) if "reserva_gastos" in df_c.index else 0
+        meta_patrimonio = float(df_c.loc["meta_patrimonio"]["valor"]) if "meta_patrimonio" in df_c.index else 0
+        nome_familia = str(df_c.loc["nome_familia"]["valor"]) if "nome_familia" in df_c.index else "Família"
+    else:
+        orcamento_mensal = reserva_gastos = meta_patrimonio = 0
+        nome_familia = "Família"
 
-    # B. Análise Profunda dos Gastos Variáveis (O PULO DO GATO 🐈)
-    detalhe_gastos_str = "Nenhum gasto registrado este mês."
-    maiores_viloes_str = ""
+    # 2. Análise Detalhada de Patrimônio
+    patrimonio = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
+    perc_meta = (patrimonio / meta_patrimonio * 100) if meta_patrimonio > 0 else 0
     
-    if not dados["controle_gastos"].empty:
-        df_g = dados["controle_gastos"].copy()
-        total_gasto = df_g["valor"].sum()
+    # Análise de investimentos por categoria
+    invest_analise = ""
+    if not dados["investimentos"].empty:
+        df_inv = dados["investimentos"]
+        # Agrupar por tipo
+        inv_por_tipo = df_inv.groupby("tipo")["valor_atual"].sum()
+        inv_por_perfil = df_inv.groupby("categoria")["valor_atual"].sum()
         
-        # 1. Quanto gastou por Categoria (Ex: Alimentação: R$ 1.500)
-        # Se você tiver a coluna 'categoria' no controle de gastos (passo futuro), usaria ela.
-        # Como hoje você usa 'descricao', vamos tentar agrupar ou mandar as maiores.
-        
-        # Vamos mandar as 10 descrições mais caras somadas (para pegar "Uber" repetido)
-        gastos_por_item = df_g.groupby("descricao")["valor"].sum().sort_values(ascending=False).head(5)
-        
-        detalhe_gastos_str = f"Total Variável: R$ {total_gasto:.2f}\n"
-        detalhe_gastos_str += "💰 ONDE VOCÊ MAIS GASTOU (Soma por item):\n"
-        for item, valor in gastos_por_item.items():
-            perc = (valor / total_gasto * 100)
-            detalhe_gastos_str += f"- {item}: R$ {valor:.2f} ({perc:.1f}% do total)\n"
+        invest_analise = f"""
+        📊 ANÁLISE DE INVESTIMENTOS:
+        - Total Investido: R$ {patrimonio:,.2f}
+        - Distribuição por Tipo: {', '.join([f'{tipo}: R$ {valor:,.0f}' for tipo, valor in inv_por_tipo.items()])}
+        - Perfil de Risco: {', '.join([f'{perfil}: {valor:,.0f}' for perfil, valor in inv_por_perfil.items()])}
+        """
 
-        # 2. Os 5 lançamentos individuais mais caros (Aquele jantar caro único)
-        top5_individual = df_g.nlargest(5, "valor")[["data", "descricao", "valor"]]
-        maiores_viloes_str = "💸 MAIORES COMPRAS ÚNICAS:\n"
-        for _, row in top5_individual.iterrows():
-            data_fmt = pd.to_datetime(row['data']).strftime('%d/%m')
-            maiores_viloes_str += f"- {data_fmt}: {row['descricao']} (R$ {row['valor']:.2f})\n"
-
-    # C. Fluxo Fixo (Só para contexto)
-    custo_fixo_total = 0
+    # 3. Análise Detalhada de Fluxo Fixo
     if not dados["fluxo_fixo"].empty:
         df_f = dados["fluxo_fixo"]
-        custo_fixo_total = df_f[df_f["tipo"] == "Despesa"]["valor"].sum()
+        receitas_fixas = df_f[df_f["tipo"] == "Receita"]["valor"].sum()
+        despesas_fixas = df_f[df_f["tipo"] == "Despesa"]["valor"].sum()
+        
+        # Top 5 maiores despesas fixas
+        top_despesas = df_f[df_f["tipo"] == "Despesa"].nlargest(5, "valor")
+        top_despesas_str = "\n".join([f"    • {row['nome']}: R$ {row['valor']:,.2f} ({row['categoria']})" 
+                                      for _, row in top_despesas.iterrows()])
+    else:
+        receitas_fixas = despesas_fixas = 0
+        top_despesas_str = "Nenhuma despesa fixa cadastrada"
+    
+    saldo_fixo = receitas_fixas - despesas_fixas
+    comprometimento_fixo = (despesas_fixas / receitas_fixas * 100) if receitas_fixas > 0 else 0
 
-    # 3. PROMPT DE ESPECIALISTA EM REDUÇÃO DE CUSTOS
+    # 4. Análise AVANÇADA dos Gastos Variáveis (COM CATEGORIZAÇÃO)
+    total_gasto_variavel = 0
+    analise_categorias = ""
+    viloes_detalhados = ""
+    
+    if not dados["controle_gastos"].empty:
+        df_g = dados["controle_gastos"]
+        total_gasto_variavel = df_g["valor"].sum()
+        
+        # 🔥 ANÁLISE POR CATEGORIA AUTOMÁTICA
+        categorias_detectadas = {}
+        palavras_chave = {
+            "Alimentação": ["restaurante", "lanche", "mercado", "supermercado", "café", "feira"],
+            "Transporte": ["uber", "táxi", "gasolina", "combustível", "ônibus", "metro"],
+            "Lazer": ["cinema", "netflix", "bar", "festas", "shows", "viagem"],
+            "Saúde": ["farmácia", "médico", "dentista", "remédio", "plano de saúde"],
+            "Casa": ["luz", "água", "gás", "condomínio", "manutenção"],
+            "Educação": ["curso", "livro", "faculdade", "material escolar"],
+            "Compras": ["roupa", "eletrônico", "presente", "acessório"],
+            "Outros": []
+        }
+        
+        for idx, row in df_g.iterrows():
+            desc_lower = row['descricao'].lower()
+            categoria_encontrada = False
+            
+            for categoria, palavras in palavras_chave.items():
+                if any(palavra in desc_lower for palavra in palavras):
+                    if categoria not in categorias_detectadas:
+                        categorias_detectadas[categoria] = 0
+                    categorias_detectadas[categoria] += row['valor']
+                    categoria_encontrada = True
+                    break
+            
+            if not categoria_encontrada:
+                if "Outros" not in categorias_detectadas:
+                    categorias_detectadas["Outros"] = 0
+                categorias_detectadas["Outros"] += row['valor']
+        
+        # Formatar análise de categorias
+        analise_categorias = "📋 DISTRIBUIÇÃO POR CATEGORIA:\n"
+        for categoria, valor in sorted(categorias_detectadas.items(), key=lambda x: x[1], reverse=True):
+            percentual = (valor / total_gasto_variavel * 100) if total_gasto_variavel > 0 else 0
+            analise_categorias += f"    • {categoria}: R$ {valor:,.2f} ({percentual:.1f}%)\n"
+        
+        # Top 3 vilões
+        top_gastos = df_g.nlargest(3, "valor")
+        viloes_detalhados = ", ".join([f"{row['descricao']} (R$ {row['valor']:.0f})" for _, row in top_gastos.iterrows()])
+    
+    # 5. Análise do Histórico (Lançamentos)
+    analise_historico = ""
+    if not dados["historico"].empty:
+        df_h = dados["historico"].copy()
+        df_h["data"] = pd.to_datetime(df_h["data"])
+        mes_atual = datetime.now().strftime("%Y-%m")
+        df_mes = df_h[df_h["data"].dt.strftime("%Y-%m") == mes_atual]
+        
+        if not df_mes.empty:
+            receitas_var = df_mes[df_mes["tipo"] == "Receita"]["valor"].sum()
+            despesas_var = df_mes[df_mes["tipo"] == "Despesa"]["valor"].sum()
+            investimentos_var = df_mes[df_mes["tipo"] == "Investimento"]["valor"].sum()
+            
+            analise_historico = f"""
+            📅 ANÁLISE DO MÊS ATUAL ({mes_atual}):
+            - Receitas Variáveis: R$ {receitas_var:,.2f}
+            - Despesas Variáveis: R$ {despesas_var:,.2f}
+            - Investimentos Realizados: R$ {investimentos_var:,.2f}
+            """
+
+    # 6. Cálculos Financeiros
+    total_saidas = despesas_fixas + total_gasto_variavel
+    balanco_mensal = receitas_fixas - total_saidas
+    taxa_poupanca = (balanco_mensal / receitas_fixas * 100) if receitas_fixas > 0 else 0
+    
+    # 7. Saúde Financeira (Score)
+    score = 0
+    if comprometimento_fixo < 50: score += 25
+    if taxa_poupanca > 20: score += 25
+    if total_gasto_variavel <= reserva_gastos: score += 25
+    if perc_meta > 50: score += 25
+    
+    status_saude = "🟢 BOA" if score >= 75 else "🟡 ALERTA" if score >= 50 else "🔴 CRÍTICA"
+
+    # 8. PROMPT AVANÇADO
     prompt = f"""
-    Atue como um Especialista em Redução de Custos Pessoais. Seja direto, um pouco rigoroso mas construtivo.
-    Seu objetivo é analisar os gastos do usuário e encontrar onde ele pode cortar desperdícios.
-
-    DADOS FINANCEIROS DO MÊS:
-    - Renda Mensal Disponível: R$ {orcamento_mensal:.2f}
-    - Custos Fixos (Contas obrigatórias): R$ {custo_fixo_total:.2f}
+    Atue como um Consultor Financeiro Sênior (CFP) certificado para a família {nome_familia}.
+    Analise os dados abaixo de forma crítica, estratégica e com foco em ações práticas.
     
-    ANÁLISE DOS GASTOS VARIÁVEIS (CARTÃO/DIA A DIA):
-    {detalhe_gastos_str}
+    ====== DADOS FINANCEIROS COMPLETOS ======
     
-    {maiores_viloes_str}
-
-    ---
-    RESPONDA EXATAMENTE ASSIM:
-
-    🕵️‍♂️ Análise de Hábitos:
-    (Olhe para os itens onde ele mais gastou. Se for comida/ifood, diga que está comendo o salário. Se for transporte, sugira alternativas. Se for compras aleatórias, dê um puxão de orelha).
-
-    ✂️ 3 Sugestões Práticas de Corte:
-    1. (Dica baseada no gasto nº 1)
-    2. (Dica baseada no gasto nº 2)
-    3. (Dica geral de economia baseada no perfil dos gastos)
-
-    🏆 Desafio da Semana:
-    (Proponha uma meta curta, tipo "Gastar zero com X essa semana")
+    1. 🎯 META E PATRIMÔNIO:
+       - Meta de Patrimônio: R$ {meta_patrimonio:,.2f}
+       - Patrimônio Atual: R$ {patrimonio:,.2f} ({perc_meta:.1f}% da meta)
+       {invest_analise if invest_analise else ""}
+    
+    2. 💰 FLUXO FIXO MENSAL:
+       - Renda Fixa Total: R$ {receitas_fixas:,.2f}
+       - Despesas Fixas: R$ {despesas_fixas:,.2f} ({comprometimento_fixo:.1f}% da renda)
+       - Saldo Fixo: R$ {saldo_fixo:,.2f}
+       - Maiores Despesas Fixas:
+       {top_despesas_str}
+    
+    3. 🛒 GASTOS VARIÁVEIS (DIA A DIA):
+       - Total Gasto: R$ {total_gasto_variavel:,.2f}
+       - Limite da Reserva: R$ {reserva_gastos:,.2f}
+       - Status: {"🟢 DENTRO DO LIMITE" if total_gasto_variavel <= reserva_gastos else f"🔴 ESTOURO DE R$ {total_gasto_variavel - reserva_gastos:,.2f}"}
+       {analise_categorias if analise_categorias else ""}
+       - Maiores Vilões: {viloes_detalhados if viloes_detalhados else "Nenhum gasto registrado"}
+    
+    4. 📊 RESULTADO FINAL:
+       - Sobra/Falta no Mês: R$ {balanco_mensal:,.2f}
+       - Taxa de Poupança: {taxa_poupanca:.1f}% (Ideal: 20%)
+       - Score de Saúde Financeira: {score}/100 → {status_saude}
+    
+    5. 📅 HISTÓRICO DO MÊS:
+       {analise_historico if analise_historico else "Nenhum lançamento no mês atual"}
+    
+    ====== ANÁLISE SOLICITADA ======
+    
+    📊 DIAGNÓSTICO COMPLETO:
+    (Dê um diagnóstico detalhado considerando TODOS os aspectos acima. Seja específico sobre pontos fortes e fracos)
+    
+    🔴 PONTOS CRÍTICOS DE ATENÇÃO:
+    1. Análise do comprometimento de renda ({comprometimento_fixo:.1f}% vs ideal <50%)
+    2. Análise do uso da reserva de gastos ({total_gasto_variavel/reserva_gastos*100:.1f}% utilizado)
+    3. Análise da taxa de poupança ({taxa_poupanca:.1f}% vs ideal 20%)
+    4. **ANÁLISE DAS CATEGORIAS DE GASTOS** - Identifique onde há mais vazamentos
+    
+    💡 PLANO DE AÇÃO PERSONALIZADO:
+    (Baseie-se nas categorias detectadas e nos dados específicos)
+    
+    A) 🎯 OTIMIZAÇÃO IMEDIATA (Esta semana):
+    1. Corte de Custos: Especifique quais categorias reduzir e quanto poupar
+    2. Ajuste Comportamental: Recomendação baseada nos "maiores vilões"
+    
+    B) 📈 ESTRATÉGIA DE MÉDIO PRAZO (Próximos 3 meses):
+    1. Revisão de Despesas Fixas: Sugestões baseadas nas maiores despesas
+    2. Meta de Poupança: Como atingir 20% baseado na realidade atual
+    
+    C) 🚀 ACELERAÇÃO DA META (Longo prazo):
+    1. Recomendação de Investimentos baseada no perfil atual
+    2. Estratégia para alcançar {perc_meta:.1f}% → 100% da meta
+    
+    📝 OBSERVAÇÃO FINAL:
+    (Dê um conselho personalizado baseado na situação específica)
     """
 
-    # 4. TENTATIVA DE MODELOS
-    modelos_para_tentar = [        'gemini-2.5-flash-lite',
-        'gemini-2.5-flash'   ]
-
+    # Tenta modelos em ordem
+    modelos_para_tentar = ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-pro']
+    
     for modelo in modelos_para_tentar:
         try:
             model = genai.GenerativeModel(modelo)
             response = model.generate_content(prompt)
             return response.text
-        except Exception:
+        except Exception as e:
             continue
     
-    return "⚠️ A IA está indisponível no momento. Tente novamente."
+    return "⚠️ A IA está sobrecarregada no momento. Tente novamente em alguns segundos."
 
 # =========================================================
 # FUNÇÃO: GERAR LANÇAMENTOS AUTOMÁTICOS
