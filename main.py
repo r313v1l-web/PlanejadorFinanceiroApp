@@ -496,7 +496,9 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 # =========================================================
 # 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI) - VERSÃO PRO
 # =========================================================
-# NOVO PROMPT DE ENGENHARIA AVANÇADA
+# =========================================================
+# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI) - VERSÃO PRO COM PROJEÇÃO
+# =========================================================
 def consultar_ia_financeira(dados):
     """
     Versão moderna, direta e visualmente atrativa da IA financeira
@@ -516,7 +518,9 @@ def consultar_ia_financeira(dados):
             "nome_familia": df_c.loc["nome_familia"]["valor"] if "nome_familia" in df_c.index else "Família",
             "meta": float(df_c.loc["meta_patrimonio"]["valor"]) if "meta_patrimonio" in df_c.index else 0,
             "orcamento": float(df_c.loc["orcamento_mensal"]["valor"]) if "orcamento_mensal" in df_c.index else 0,
-            "reserva": float(df_c.loc["reserva_gastos"]["valor"]) if "reserva_gastos" in df_c.index else 0
+            "reserva": float(df_c.loc["reserva_gastos"]["valor"]) if "reserva_gastos" in df_c.index else 0,
+            "rendimento": float(df_c.loc["rendimento_mensal"]["valor"]) if "rendimento_mensal" in df_c.index else 0.008,
+            "inflacao": float(df_c.loc["inflacao_mensal"]["valor"]) if "inflacao_mensal" in df_c.index else 0.004
         }
     
     # Cálculos essenciais
@@ -574,6 +578,48 @@ def consultar_ia_financeira(dados):
     taxa_poupanca = (saldo_fixo / receitas * 100) if receitas > 0 else 0
     uso_reserva = (gastos_var / config["reserva"] * 100) if config["reserva"] > 0 else 0
     
+    # 🔥 NOVO: CÁLCULO DA PROJEÇÃO DE TEMPO PARA A META
+    projecao_tempo = ""
+    if config["meta"] > patrimonio and saldo_fixo > 0:
+        # Usar a mesma lógica do dashboard (projetar_patrimonio)
+        taxa_real = config.get("rendimento", 0.008) - config.get("inflacao", 0.004)
+        taxa_real = max(taxa_real, 0.001)  # Mínimo 0.1% para evitar problemas
+        
+        # Simulação mês a mês (120 meses = 10 anos máximo)
+        patrimonio_projetado = patrimonio
+        meses_necessarios = 0
+        
+        for i in range(120):  # Máximo 10 anos
+            if patrimonio_projetado >= config["meta"]:
+                break
+                
+            if i > 0:  # Primeiro mês só patrimônio inicial
+                rendimento = patrimonio_projetado * taxa_real
+                patrimonio_projetado += rendimento + saldo_fixo
+            else:
+                patrimonio_projetado += saldo_fixo  # Aporte do primeiro mês
+            
+            meses_necessarios += 1
+        
+        if patrimonio_projetado >= config["meta"]:
+            anos = meses_necessarios // 12
+            meses = meses_necessarios % 12
+            
+            if anos > 0 and meses > 0:
+                projecao_tempo = f"⏳ Projeção: {anos} anos e {meses} meses para atingir a meta"
+            elif anos > 0:
+                projecao_tempo = f"⏳ Projeção: {anos} anos para atingir a meta"
+            else:
+                projecao_tempo = f"⏳ Projeção: {meses} meses para atingir a meta"
+        else:
+            projecao_tempo = "🎯 Meta distante - precisa aumentar aportes"
+    elif config["meta"] <= patrimonio:
+        projecao_tempo = "🎉 Meta já atingida! Parabéns! 🏆"
+    elif config["meta"] == 0:
+        projecao_tempo = "🎯 Defina uma meta de patrimônio para ver projeções"
+    else:
+        projecao_tempo = "🎯 Aumente seu saldo livre para acelerar a meta"
+
     # Determinar emoji baseado no score
     if comprometimento < 50 and taxa_poupanca >= 20:
         emoji_principal = "🚀"
@@ -585,7 +631,7 @@ def consultar_ia_financeira(dados):
         emoji_principal = "🎯"
         tom = "atenção"
 
-    # --- PROMPT MODERNO COM EMOJIS ---
+    # --- PROMPT MODERNO COM EMOJIS (MANTENDO TODO O CONTEÚDO ORIGINAL) ---
     prompt = f"""
     Você é um consultor financeiro moderno que fala de forma direta e usa emojis para deixar a análise visual, você não usa negrito para destacar porque fica com * indesejados.. 
     Responda APENAS com o conteúdo da análise, sem introduções ou saudações.
@@ -597,6 +643,7 @@ def consultar_ia_financeira(dados):
     💰 Saldo Livre/Mês: R$ {saldo_fixo:,.0f}
     📈 Taxa de Poupança: {taxa_poupanca:.1f}%
     🎯 Saúde Financeira: {tom.upper()}
+    {projecao_tempo}
 
     ⚠️ PONTOS DE ATENÇÃO
     1. 📉 Comprometimento: {comprometimento:.1f}% da renda (ideal <50%)
@@ -640,55 +687,6 @@ def consultar_ia_financeira(dados):
             continue
     
     return "🤖 Consultoria temporariamente indisponível. Tente novamente!"
-
-
-# Função SIMPLES para exibir - SEM transformações complexas
-def mostrar_analise_ia_simples(analise_texto):
-    """
-    Exibe a análise da IA de forma limpa e visual
-    """
-    # Container estilizado
-    st.markdown("""
-    <div style='
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border-radius: 16px;
-        padding: 24px;
-        margin: 20px 0;
-        border: 1px solid #334155;
-    '>
-    """, unsafe_allow_html=True)
-    
-    # Cabeçalho fixo
-    st.markdown("""
-    <div style='
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 20px;
-    '>
-        <div style='
-            background: #7c3aed;
-            border-radius: 10px;
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        '>
-            <span style='font-size: 24px;'>🤖</span>
-        </div>
-        <div>
-            <h3 style='margin: 0; color: white;'>Consultor Financeiro AI</h3>
-            <p style='margin: 0; color: #94a3b8; font-size: 14px;'>Análise inteligente em tempo real</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Apenas exibe o texto como markdown (já vem formatado com emojis)
-    st.markdown(analise_texto)
-    
-    # Fecha o container
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # FUNÇÃO: GERAR LANÇAMENTOS AUTOMÁTICOS
