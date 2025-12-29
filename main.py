@@ -497,7 +497,7 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 # 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI) - VERSÃO PRO
 # =========================================================
 # NOVO PROMPT DE ENGENHARIA AVANÇADA
-def consultar_ia_financeira_avancada(dados):
+def consultar_ia_financeira(dados):
     try:
         genai.configure(api_key=st.secrets["API_KEY"])
     except:
