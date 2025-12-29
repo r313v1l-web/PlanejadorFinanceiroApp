@@ -193,13 +193,12 @@ def tela_login():
         st.markdown("<br>", unsafe_allow_html=True)
         
         # BOTÃO DE LOGIN
-        df_users = DatabaseManager.load_users()
-        
         if st.button("🚀 Entrar no Sistema", type="primary", use_container_width=True):
             usuario_input = usuario.strip().lower()
             senha_input = senha.strip()
             
-            user = df_users[df_users["usuario"] == usuario_input]
+            # 🔥 MUDANÇA AQUI: Busca direto no banco apenas esse usuário
+            user = DatabaseManager.get_user_by_username(usuario_input)
             
             if user.empty:
                 st.error("❌ Usuário não encontrado.")

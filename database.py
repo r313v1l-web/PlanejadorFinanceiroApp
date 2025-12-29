@@ -18,11 +18,40 @@ class DatabaseManager:
     # ===============================
     # USUÁRIOS
     # ===============================
+    
+    # ===============================
+    # NOVAS FUNÇÕES DE USUÁRIO
+    # ===============================
     @staticmethod
-    def load_users():
+    def get_user_by_username(usuario):
+        """Busca apenas UM usuário para o Login (Mais rápido e seguro)"""
+        supabase = DatabaseManager._get_client()
+        
+        # Garante que o usuário está em minúsculo e sem espaços
+        usuario_clean = str(usuario).strip().lower()
+
+        # Busca apenas onde a coluna 'usuario' é igual ao digitado
+        res = supabase.table("usuarios").select("*").eq("usuario", usuario_clean).execute()
+
+        if not res.data:
+            return pd.DataFrame() # Retorna vazio se não achar
+
+        df = pd.DataFrame(res.data)
+        
+        # Normaliza as colunas para evitar erros
+        df["usuario"] = df["usuario"].astype(str).str.strip().str.lower()
+        df["perfil"] = df["perfil"].fillna("user").astype(str).str.lower()
+        df["ativo"] = df["ativo"].astype(str).str.strip().str.lower()
+        
+        return df
+
+    @staticmethod
+    def list_all_users():
+        """Lista TODOS os usuários (Apenas para a tela de Admin)"""
         supabase = DatabaseManager._get_client()
 
-        res = supabase.table("usuarios").select("*").execute()
+        # Busca tudo e ordena por nome
+        res = supabase.table("usuarios").select("*").order("nome").execute()
 
         if not res.data:
             return pd.DataFrame(
