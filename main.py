@@ -494,21 +494,18 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 
 
 # =========================================================
-# 🧠 SUPER AGENTE HÍBRIDO COMPLETO (DADOS INTERNOS + MERCADO)
+# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI) - VERSÃO PRO
 # =========================================================
-def consultar_ia_integrada_completa(dados):
+def consultar_ia_financeira(dados):
     """
-    Versão FINAL que mantém TODA sua análise original + pesquisa de mercado
+    Versão moderna, direta e visualmente atrativa da IA financeira
     """
     try:
         genai.configure(api_key=st.secrets["API_KEY"])
     except:
         return "⚠️ Erro: Chave da API não configurada."
 
-    # --- 1. PRIMEIRO: PESQUISAR DADOS DE MERCADO REAIS ---
-    dados_mercado = pesquisar_dados_mercado_real()
-    
-    # --- 2. MANTER TODA SUA ANÁLISE ORIGINAL (COMPLETA) ---
+    # --- PREPARAÇÃO RÁPIDA DOS DADOS ---
     
     # Configurações básicas
     config = {}
@@ -578,29 +575,26 @@ def consultar_ia_integrada_completa(dados):
     taxa_poupanca = (saldo_fixo / receitas * 100) if receitas > 0 else 0
     uso_reserva = (gastos_var / config["reserva"] * 100) if config["reserva"] > 0 else 0
     
-    # 🔥 NOVO: CÁLCULO DA PROJEÇÃO DE TEMPO PARA A META COM DADOS REAIS
+    # 🔥 NOVO: CÁLCULO DA PROJEÇÃO DE TEMPO PARA A META
     projecao_tempo = ""
     if config["meta"] > patrimonio and saldo_fixo > 0:
-        # Usar taxa SELIC REAL se disponível, senão usar config
-        taxa_real = (dados_mercado.get("selic", 0) / 12) - (dados_mercado.get("ipca", 0) / 12)
-        if taxa_real <= 0:
-            taxa_real = config.get("rendimento", 0.008) - config.get("inflacao", 0.004)
+        # Usar a mesma lógica do dashboard (projetar_patrimonio)
+        taxa_real = config.get("rendimento", 0.008) - config.get("inflacao", 0.004)
+        taxa_real = max(taxa_real, 0.001)  # Mínimo 0.1% para evitar problemas
         
-        taxa_real = max(taxa_real, 0.001)
-        
-        # Simulação mês a mês
+        # Simulação mês a mês (120 meses = 10 anos máximo)
         patrimonio_projetado = patrimonio
         meses_necessarios = 0
         
-        for i in range(120):
+        for i in range(120):  # Máximo 10 anos
             if patrimonio_projetado >= config["meta"]:
                 break
                 
-            if i > 0:
+            if i > 0:  # Primeiro mês só patrimônio inicial
                 rendimento = patrimonio_projetado * taxa_real
                 patrimonio_projetado += rendimento + saldo_fixo
             else:
-                patrimonio_projetado += saldo_fixo
+                patrimonio_projetado += saldo_fixo  # Aporte do primeiro mês
             
             meses_necessarios += 1
         
@@ -634,48 +628,12 @@ def consultar_ia_integrada_completa(dados):
         emoji_principal = "🎯"
         tom = "atenção"
 
-    # --- 3. ANÁLISE DE PERFIL DE INVESTIDOR BASEADA NOS DADOS ---
-    perfil_investidor = "CONSERVADOR"
-    analise_carteira = ""
-    
-    if not dados["investimentos"].empty:
-        df_inv = dados["investimentos"]
-        
-        # Calcular exposição por tipo de investimento
-        total_inv = df_inv["valor_atual"].sum()
-        
-        # Mapear categorias para tipos
-        tipos = {
-            "RENDA_FIXA": ["CDB", "LCI", "LCA", "Tesouro Direto", "Poupança"],
-            "ACOES": ["Ações", "ETF", "BDR"],
-            "FII": ["FII", "Fundos Imobiliários"],
-            "CRIPTO": ["Bitcoin", "Ethereum", "Criptomoedas"],
-            "INTERNACIONAL": ["Exterior", "ETF Exterior"]
-        }
-        
-        exposicao = {}
-        for tipo, palavras in tipos.items():
-            valor_tipo = df_inv[df_inv["tipo"].isin(palavras)]["valor_atual"].sum()
-            exposicao[tipo] = (valor_tipo / total_inv) if total_inv > 0 else 0
-        
-        analise_carteira = "\n".join([f"• {k}: {v:.1%}" for k, v in exposicao.items() if v > 0])
-        
-        # Determinar perfil automaticamente
-        risco_total = exposicao.get("ACOES", 0) + exposicao.get("CRIPTO", 0) + exposicao.get("INTERNACIONAL", 0)
-        
-        if risco_total > 0.4:
-            perfil_investidor = "ARROJADO"
-        elif risco_total > 0.2:
-            perfil_investidor = "MODERADO"
-        else:
-            perfil_investidor = "CONSERVADOR"
-
-    # --- 4. PROMPT FINAL INTEGRADO (SEUS DADOS + MERCADO) ---
+    # --- PROMPT MODERNO COM EMOJIS (MANTENDO TODO O CONTEÚDO ORIGINAL) ---
     prompt = f"""
-    Você é um consultor financeiro privado (Private Banker). Use emojis para tornar visual.
-    Responda APENAS com o conteúdo da análise, sem introduções.
+    Você é um consultor financeiro moderno que fala de forma direta e usa emojis para deixar a análise visual, você não usa negrito para destacar porque fica com * indesejados.. 
+    Responda APENAS com o conteúdo da análise, sem introduções ou saudações.
 
-    📊 DADOS DO CLIENTE ({config["nome_familia"]})
+    FAMÍLIA: {config["nome_familia"]}
     
     {emoji_principal} VISÃO GERAL
     👛 Patrimônio: R$ {patrimonio:,.0f} ({perc_meta:.1f}% da meta)
@@ -685,256 +643,47 @@ def consultar_ia_integrada_completa(dados):
     {projecao_tempo}
 
     ⚠️ PONTOS DE ATENÇÃO
-    1. 📉 Comprometimento: {comprometimento:.1f}% da renda
-    2. 💳 Uso da Reserva: {uso_reserva:.1f}%
+    1. 📉 Comprometimento: {comprometimento:.1f}% da renda (ideal <50%)
+    2. 💳 Uso da Reserva: {uso_reserva:.1f}% (limite: R$ {config["reserva"]:.0f})
     3. 🔥 Maiores Gastos Fixos:
     {chr(10).join([f'   • {item["nome"]}: R$ {item["valor"]:.0f}' for item in top_fixas_list[:3]]) if top_fixas_list else '   • Nenhum gasto fixo registrado'}
 
     🎯 ONDE VOCÊ GASTA MAIS
-    {chr(10).join([f'   {cat}: R$ {valor:.0f}' for cat, valor in categorias_gastos.items()]) if categorias_gastos else '   📝 Nenhum gasto variável registrado'}
+    {chr(10).join([f'   {cat}: R$ {valor:.0f}' for cat, valor in categorias_gastos.items()]) if categorias_gastos else '   📝 Nenhum gasto variável registrado este mês'}
 
-    💼 CARTERA ATUAL (Perfil {perfil_investidor})
-    {analise_carteira if analise_carteira else '• Sem investimentos registrados'}
+    🚀 PLANO DE AÇÃO (3 ETAPAS)
 
-    🌍 MERCADO HOJE (DADOS REAIS)
-    • 💰 SELIC: {dados_mercado.get("selic", 0):.2%} ao ano
-    • 📉 IPCA 12m: {dados_mercado.get("ipca", 0):.2%}
-    • 💵 Dólar: R$ {dados_mercado.get("dolar", 0):.2f}
-    • 🎯 Tendência: {dados_mercado.get("tendencia", "Neutra")}
-    • ⏰ Atualizado: {dados_mercado.get("timestamp", "")}
-
-    🚀 ANÁLISE INTEGRADA (CLIENTE + MERCADO)
-
-    🟢 ETAPA 1: CORTES IMEDIATOS + OPORTUNIDADE
+    🟢 ETAPA 1: CORTES IMEDIATOS
     • {"Reduza " + top_fixas_list[0]["nome"] + f" em R$ {top_fixas_list[0]["valor"]*0.1:.0f}" if top_fixas_list else "Identifique sua maior despesa"}
-    • {"Invista a sobra em: " + dados_mercado.get("recomendacao_curto", "Tesouro Selic")}
+    • {"Controle gastos com " + list(categorias_gastos.keys())[0] if categorias_gastos else "Registre TODOS os gastos"}
 
-    🟡 ETAPA 2: OTIMIZAÇÃO (30 DIAS) - AJUSTE DE CARTERA
+    🟡 ETAPA 2: OTIMIZAÇÃO (30 DIAS)
     • {"Mantenha" if taxa_poupanca >= 20 else "Aumente para"} {max(20, taxa_poupanca + 5)}% de poupança
-    • {"Diversifique com: " + dados_mercado.get("recomendacao_medio", "FIIs e Ações")}
+    • {"Diversifique investimentos" if patrimonio > 1000 else "Comece com R$ 50/mês"}
 
-    🔵 ETAPA 3: ACELERAÇÃO (90 DIAS) - ESTRATÉGIA AVANÇADA
+    🔵 ETAPA 3: ACELERAÇÃO (90 DIAS)
     • {"Supere" if perc_meta >= 100 else "Atinga"} {min(100, perc_meta + 15)}% da meta
-    • {"Considere: " + dados_mercado.get("recomendacao_longo", "Exterior e ETFs")}
+    • {"Busque R$ 300/mês extra" if saldo_fixo < 1500 else "Invista 5% a mais"}
 
-    💡 DICA DE OURO (BASEADA NO MERCADO ATUAL)
-    {gerar_dica_mercado_personalizada(dados_mercado, perfil_investidor, saldo_fixo)}
-
-    ⚡ INSIGHT EXCLUSIVO
-    {"Seu perfil " + perfil_investidor + " combinado com SELIC a " + f"{dados_mercado.get('selic', 0):.2%}" + " sugere: " + 
-     ("priorizar renda fixa." if dados_mercado.get('selic', 0) > 0.10 and perfil_investidor in ["CONSERVADOR", "MODERADO"] else
-      "buscar renda variável para crescimento." if dados_mercado.get('selic', 0) < 0.08 else
-      "manter equilíbrio entre proteção e crescimento.")}
+    💡 DICA PRÁTICA
+    {"Você está no caminho certo! Só ajustar os detalhes. 🎉" if taxa_poupanca >= 15 else 
+    "Foque em UM problema por vez. Pequenas vitórias levam ao sucesso! ✨"}
+    
+    ⏰ Atualizado: {datetime.now().strftime("%d/%m %H:%M")}
     """
 
-    # --- 5. CHAMAR IA ---
-    try:
-        model = genai.GenerativeModel('gemini-2.5-flash-lite')
-        response = model.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        # Fallback: Retornar análise básica se IA falhar
-        return f"""🚀 Análise Financeira Básica:
-
-📊 RESUMO
-• Patrimônio: R$ {patrimonio:,.0f}
-• Saldo Mensal: R$ {saldo_fixo:,.0f}
-• Taxa Poupança: {taxa_poupanca:.1f}%
-
-🎯 AÇÃO RECOMENDADA:
-Com SELIC a {dados_mercado.get('selic', 0):.2%}, invista {saldo_fixo * 0.7:,.0f} em renda fixa e {saldo_fixo * 0.3:,.0f} para diversificação.
-
-⏰ Atualizado: {datetime.now().strftime("%d/%m %H:%M")}"""
-
-# =========================================================
-# 🔍 FUNÇÃO DE PESQUISA DE MERCADO REAL
-# =========================================================
-def pesquisar_dados_mercado_real():
-    """Coleta dados reais de mercado e gera recomendações"""
+    # Modelos a tentar (mais modernos)
+    modelos = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-1.5-flash']
     
-    dados = {
-        "selic": 0.1050,  # Valores padrão
-        "ipca": 0.042,
-        "dolar": 5.45,
-        "tendencia": "Neutra",
-        "timestamp": datetime.now().strftime("%d/%m %H:%M")
-    }
+    for modelo in modelos:
+        try:
+            model = genai.GenerativeModel(modelo)
+            response = model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            continue
     
-    try:
-        # 1. SELIC (Taxa básica de juros)
-        url_selic = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados/ultimos/1?formato=json"
-        response = requests.get(url_selic, timeout=3)
-        if response.status_code == 200:
-            selic_data = response.json()
-            if selic_data:
-                dados["selic"] = float(selic_data[0]["valor"]) / 100
-        
-        # 2. IPCA (Inflação)
-        url_ipca = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados/ultimos/12?formato=json"
-        response = requests.get(url_ipca, timeout=3)
-        if response.status_code == 200:
-            ipca_data = response.json()
-            if ipca_data:
-                total_ipca = sum(float(item["valor"]) for item in ipca_data)
-                dados["ipca"] = total_ipca / 100
-        
-        # 3. Dólar
-        url_dolar = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados/ultimos/1?formato=json"
-        response = requests.get(url_dolar, timeout=3)
-        if response.status_code == 200:
-            dolar_data = response.json()
-            if dolar_data:
-                dados["dolar"] = float(dolar_data[0]["valor"])
-        
-        # 4. Determinar tendência
-        if dados["selic"] > 0.12:
-            dados["tendencia"] = "Alta dos juros"
-            dados["recomendacao_curto"] = "Tesouro Selic"
-            dados["recomendacao_medio"] = "CDBs 110%+ CDI"
-            dados["recomendacao_longo"] = "Aguardar redução de juros"
-        elif dados["selic"] > 0.09:
-            dados["tendencia"] = "Juros moderados"
-            dados["recomendacao_curto"] = "CDB 100% CDI"
-            dados["recomendacao_medio"] = "FIIs de papel"
-            dados["recomendacao_longo"] = "Ações dividendistas"
-        else:
-            dados["tendencia"] = "Juros baixos"
-            dados["recomendacao_curto"] = "LCI/LCA isentos"
-            dados["recomendacao_medio"] = "FIIs e ações growth"
-            dados["recomendacao_longo"] = "ETFs internacionais"
-            
-    except Exception as e:
-        # Manter valores padrão se API falhar
-        pass
-    
-    return dados
-
-# =========================================================
-# 💎 FUNÇÃO PARA DICA PERSONALIZADA
-# =========================================================
-def gerar_dica_mercado_personalizada(dados_mercado, perfil, saldo):
-    """Gera dica personalizada baseada em mercado + perfil"""
-    
-    selic = dados_mercado.get("selic", 0)
-    ipca = dados_mercado.get("ipca", 0)
-    
-    if perfil == "CONSERVADOR":
-        if selic > 0.10:
-            return f"💰 Com SELIC alta ({selic:.2%}), priorize Tesouro Selic para reserva e liquidez."
-        else:
-            return f"🛡️ SELIC baixa, busque LCIs/LCAs isentos para proteger ganhos reais."
-    
-    elif perfil == "MODERADO":
-        if ipca > 0.05:
-            return f"📈 Inflação alta ({ipca:.2%}), aloque 30% em Tesouro IPCA+ para proteção."
-        else:
-            return f"⚖️ Boa diversificação: 50% RF, 30% FIIs, 20% Ações para crescimento."
-    
-    else:  # ARROJADO
-        if saldo > 5000:
-            return f"🚀 Com aporte de R$ {saldo:,.0f}, considere FIIs de shoppings + tech stocks."
-        else:
-            return f"🎯 Foque em ETFs setoriais e FIIs para multiplicar aportes menores."
-    
-    return "📊 Mantenha disciplina de aportes mensais independente do cenário."
-
-# =========================================================
-# 🎨 INTERFACE STREAMLIT COMPLETA
-# =========================================================
-def mostrar_dashboard_integrado(dados):
-    """Mostra o dashboard completo com dados + mercado"""
-    
-    st.markdown("""
-    <div style="
-        background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 24px;
-        color: white;
-        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
-        border: 1px solid rgba(255,255,255,0.1);
-    ">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <h2 style="margin:0; color:white; font-size: 24px;">🧠 Cérebro Financeiro IA Pro</h2>
-                <p style="margin:5px 0 0 0; font-size:16px; opacity:0.9;">
-                    Análise interna + Mercado em tempo real = Decisão Inteligente
-                </p>
-            </div>
-            <div style="font-size: 40px;">🤖💹</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Mostrar dados de mercado em cards
-    dados_mercado = pesquisar_dados_mercado_real()
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric(
-            label="💰 SELIC",
-            value=f"{dados_mercado['selic']:.2%}",
-            delta=f"{'Alta' if dados_mercado['selic'] > 0.10 else 'Estável'}"
-        )
-    
-    with col2:
-        st.metric(
-            label="📉 IPCA 12m",
-            value=f"{dados_mercado['ipca']:.2%}",
-            delta=f"{'Cuidado' if dados_mercado['ipca'] > 0.045 else 'Controlado'}"
-        )
-    
-    with col3:
-        st.metric(
-            label="💵 Dólar",
-            value=f"R$ {dados_mercado['dolar']:.2f}",
-            delta=None
-        )
-    
-    with col4:
-        st.metric(
-            label="🎯 Tendência",
-            value=dados_mercado['tendencia'],
-            delta=None
-        )
-    
-    st.markdown(f"<div style='text-align: right; font-size: 12px; color: #666;'>Atualizado: {dados_mercado['timestamp']}</div>", unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Botão para análise completa
-    if st.button("🚀 GERAR ANÁLISE COMPLETA COM MERCADO", use_container_width=True, type="primary"):
-        with st.spinner("🔍 Analisando seus dados + pesquisando mercado..."):
-            resultado = consultar_ia_integrada_completa(dados)
-            st.session_state["analise_completa"] = resultado
-    
-    # Mostrar resultado
-    if "analise_completa" in st.session_state:
-        st.markdown("---")
-        st.markdown("### 📊 Análise Integrada Personalizada")
-        
-        st.markdown("""
-        <div style="
-            background: #1f2937; 
-            border: 1px solid #7c3aed; 
-            border-radius: 12px; 
-            padding: 24px; 
-            margin-bottom: 24px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            line-height: 1.6;
-        ">
-        """, unsafe_allow_html=True)
-        
-        st.markdown(st.session_state["analise_completa"])
-        
-        st.markdown("""
-        <div style="margin-top: 20px; font-size: 12px; color: #9ca3af; text-align: right;">
-            * Análise gerada por IA cruzando seus dados pessoais com indicadores de mercado em tempo real.
-            Dados do Banco Central do Brasil.
-        </div>
-        </div>
-        """, unsafe_allow_html=True)
+    return "🤖 Consultoria temporariamente indisponível. Tente novamente!"
 
 # =========================================================
 # FUNÇÃO: GERAR LANÇAMENTOS AUTOMÁTICOS
@@ -7155,150 +6904,50 @@ elif menu == "📊 Dashboard/IA":
         """, unsafe_allow_html=True)
         st.session_state["msg"] = None
 
-    # ================= BOTÃO DA IA COM MERCADO INTEGRADO =================
+    # ================= BOTÃO DA IA =================
     with st.container():
         st.markdown("""
         <div style="
             background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
             border-radius: 12px;
-            padding: 24px;
+            padding: 20px;
             margin-bottom: 24px;
             color: white;
-            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
-            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         ">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <h3 style="margin:0; color:white; font-size: 24px;">🧠 Consultor IA Pro</h3>
-                    <p style="margin:5px 0 0 0; font-size:14px; opacity:0.9;">
-                        Análise completa: Seus dados + Mercado em tempo real
-                    </p>
-                </div>
-                <div style="font-size: 36px;">🤖💹</div>
+            <div>
+                <h3 style="margin:0; color:white;">🤖 Consultor IA</h3>
+                <p style="margin:0; font-size:14px; opacity:0.9;">Peça uma análise inteligente das suas finanças</p>
             </div>
         """, unsafe_allow_html=True)
         
-        # MOSTRAR DADOS DE MERCADO RÁPIDOS ANTES DO BOTÃO
-        try:
-            dados_mercado = pesquisar_dados_mercado_real()
-            col_m1, col_m2, col_m3 = st.columns(3)
-            
-            with col_m1:
-                st.metric("💰 SELIC", f"{dados_mercado.get('selic', 0):.2%}", 
-                         delta="Alta" if dados_mercado.get('selic', 0) > 0.10 else "Estável")
-            
-            with col_m2:
-                st.metric("📉 IPCA", f"{dados_mercado.get('ipca', 0):.2%}", 
-                         delta="Cuidado" if dados_mercado.get('ipca', 0) > 0.045 else "OK")
-            
-            with col_m3:
-                st.metric("💵 Dólar", f"R$ {dados_mercado.get('dolar', 0):.2f}")
-                
-        except:
-            pass  # Se falhar, só não mostra os cards
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # BOTÃO PRINCIPAL
-        col_btn1, col_btn2 = st.columns([2, 1])
-        
-        with col_btn1:
-            if st.button("🚀 ANALISAR COM DADOS DO MERCADO", 
-                        use_container_width=True,
-                        type="primary",
-                        help="Analisa seus dados + pesquisa SELIC, IPCA e dólar em tempo real"):
-                with st.spinner("🔍 Conectando dados internos com Banco Central..."):
-                    analise = consultar_ia_integrada_completa(dados)
+        col_ai_btn, _ = st.columns([1, 3])
+        with col_ai_btn:
+            if st.button("✨ Analisar Agora", use_container_width=True):
+                with st.spinner("A IA está lendo seus dados..."):
+                    analise = consultar_ia_financeira(dados)
                     st.session_state["analise_ia"] = analise
-                    st.session_state["ultima_analise_time"] = datetime.now()
-                    
-                    # Forçar atualização da página
-                    st.rerun()
-        
-        with col_btn2:
-            if st.button("📊 VER ÚLTIMA ANÁLISE", 
-                        use_container_width=True,
-                        disabled="analise_ia" not in st.session_state):
-                pass  # Só para mostrar o botão
-        
-        st.markdown("""
-        <div style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.7);">
-            🔄 Usa dados reais do Banco Central do Brasil | ⏱️ Última atualização: {hora}
-        </div>
-        """.format(hora=datetime.now().strftime("%H:%M")), unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # MOSTRAR RESULTADO DA ANÁLISE
+        # Mostrar o resultado se já tiver sido gerado
         if "analise_ia" in st.session_state and st.session_state["analise_ia"]:
-            # Mostrar quando foi gerada
-            if "ultima_analise_time" in st.session_state:
-                hora_analise = st.session_state["ultima_analise_time"].strftime("%H:%M")
-                st.caption(f"📅 Análise gerada às {hora_analise} (atualize para novos dados de mercado)")
-            
-            st.markdown("""
+            st.markdown(f"""
             <div style="
-                background: linear-gradient(135deg, #1f2937 0%, #111827 100%); 
+                background: #1f2937; 
                 border: 1px solid #7c3aed; 
                 border-radius: 12px; 
-                padding: 24px; 
+                padding: 20px; 
                 margin-bottom: 24px;
-                box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
             ">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <h4 style="color: #a78bfa; margin:0; font-size:18px;">💡 Análise Integrada Personalizada</h4>
-                    <div style="font-size:20px;">🎯📈</div>
-                </div>
-                <div style="
-                    color: #e5e7eb; 
-                    line-height: 1.7;
-                    font-size: 15px;
-                    max-height: 500px;
-                    overflow-y: auto;
-                    padding-right: 10px;
-                ">
-            """, unsafe_allow_html=True)
-            
-            # Substituir quebras de linha e formatar
-            analise_formatada = st.session_state["analise_ia"].replace('\n', '<br>')
-            
-            # Adicionar emojis extras se não tiver muitos
-            if analise_formatada.count('🔍') < 3:
-                analise_formatada = analise_formatada.replace('🚀', '🚀 ')
-                analise_formatada = analise_formatada.replace('🎯', '🎯 ')
-            
-            st.markdown(analise_formatada, unsafe_allow_html=True)
-            
-            st.markdown("""
-                </div>
-                <div style="
-                    margin-top: 20px; 
-                    padding-top: 15px;
-                    border-top: 1px solid #374151;
-                    font-size: 11px; 
-                    color: #9ca3af; 
-                    text-align: right;
-                ">
-                    * Dados pessoais + Indicadores do Banco Central + IA Gemini-2.5-flash-lite<br>
-                    * Para decisões de investimento, consulte um profissional certificado
+                <h4 style="color: #a78bfa; margin-top:0;">💡 Análise do Consultor Virtual</h4>
+                <div style="color: #e5e7eb; line-height: 1.6;">
+                    {st.session_state["analise_ia"].replace(chr(10), '<br>')}
                 </div>
             </div>
-            """, unsafe_allow_html=True)
-            
-            # BOTÃO PARA COPIAR A ANÁLISE
-            col_copy, col_refresh, _ = st.columns([1, 1, 2])
-            
-            with col_copy:
-                if st.button("📋 Copiar Análise", use_container_width=True):
-                    # Copiar para clipboard (simulado)
-                    st.info("Análise copiada para área de transferência!")
-                    # Em produção real, usar pyperclip ou similar
-            
-            with col_refresh:
-                if st.button("🔄 Gerar Nova", use_container_width=True):
-                    # Limpar e gerar nova
-                    del st.session_state["analise_ia"]
-                    st.rerun()
+            """, unsafe_allow_html=True)    
 
     # ================= CARDS DE MÉTRICAS PRINCIPAIS =================
     st.markdown("### 📈 Métricas Principais")
