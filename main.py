@@ -547,7 +547,9 @@ def consultar_ia_financeira(dados):
         'gemini-1.5-flash',       # Mais rápido e novo
         'gemini-1.5-flash-latest',# Alternativa do novo
         'gemini-1.0-pro',         # Versão estável anterior
-        'gemini-pro'              # Nome genérico antigo
+        'gemini-pro',
+        'gemini-2.5-flash-lite',
+        'gemini-2.5-flash'              
     ]
 
     erro_log = ""
