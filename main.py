@@ -354,6 +354,136 @@ def tela_admin_usuarios():
         st.rerun()
 
 
+
+# =========================================================
+# TELA DE ONBOARDING (PRIMEIRO ACESSO)
+# =========================================================
+def verificar_e_mostrar_onboarding(dados, usuario):
+    # Verifica se existe configuração de "nome_familia"
+    # Se já existir, entendemos que o usuário já fez o setup
+    config_existente = False
+    if not dados["config"].empty:
+        if "nome_familia" in dados["config"]["chave"].values:
+            config_existente = True
+            
+    if config_existente:
+        return False  # Não precisa de onboarding, segue o baile
+
+    # === SE CHEGOU AQUI, É UM NOVO USUÁRIO ===
+    
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1>🚀 Bem-vindo ao Gestor Financeiro!</h1>
+        <p style="color: #94a3b8; font-size: 18px;">
+            Vamos configurar seu ambiente em menos de 1 minuto para você começar com o pé direito.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    with st.container():
+        st.markdown("### 1️⃣ Configurações Essenciais (Obrigatório)")
+        
+        with st.form("form_onboarding"):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                nome_familia = st.text_input("👨‍👩‍👧‍👦 Nome da Família / Perfil", placeholder="Ex: Família Silva")
+                meta_patrimonio = st.number_input("🎯 Meta de Patrimônio (R$)", min_value=0.0, value=100000.0, step=1000.0)
+            
+            with col2:
+                orcamento_mensal = st.number_input("💰 Renda Mensal Estimada (R$)", min_value=0.0, value=5000.0, step=100.0)
+                reserva_gastos = st.number_input("💳 Limite para Gastos Variáveis (R$)", min_value=0.0, value=2000.0, step=100.0, help="Quanto você quer gastar no máximo com mercado, lazer, etc.")
+
+            st.markdown("---")
+            st.markdown("### 2️⃣ Vamos facilitar para você? (Sugestões)")
+            st.caption("Podemos já criar alguns dados iniciais para você não começar do zero.")
+
+            c1, c2 = st.columns(2)
+            with c1:
+                criar_categorias = st.checkbox("✅ Criar categorias padrão (Alimentação, Casa, Transporte...)", value=True)
+                criar_salario = st.checkbox("✅ Adicionar minha renda como Receita Fixa", value=True)
+            
+            with c2:
+                criar_despesas_exemplo = st.checkbox("✅ Adicionar despesas de exemplo (Aluguel/Energia)", value=False)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            submitted = st.form_submit_button("🚀 SALVAR E COMEÇAR", type="primary", use_container_width=True)
+
+            if submitted:
+                if not nome_familia:
+                    st.error("Por favor, preencha o Nome da Família.")
+                else:
+                    # 1. Salvar Configurações
+                    df_config = pd.DataFrame([
+                        {"chave": "nome_familia", "valor": nome_familia},
+                        {"chave": "meta_patrimonio", "valor": meta_patrimonio},
+                        {"chave": "orcamento_mensal", "valor": orcamento_mensal},
+                        {"chave": "reserva_gastos", "valor": reserva_gastos},
+                        {"chave": "rendimento_mensal", "valor": 0.008}, # 0.8% padrão
+                        {"chave": "inflacao_mensal", "valor": 0.004}    # 0.4% padrão
+                    ])
+                    DatabaseManager.save("config", df_config, usuario)
+
+                    # 2. Criar Categorias Padrão
+                    if criar_categorias:
+                        cats = [
+                            {"nome": "Alimentação", "tipo": "Despesa Variável", "ativa": True},
+                            {"nome": "Transporte", "tipo": "Despesa Variável", "ativa": True},
+                            {"nome": "Casa", "tipo": "Despesa Fixa", "ativa": True},
+                            {"nome": "Lazer", "tipo": "Despesa Variável", "ativa": True},
+                            {"nome": "Saúde", "tipo": "Despesa Variável", "ativa": True},
+                            {"nome": "Educação", "tipo": "Despesa Fixa", "ativa": True},
+                            {"nome": "Salário", "tipo": "Receita", "ativa": True},
+                            {"nome": "Investimentos", "tipo": "Despesa Fixa", "ativa": True}
+                        ]
+                        df_cats = pd.DataFrame(cats)
+                        DatabaseManager.save("categorias", df_cats, usuario)
+
+                    # 3. Criar Fluxo Fixo (Salário)
+                    fluxos = []
+                    if criar_salario and orcamento_mensal > 0:
+                        fluxos.append({
+                            "nome": "Salário Mensal",
+                            "valor": orcamento_mensal,
+                            "tipo": "Receita",
+                            "categoria": "Salário",
+                            "recorrencia": "Mensal",
+                            "data_inicio": date.today().isoformat(),
+                            "observacao": "Gerado automaticamente no onboarding"
+                        })
+                    
+                    if criar_despesas_exemplo:
+                        fluxos.append({
+                            "nome": "Aluguel / Condomínio",
+                            "valor": 1500.0,
+                            "tipo": "Despesa",
+                            "categoria": "Casa",
+                            "recorrencia": "Mensal",
+                            "data_inicio": date.today().isoformat(),
+                            "observacao": "Exemplo gerado automaticamente"
+                        })
+                        fluxos.append({
+                            "nome": "Energia Elétrica",
+                            "valor": 200.0,
+                            "tipo": "Despesa",
+                            "categoria": "Casa",
+                            "recorrencia": "Mensal",
+                            "data_inicio": date.today().isoformat(),
+                            "observacao": "Exemplo gerado automaticamente"
+                        })
+
+                    if fluxos:
+                        df_fluxo = pd.DataFrame(fluxos)
+                        DatabaseManager.save("fluxo_fixo", df_fluxo, usuario)
+
+                    st.success("Tudo pronto! Carregando seu painel...")
+                    st.rerun()
+    
+    return True # Indica que mostrou o onboarding e deve parar o resto
+
+
+
 # =========================================================
 # FUNÇÃO: SALVAR RELATÓRIO MENSAL
 # =========================================================
@@ -560,6 +690,12 @@ if "dados" not in st.session_state:
 dados = st.session_state["dados"]
 for chave in dados:
     dados[chave] = normalizar_df(dados[chave])
+
+# 🔥 NOVO BLOCO: VERIFICAR ONBOARDING 🔥
+# Se a função retornar True, significa que está mostrando a tela de boas-vindas
+# Então paramos o script aqui com st.stop() para não mostrar o menu lateral ainda
+if verificar_e_mostrar_onboarding(dados, st.session_state["usuario"]):
+    st.stop()
 
 
 # =========================================================
