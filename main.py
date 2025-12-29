@@ -498,220 +498,281 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 # =========================================================
 # NOVO PROMPT DE ENGENHARIA AVANÇADA
 def consultar_ia_financeira(dados):
+    """
+    Versão moderna, direta e visualmente limpa da IA financeira
+    """
     try:
         genai.configure(api_key=st.secrets["API_KEY"])
     except:
-        return "⚠️ Erro: Chave da API do Google não configurada."
+        return "⚠️ Erro: Chave da API não configurada."
 
-    # --- PREPARAÇÃO DE DADOS AVANÇADA ---
+    # --- PREPARAÇÃO RÁPIDA DOS DADOS ---
     
-    # 1. Dados Básicos da Configuração
+    # Configurações básicas
+    config = {}
     if not dados["config"].empty:
         df_c = dados["config"].set_index("chave")
-        orcamento_mensal = float(df_c.loc["orcamento_mensal"]["valor"]) if "orcamento_mensal" in df_c.index else 0
-        reserva_gastos = float(df_c.loc["reserva_gastos"]["valor"]) if "reserva_gastos" in df_c.index else 0
-        meta_patrimonio = float(df_c.loc["meta_patrimonio"]["valor"]) if "meta_patrimonio" in df_c.index else 0
-        nome_familia = str(df_c.loc["nome_familia"]["valor"]) if "nome_familia" in df_c.index else "Família"
-    else:
-        orcamento_mensal = reserva_gastos = meta_patrimonio = 0
-        nome_familia = "Família"
-
-    # 2. Análise Detalhada de Patrimônio
-    patrimonio = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
-    perc_meta = (patrimonio / meta_patrimonio * 100) if meta_patrimonio > 0 else 0
+        config = {
+            "nome_familia": df_c.loc["nome_familia"]["valor"] if "nome_familia" in df_c.index else "Família",
+            "meta": float(df_c.loc["meta_patrimonio"]["valor"]) if "meta_patrimonio" in df_c.index else 0,
+            "orcamento": float(df_c.loc["orcamento_mensal"]["valor"]) if "orcamento_mensal" in df_c.index else 0,
+            "reserva": float(df_c.loc["reserva_gastos"]["valor"]) if "reserva_gastos" in df_c.index else 0
+        }
     
-    # Análise de investimentos por categoria
-    invest_analise = ""
-    if not dados["investimentos"].empty:
-        df_inv = dados["investimentos"]
-        # Agrupar por tipo
-        inv_por_tipo = df_inv.groupby("tipo")["valor_atual"].sum()
-        inv_por_perfil = df_inv.groupby("categoria")["valor_atual"].sum()
-        
-        invest_analise = f"""
-        📊 ANÁLISE DE INVESTIMENTOS:
-        - Total Investido: R$ {patrimonio:,.2f}
-        - Distribuição por Tipo: {', '.join([f'{tipo}: R$ {valor:,.0f}' for tipo, valor in inv_por_tipo.items()])}
-        - Perfil de Risco: {', '.join([f'{perfil}: {valor:,.0f}' for perfil, valor in inv_por_perfil.items()])}
-        """
-
-    # 3. Análise Detalhada de Fluxo Fixo
+    # Cálculos essenciais
+    patrimonio = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
+    perc_meta = (patrimonio / config["meta"] * 100) if config["meta"] > 0 else 0
+    
+    # Fluxo fixo
     if not dados["fluxo_fixo"].empty:
         df_f = dados["fluxo_fixo"]
-        receitas_fixas = df_f[df_f["tipo"] == "Receita"]["valor"].sum()
+        receitas = df_f[df_f["tipo"] == "Receita"]["valor"].sum()
         despesas_fixas = df_f[df_f["tipo"] == "Despesa"]["valor"].sum()
+        saldo_fixo = receitas - despesas_fixas
         
-        # Top 5 maiores despesas fixas
-        top_despesas = df_f[df_f["tipo"] == "Despesa"].nlargest(5, "valor")
-        top_despesas_str = "\n".join([f"    • {row['nome']}: R$ {row['valor']:,.2f} ({row['categoria']})" 
-                                      for _, row in top_despesas.iterrows()])
+        # TOP 3 despesas fixas
+        top_fixas = df_f[df_f["tipo"] == "Despesa"].nlargest(3, "valor")
+        top_fixas_str = "\n".join([f"• {row['nome']}: R$ {row['valor']:.0f}" for _, row in top_fixas.iterrows()])
     else:
-        receitas_fixas = despesas_fixas = 0
-        top_despesas_str = "Nenhuma despesa fixa cadastrada"
+        receitas = despesas_fixas = saldo_fixo = 0
+        top_fixas_str = "Nenhuma despesa fixa registrada"
     
-    saldo_fixo = receitas_fixas - despesas_fixas
-    comprometimento_fixo = (despesas_fixas / receitas_fixas * 100) if receitas_fixas > 0 else 0
-
-    # 4. Análise AVANÇADA dos Gastos Variáveis (COM CATEGORIZAÇÃO)
-    total_gasto_variavel = 0
-    analise_categorias = ""
-    viloes_detalhados = ""
+    # Gastos variáveis com categorização inteligente
+    gastos_var = 0
+    categorias_gastos = {}
     
     if not dados["controle_gastos"].empty:
         df_g = dados["controle_gastos"]
-        total_gasto_variavel = df_g["valor"].sum()
+        gastos_var = df_g["valor"].sum()
         
-        # 🔥 ANÁLISE POR CATEGORIA AUTOMÁTICA
-        categorias_detectadas = {}
-        palavras_chave = {
-            "Alimentação": ["restaurante", "lanche", "mercado", "supermercado", "café", "feira"],
-            "Transporte": ["uber", "táxi", "gasolina", "combustível", "ônibus", "metro"],
-            "Lazer": ["cinema", "netflix", "bar", "festas", "shows", "viagem"],
-            "Saúde": ["farmácia", "médico", "dentista", "remédio", "plano de saúde"],
-            "Casa": ["luz", "água", "gás", "condomínio", "manutenção"],
-            "Educação": ["curso", "livro", "faculdade", "material escolar"],
-            "Compras": ["roupa", "eletrônico", "presente", "acessório"],
-            "Outros": []
+        # Categorização automática simplificada
+        categorias = {
+            "🍔 Alimentação": ["restaurante", "lanche", "mercado", "supermercado", "café", "feira"],
+            "🚗 Transporte": ["uber", "táxi", "gasolina", "combustível", "ônibus", "metro", "estacionamento"],
+            "🎮 Lazer": ["cinema", "netflix", "bar", "festas", "shows", "viagem", "games"],
+            "💊 Saúde": ["farmácia", "médico", "dentista", "remédio", "plano"],
+            "🏠 Casa": ["luz", "água", "gás", "condomínio", "manutenção", "aluguel"],
+            "📚 Educação": ["curso", "livro", "faculdade", "material"],
+            "🛒 Compras": ["roupa", "eletrônico", "presente", "acessório"]
         }
         
         for idx, row in df_g.iterrows():
-            desc_lower = row['descricao'].lower()
-            categoria_encontrada = False
+            desc = row['descricao'].lower()
+            categoria_detectada = "💰 Outros"
             
-            for categoria, palavras in palavras_chave.items():
-                if any(palavra in desc_lower for palavra in palavras):
-                    if categoria not in categorias_detectadas:
-                        categorias_detectadas[categoria] = 0
-                    categorias_detectadas[categoria] += row['valor']
-                    categoria_encontrada = True
+            for cat, palavras in categorias.items():
+                if any(palavra in desc for palavra in palavras):
+                    categoria_detectada = cat
                     break
             
-            if not categoria_encontrada:
-                if "Outros" not in categorias_detectadas:
-                    categorias_detectadas["Outros"] = 0
-                categorias_detectadas["Outros"] += row['valor']
-        
-        # Formatar análise de categorias
-        analise_categorias = "📋 DISTRIBUIÇÃO POR CATEGORIA:\n"
-        for categoria, valor in sorted(categorias_detectadas.items(), key=lambda x: x[1], reverse=True):
-            percentual = (valor / total_gasto_variavel * 100) if total_gasto_variavel > 0 else 0
-            analise_categorias += f"    • {categoria}: R$ {valor:,.2f} ({percentual:.1f}%)\n"
-        
-        # Top 3 vilões
-        top_gastos = df_g.nlargest(3, "valor")
-        viloes_detalhados = ", ".join([f"{row['descricao']} (R$ {row['valor']:.0f})" for _, row in top_gastos.iterrows()])
+            if categoria_detectada not in categorias_gastos:
+                categorias_gastos[categoria_detectada] = 0
+            categorias_gastos[categoria_detectada] += row['valor']
     
-    # 5. Análise do Histórico (Lançamentos)
-    analise_historico = ""
-    if not dados["historico"].empty:
-        df_h = dados["historico"].copy()
-        df_h["data"] = pd.to_datetime(df_h["data"])
-        mes_atual = datetime.now().strftime("%Y-%m")
-        df_mes = df_h[df_h["data"].dt.strftime("%Y-%m") == mes_atual]
-        
-        if not df_mes.empty:
-            receitas_var = df_mes[df_mes["tipo"] == "Receita"]["valor"].sum()
-            despesas_var = df_mes[df_mes["tipo"] == "Despesa"]["valor"].sum()
-            investimentos_var = df_mes[df_mes["tipo"] == "Investimento"]["valor"].sum()
-            
-            analise_historico = f"""
-            📅 ANÁLISE DO MÊS ATUAL ({mes_atual}):
-            - Receitas Variáveis: R$ {receitas_var:,.2f}
-            - Despesas Variáveis: R$ {despesas_var:,.2f}
-            - Investimentos Realizados: R$ {investimentos_var:,.2f}
-            """
-
-    # 6. Cálculos Financeiros
-    total_saidas = despesas_fixas + total_gasto_variavel
-    balanco_mensal = receitas_fixas - total_saidas
-    taxa_poupanca = (balanco_mensal / receitas_fixas * 100) if receitas_fixas > 0 else 0
+    # Cálculo do score de saúde
+    comprometimento = (despesas_fixas / receitas * 100) if receitas > 0 else 0
+    taxa_poupanca = (saldo_fixo / receitas * 100) if receitas > 0 else 0
+    uso_reserva = (gastos_var / config["reserva"] * 100) if config["reserva"] > 0 else 0
     
-    # 7. Saúde Financeira (Score)
     score = 0
-    if comprometimento_fixo < 50: score += 25
-    if taxa_poupanca > 20: score += 25
-    if total_gasto_variavel <= reserva_gastos: score += 25
-    if perc_meta > 50: score += 25
+    if comprometimento < 50: score += 30
+    if taxa_poupanca >= 15: score += 30
+    if gastos_var <= config["reserva"]: score += 20
+    if perc_meta > 30: score += 20
     
-    status_saude = "🟢 BOA" if score >= 75 else "🟡 ALERTA" if score >= 50 else "🔴 CRÍTICA"
-
-    # 8. PROMPT AVANÇADO
+    emoji_saude = "🟢" if score >= 70 else "🟡" if score >= 50 else "🔴"
+    
+    # --- PROMPT MODERNO E DIRETO ---
     prompt = f"""
-    Atue como um Consultor Financeiro Sênior (CFP) certificado para a família {nome_familia}.
-    Analise os dados abaixo de forma crítica, estratégica e com foco em ações práticas.
-    
-    ====== DADOS FINANCEIROS COMPLETOS ======
-    
-    1. 🎯 META E PATRIMÔNIO:
-       - Meta de Patrimônio: R$ {meta_patrimonio:,.2f}
-       - Patrimônio Atual: R$ {patrimonio:,.2f} ({perc_meta:.1f}% da meta)
-       {invest_analise if invest_analise else ""}
-    
-    2. 💰 FLUXO FIXO MENSAL:
-       - Renda Fixa Total: R$ {receitas_fixas:,.2f}
-       - Despesas Fixas: R$ {despesas_fixas:,.2f} ({comprometimento_fixo:.1f}% da renda)
-       - Saldo Fixo: R$ {saldo_fixo:,.2f}
-       - Maiores Despesas Fixas:
-       {top_despesas_str}
-    
-    3. 🛒 GASTOS VARIÁVEIS (DIA A DIA):
-       - Total Gasto: R$ {total_gasto_variavel:,.2f}
-       - Limite da Reserva: R$ {reserva_gastos:,.2f}
-       - Status: {"🟢 DENTRO DO LIMITE" if total_gasto_variavel <= reserva_gastos else f"🔴 ESTOURO DE R$ {total_gasto_variavel - reserva_gastos:,.2f}"}
-       {analise_categorias if analise_categorias else ""}
-       - Maiores Vilões: {viloes_detalhados if viloes_detalhados else "Nenhum gasto registrado"}
-    
-    4. 📊 RESULTADO FINAL:
-       - Sobra/Falta no Mês: R$ {balanco_mensal:,.2f}
-       - Taxa de Poupança: {taxa_poupanca:.1f}% (Ideal: 20%)
-       - Score de Saúde Financeira: {score}/100 → {status_saude}
-    
-    5. 📅 HISTÓRICO DO MÊS:
-       {analise_historico if analise_historico else "Nenhum lançamento no mês atual"}
-    
-    ====== ANÁLISE SOLICITADA ======
-    
-    📊 DIAGNÓSTICO COMPLETO:
-    (Dê um diagnóstico detalhado considerando TODOS os aspectos acima. Seja específico sobre pontos fortes e fracos)
-    
-    🔴 PONTOS CRÍTICOS DE ATENÇÃO:
-    1. Análise do comprometimento de renda ({comprometimento_fixo:.1f}% vs ideal <50%)
-    2. Análise do uso da reserva de gastos ({total_gasto_variavel/reserva_gastos*100:.1f}% utilizado)
-    3. Análise da taxa de poupança ({taxa_poupanca:.1f}% vs ideal 20%)
-    4. **ANÁLISE DAS CATEGORIAS DE GASTOS** - Identifique onde há mais vazamentos
-    
-    💡 PLANO DE AÇÃO PERSONALIZADO:
-    (Baseie-se nas categorias detectadas e nos dados específicos)
-    
-    A) 🎯 OTIMIZAÇÃO IMEDIATA (Esta semana):
-    1. Corte de Custos: Especifique quais categorias reduzir e quanto poupar
-    2. Ajuste Comportamental: Recomendação baseada nos "maiores vilões"
-    
-    B) 📈 ESTRATÉGIA DE MÉDIO PRAZO (Próximos 3 meses):
-    1. Revisão de Despesas Fixas: Sugestões baseadas nas maiores despesas
-    2. Meta de Poupança: Como atingir 20% baseado na realidade atual
-    
-    C) 🚀 ACELERAÇÃO DA META (Longo prazo):
-    1. Recomendação de Investimentos baseada no perfil atual
-    2. Estratégia para alcançar {perc_meta:.1f}% → 100% da meta
-    
-    📝 OBSERVAÇÃO FINAL:
-    (Dê um conselho personalizado baseado na situação específica)
+    Você é um consultor financeiro direto, prático e sem firulas. Fale como um amigo experiente em dinheiro.
+
+    ANÁLISE RÁPIDA DA {config["nome_familia"].upper()}:
+
+    📊 **SITUAÇÃO ATUAL**
+    • Patrimônio: R$ {patrimonio:,.0f} ({perc_meta:.1f}% da meta de R$ {config["meta"]:,.0f})
+    • Saldo Fixo Mensal: R$ {saldo_fixo:,.0f} (Taxa de poupança: {taxa_poupanca:.1f}%)
+    • Saúde Financeira: {score}/100 {emoji_saude}
+
+    🚩 **PRINCIPAIS PONTOS**
+    1. Comprometimento da renda: {comprometimento:.1f}% (ideal <50%)
+    2. Uso da reserva: {uso_reserva:.1f}% do limite de R$ {config["reserva"]:.0f}
+    3. Maiores despesas fixas:
+    {top_fixas_str}
+
+    🎯 **ONDE SEU DINHEIRO VAI (GASTOS VARIÁVEIS)**
+    {chr(10).join([f"• {cat}: R$ {valor:.0f}" for cat, valor in categorias_gastos.items()]) if categorias_gastos else "• Nenhum gasto registrado este mês"}
+
+    ⚡ **PLANO DE 3 PASSOS**
+
+    1️⃣ **CORTE IMEDIATO (esta semana)**
+    - {f"Reduza '{top_fixas.iloc[0]['nome'] if not top_fixas.empty else 'sua maior despesa'}': Economize R$ {top_fixas.iloc[0]['valor']*0.1:.0f} renegociando ou cortando"
+    if not top_fixas.empty else "Identifique sua maior despesa fixa para cortar"}
+    - Controle {list(categorias_gastos.keys())[0] if categorias_gastos else "seus gastos"} nos próximos 7 dias
+
+    2️⃣ **AJUSTE ESTRATÉGICO (próximo mês)**
+    - {f"Aumente sua poupança para {max(20, taxa_poupanca + 5):.0f}%" if taxa_poupanca < 20 else "Mantenha a ótima taxa de poupança"}
+    - {"Diversifique seus investimentos além de 'Outros'" if patrimonio > 0 else "Comece a investir, mesmo que R$ 50 por mês"}
+
+    3️⃣ **META ACELERADA (3 meses)**
+    - Foque em {f"atingir {min(100, perc_meta + 10):.1f}% da meta" if perc_meta < 100 else "superar sua meta!"}
+    - {"Busque R$ 200/mês extra" if saldo_fixo < 1000 else "Aumente seu patrimônio em 5%"}
+
+    💡 **DICA DO DIA**
+    {"Você está no caminho certo! Só precisa otimizar onde o dinheiro vaza mais." if score >= 60 else 
+    "Não se assuste. Todo mundo começa de algum lugar. Foque em um problema de cada vez."}
     """
 
-    # Tenta modelos em ordem
-    modelos_para_tentar = [        'gemini-2.5-flash-lite',
-        'gemini-2.5-flash'   ]
+    # Modelos a tentar
+    modelos = ['gemini-1.5-flash', 'gemini-2.0-flash-exp', 'gemini-1.5-pro']
     
-    for modelo in modelos_para_tentar:
+    for modelo in modelos:
         try:
             model = genai.GenerativeModel(modelo)
             response = model.generate_content(prompt)
             return response.text
-        except Exception as e:
+        except:
             continue
     
-    return "⚠️ A IA está sobrecarregada no momento. Tente novamente em alguns segundos."
+    return "🤖 Nossa consultoria financeira está ocupada no momento. Tente novamente em alguns segundos."
+
+
+# E na hora de exibir no Streamlit:
+def mostrar_analise_ia_estilizada(analise_texto):
+    """
+    Exibe a análise da IA com formatação visualmente atrativa
+    """
+    st.markdown("""
+    <div style='
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin: 20px 0;
+        border: 1px solid #334155;
+    '>
+        <div style='
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        '>
+            <div style='
+                background: #7c3aed;
+                border-radius: 10px;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            '>
+                <span style='font-size: 24px;'>🤖</span>
+            </div>
+            <div>
+                <h3 style='margin: 0; color: white;'>Consultor Financeiro AI</h3>
+                <p style='margin: 0; color: #94a3b8; font-size: 14px;'>Análise inteligente em tempo real</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Substitui formatações Markdown por HTML limpo
+    analise_limpa = analise_texto
+    
+    # Converte títulos
+    analise_limpa = analise_limpa.replace("📊 **SITUAÇÃO ATUAL**", """
+    <div style="
+        color: #3b82f6;
+        font-size: 18px;
+        font-weight: bold;
+        margin: 20px 0 10px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #3b82f6;
+    ">
+        📊 SITUAÇÃO ATUAL
+    </div>
+    """)
+    
+    analise_limpa = analise_limpa.replace("🚩 **PRINCIPAIS PONTOS**", """
+    <div style="
+        color: #ef4444;
+        font-size: 18px;
+        font-weight: bold;
+        margin: 20px 0 10px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #ef4444;
+    ">
+        🚩 PRINCIPAIS PONTOS
+    </div>
+    """)
+    
+    analise_limpa = analise_limpa.replace("🎯 **ONDE SEU DINHEIRO VAI**", """
+    <div style="
+        color: #10b981;
+        font-size: 18px;
+        font-weight: bold;
+        margin: 20px 0 10px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #10b981;
+    ">
+        🎯 ONDE SEU DINHEIRO VAI
+    </div>
+    """)
+    
+    analise_limpa = analise_limpa.replace("⚡ **PLANO DE 3 PASSOS**", """
+    <div style="
+        color: #f59e0b;
+        font-size: 18px;
+        font-weight: bold;
+        margin: 20px 0 10px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f59e0b;
+    ">
+        ⚡ PLANO DE 3 PASSOS
+    </div>
+    """)
+    
+    analise_limpa = analise_limpa.replace("💡 **DICA DO DIA**", """
+    <div style="
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 10px;
+        padding: 16px;
+        margin: 20px 0;
+        border-left: 4px solid #3b82f6;
+    ">
+        <div style="
+            color: #3b82f6;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        ">
+            💡 DICA DO DIA
+        </div>
+    """) + "</div>"
+    
+    # Converte bullets
+    analise_limpa = analise_limpa.replace("• ", "• ")
+    
+    # Exibe o conteúdo
+    st.markdown(f"""
+    <div style='
+        color: #e5e7eb;
+        line-height: 1.6;
+        font-size: 15px;
+    '>
+        {analise_limpa.replace(chr(10), '<br>')}
+    </div>
+    
+    <div style='
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #334155;
+        text-align: right;
+        color: #94a3b8;
+        font-size: 12px;
+    '>
+        Análise gerada em {datetime.now().strftime('%d/%m às %H:%M')}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # FUNÇÃO: GERAR LANÇAMENTOS AUTOMÁTICOS
