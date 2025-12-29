@@ -494,199 +494,103 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 
 
 # =========================================================
-# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI) - VERSÃO PRO
+# 🧠 SUPER AGENTE HÍBRIDO (DADOS INTERNOS + PESQUISA GOOGLE)
 # =========================================================
-# =========================================================
-# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI) - VERSÃO PRO COM PROJEÇÃO
-# =========================================================
-def consultar_ia_financeira(dados):
+def consultar_ia_integrada(dados):
     """
-    Versão moderna, direta e visualmente atrativa da IA financeira
+    Analisa os dados do usuário E pesquisa o mercado em tempo real
+    para dar uma consultoria contextualizada.
     """
     try:
         genai.configure(api_key=st.secrets["API_KEY"])
     except:
         return "⚠️ Erro: Chave da API não configurada."
 
-    # --- PREPARAÇÃO RÁPIDA DOS DADOS ---
-    
-    # Configurações básicas
+    # --- 1. PROCESSAMENTO DE DADOS INTERNOS (Igual à função original) ---
     config = {}
     if not dados["config"].empty:
         df_c = dados["config"].set_index("chave")
         config = {
-            "nome_familia": df_c.loc["nome_familia"]["valor"] if "nome_familia" in df_c.index else "Família",
-            "meta": float(df_c.loc["meta_patrimonio"]["valor"]) if "meta_patrimonio" in df_c.index else 0,
-            "orcamento": float(df_c.loc["orcamento_mensal"]["valor"]) if "orcamento_mensal" in df_c.index else 0,
-            "reserva": float(df_c.loc["reserva_gastos"]["valor"]) if "reserva_gastos" in df_c.index else 0,
-            "rendimento": float(df_c.loc["rendimento_mensal"]["valor"]) if "rendimento_mensal" in df_c.index else 0.008,
-            "inflacao": float(df_c.loc["inflacao_mensal"]["valor"]) if "inflacao_mensal" in df_c.index else 0.004
+            "nome_familia": df_c.loc["nome_familia"]["valor"] if "nome_familia" in df_c.index else "Investidor",
+            "meta": float(df_c.loc["meta_patrimonio"]["valor"]) if "meta_patrimonio" in df_c.index else 0
         }
-    
-    # Cálculos essenciais
+
+    # Patrimônio e Investimentos
     patrimonio = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
-    perc_meta = (patrimonio / config["meta"] * 100) if config["meta"] > 0 else 0
+    investimentos_str = ""
+    perfil_detectado = "Conservador/Moderado" # Default
     
-    # Fluxo fixo
+    if not dados["investimentos"].empty:
+        # Cria um resumo textual dos investimentos atuais
+        resumo_invest = dados["investimentos"].groupby('tipo')['valor_atual'].sum().to_string()
+        investimentos_str = f"Carteira Atual:\n{resumo_invest}"
+        
+        # Tenta inferir perfil
+        if "Ações" in dados["investimentos"]["tipo"].values or "Criptomoedas" in dados["investimentos"]["tipo"].values:
+            perfil_detectado = "Arrojado"
+
+    # Fluxo de Caixa (Sobrou dinheiro?)
+    receitas = despesas = saldo = 0
     if not dados["fluxo_fixo"].empty:
         df_f = dados["fluxo_fixo"]
         receitas = df_f[df_f["tipo"] == "Receita"]["valor"].sum()
-        despesas_fixas = df_f[df_f["tipo"] == "Despesa"]["valor"].sum()
-        saldo_fixo = receitas - despesas_fixas
-        
-        # TOP 3 despesas fixas
-        top_fixas = df_f[df_f["tipo"] == "Despesa"].nlargest(3, "valor")
-        top_fixas_list = [{"nome": row['nome'], "valor": row['valor']} for _, row in top_fixas.iterrows()]
-    else:
-        receitas = despesas_fixas = saldo_fixo = 0
-        top_fixas_list = []
-    
-    # Gastos variáveis com categorização inteligente
-    gastos_var = 0
-    categorias_gastos = {}
-    
-    if not dados["controle_gastos"].empty:
-        df_g = dados["controle_gastos"]
-        gastos_var = df_g["valor"].sum()
-        
-        # Categorização automática simplificada com emojis
-        categorias = {
-            "🍔 Alimentação": ["restaurante", "lanche", "mercado", "supermercado", "café", "feira"],
-            "🚗 Transporte": ["uber", "táxi", "gasolina", "combustível", "ônibus", "metro", "estacionamento"],
-            "🎮 Lazer": ["cinema", "netflix", "bar", "festas", "shows", "viagem", "games"],
-            "💊 Saúde": ["farmácia", "médico", "dentista", "remédio", "plano"],
-            "🏠 Casa": ["luz", "água", "gás", "condomínio", "manutenção", "aluguel"],
-            "📚 Educação": ["curso", "livro", "faculdade", "material"],
-            "🛒 Compras": ["roupa", "eletrônico", "presente", "acessório"]
-        }
-        
-        for idx, row in df_g.iterrows():
-            desc = row['descricao'].lower()
-            categoria_detectada = "💰 Outros"
-            
-            for cat, palavras in categorias.items():
-                if any(palavra in desc for palavra in palavras):
-                    categoria_detectada = cat
-                    break
-            
-            if categoria_detectada not in categorias_gastos:
-                categorias_gastos[categoria_detectada] = 0
-            categorias_gastos[categoria_detectada] += row['valor']
-    
-    # Cálculo do score de saúde
-    comprometimento = (despesas_fixas / receitas * 100) if receitas > 0 else 0
-    taxa_poupanca = (saldo_fixo / receitas * 100) if receitas > 0 else 0
-    uso_reserva = (gastos_var / config["reserva"] * 100) if config["reserva"] > 0 else 0
-    
-    # 🔥 NOVO: CÁLCULO DA PROJEÇÃO DE TEMPO PARA A META
-    projecao_tempo = ""
-    if config["meta"] > patrimonio and saldo_fixo > 0:
-        # Usar a mesma lógica do dashboard (projetar_patrimonio)
-        taxa_real = config.get("rendimento", 0.008) - config.get("inflacao", 0.004)
-        taxa_real = max(taxa_real, 0.001)  # Mínimo 0.1% para evitar problemas
-        
-        # Simulação mês a mês (120 meses = 10 anos máximo)
-        patrimonio_projetado = patrimonio
-        meses_necessarios = 0
-        
-        for i in range(120):  # Máximo 10 anos
-            if patrimonio_projetado >= config["meta"]:
-                break
-                
-            if i > 0:  # Primeiro mês só patrimônio inicial
-                rendimento = patrimonio_projetado * taxa_real
-                patrimonio_projetado += rendimento + saldo_fixo
-            else:
-                patrimonio_projetado += saldo_fixo  # Aporte do primeiro mês
-            
-            meses_necessarios += 1
-        
-        if patrimonio_projetado >= config["meta"]:
-            anos = meses_necessarios // 12
-            meses = meses_necessarios % 12
-            
-            if anos > 0 and meses > 0:
-                projecao_tempo = f"⏳ Projeção: {anos} anos e {meses} meses para atingir a meta"
-            elif anos > 0:
-                projecao_tempo = f"⏳ Projeção: {anos} anos para atingir a meta"
-            else:
-                projecao_tempo = f"⏳ Projeção: {meses} meses para atingir a meta"
-        else:
-            projecao_tempo = "🎯 Meta distante - precisa aumentar aportes"
-    elif config["meta"] <= patrimonio:
-        projecao_tempo = "🎉 Meta já atingida! Parabéns! 🏆"
-    elif config["meta"] == 0:
-        projecao_tempo = "🎯 Defina uma meta de patrimônio para ver projeções"
-    else:
-        projecao_tempo = "🎯 Aumente seu saldo livre para acelerar a meta"
+        despesas = df_f[df_f["tipo"] == "Despesa"]["valor"].sum()
+        saldo = receitas - despesas
 
-    # Determinar emoji baseado no score
-    if comprometimento < 50 and taxa_poupanca >= 20:
-        emoji_principal = "🚀"
-        tom = "excelente"
-    elif comprometimento < 60 and taxa_poupanca >= 15:
-        emoji_principal = "📈"
-        tom = "bom"
-    else:
-        emoji_principal = "🎯"
-        tom = "atenção"
+    taxa_poupanca = (saldo / receitas * 100) if receitas > 0 else 0
 
-    # --- PROMPT MODERNO COM EMOJIS (MANTENDO TODO O CONTEÚDO ORIGINAL) ---
+    # --- 2. CONFIGURAÇÃO DA IA COM TOOLS ---
+    tools = [{"google_search": {}}]
+    model = genai.GenerativeModel('gemini-2.5-flash', tools=tools)
+
+    # --- 3. PROMPT INTEGRADO (O SEGREDO) ---
     prompt = f"""
-    Você é um consultor financeiro moderno que fala de forma direta e usa emojis para deixar a análise visual, você não usa negrito para destacar porque fica com * indesejados.. 
-    Responda APENAS com o conteúdo da análise, sem introduções ou saudações.
-
-    FAMÍLIA: {config["nome_familia"]}
+    Atue como um Consultor Financeiro de Elite (Private Banker).
     
-    {emoji_principal} VISÃO GERAL
-    👛 Patrimônio: R$ {patrimonio:,.0f} ({perc_meta:.1f}% da meta)
-    💰 Saldo Livre/Mês: R$ {saldo_fixo:,.0f}
-    📈 Taxa de Poupança: {taxa_poupanca:.1f}%
-    🎯 Saúde Financeira: {tom.upper()}
-    {projecao_tempo}
+    PARTE 1: CONTEXTO DO CLIENTE (DADOS REAIS INTERNOS)
+    - Família: {config.get('nome_familia')}
+    - Patrimônio Total: R$ {patrimonio:,.2f}
+    - Meta de Patrimônio: R$ {config.get('meta', 0):,.2f}
+    - Capacidade de Aporte Mensal (Sobra): R$ {saldo:,.2f}
+    - Taxa de Poupança Atual: {taxa_poupanca:.1f}%
+    - Perfil Estimado: {perfil_detectado}
+    - {investimentos_str}
 
-    ⚠️ PONTOS DE ATENÇÃO
-    1. 📉 Comprometimento: {comprometimento:.1f}% da renda (ideal <50%)
-    2. 💳 Uso da Reserva: {uso_reserva:.1f}% (limite: R$ {config["reserva"]:.0f})
-    3. 🔥 Maiores Gastos Fixos:
-    {chr(10).join([f'   • {item["nome"]}: R$ {item["valor"]:.0f}' for item in top_fixas_list[:3]]) if top_fixas_list else '   • Nenhum gasto fixo registrado'}
+    PARTE 2: SUA MISSÃO (PESQUISA + ANÁLISE)
+    1. PESQUISE HOJE no Google: Taxa Selic atual, IPCA acumulado 12 meses e Dólar.
+    2. PESQUISE 2 oportunidades de investimento que estão "quentes" no Brasil hoje para o perfil {perfil_detectado}.
+    3. RACIOCÍNIO INTEGRADO: Compare o que o cliente JÁ TEM com o que o mercado oferece.
+       - Ex: Se ele tem dinheiro na poupança e a Selic está alta, mande trocar.
+       - Ex: Se a inflação está alta, sugira proteção (IPCA+).
 
-    🎯 ONDE VOCÊ GASTA MAIS
-    {chr(10).join([f'   {cat}: R$ {valor:.0f}' for cat, valor in categorias_gastos.items()]) if categorias_gastos else '   📝 Nenhum gasto variável registrado este mês'}
-
-    🚀 PLANO DE AÇÃO (3 ETAPAS)
-
-    🟢 ETAPA 1: CORTES IMEDIATOS
-    • {"Reduza " + top_fixas_list[0]["nome"] + f" em R$ {top_fixas_list[0]["valor"]*0.1:.0f}" if top_fixas_list else "Identifique sua maior despesa"}
-    • {"Controle gastos com " + list(categorias_gastos.keys())[0] if categorias_gastos else "Registre TODOS os gastos"}
-
-    🟡 ETAPA 2: OTIMIZAÇÃO (30 DIAS)
-    • {"Mantenha" if taxa_poupanca >= 20 else "Aumente para"} {max(20, taxa_poupanca + 5)}% de poupança
-    • {"Diversifique investimentos" if patrimonio > 1000 else "Comece com R$ 50/mês"}
-
-    🔵 ETAPA 3: ACELERAÇÃO (90 DIAS)
-    • {"Supere" if perc_meta >= 100 else "Atinga"} {min(100, perc_meta + 15)}% da meta
-    • {"Busque R$ 300/mês extra" if saldo_fixo < 1500 else "Invista 5% a mais"}
-
-    💡 DICA PRÁTICA
-    {"Você está no caminho certo! Só ajustar os detalhes. 🎉" if taxa_poupanca >= 15 else 
-    "Foque em UM problema por vez. Pequenas vitórias levam ao sucesso! ✨"}
+    PARTE 3: GERE O RELATÓRIO FINAL (FORMATO)
     
-    ⏰ Atualizado: {datetime.now().strftime("%d/%m %H:%M")}
+    # 🏥 Diagnóstico & Mercado 🌍
+    * **Sua Saúde:** [Resumo em 1 frase sobre se ele está poupando bem ou mal]
+    * **O Mercado Hoje:** Selic [Valor]% | IPCA [Valor]% | Dólar [Valor]
+    * **Veredito:** [Ex: "O momento favorece Renda Fixa" ou "Hora de tomar risco"]
+
+    # 🚀 Plano de Ação Inteligente
+    Com base no seu saldo mensal de R$ {saldo:,.0f}, faça isso:
+    
+    1. **[Ação Imediata]**: [Sugestão específica baseada na pesquisa]. 
+       *Por que?* [Justificativa ligando o dado do mercado ao dado dele].
+    
+    2. **[Ajuste de Carteira]**: [Sugestão para o patrimônio já acumulado].
+    
+    3. **[Oportunidade da Semana]**: [Nome de um ativo real encontrado na pesquisa].
+
+    💡 **Dica de Ouro:** [Uma frase curta de impacto financeiro]
+    
+    Use emojis. Seja direto. Não use introduções como "Aqui está sua análise".
     """
 
-    # Modelos a tentar (mais modernos)
-    modelos = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-1.5-flash']
+    try:
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"⚠️ A IA Integrada teve um problema de conexão: {str(e)}"
     
-    for modelo in modelos:
-        try:
-            model = genai.GenerativeModel(modelo)
-            response = model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            continue
-    
-    return "🤖 Consultoria temporariamente indisponível. Tente novamente!"
 
 # =========================================================
 # FUNÇÃO: GERAR LANÇAMENTOS AUTOMÁTICOS
@@ -6907,48 +6811,59 @@ elif menu == "📊 Dashboard/IA":
         """, unsafe_allow_html=True)
         st.session_state["msg"] = None
 
-    # ================= BOTÃO DA IA =================
+    # ================= CÉREBRO FINANCEIRO (INTEGRADO) =================
     with st.container():
         st.markdown("""
         <div style="
             background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
             border-radius: 12px;
-            padding: 20px;
+            padding: 24px;
             margin-bottom: 24px;
             color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+            border: 1px solid rgba(255,255,255,0.1);
         ">
-            <div>
-                <h3 style="margin:0; color:white;">🤖 Consultor IA</h3>
-                <p style="margin:0; font-size:14px; opacity:0.9;">Peça uma análise inteligente das suas finanças</p>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h2 style="margin:0; color:white; font-size: 24px;">🧠 Cérebro Financeiro IA</h2>
+                    <p style="margin:5px 0 0 0; font-size:16px; opacity:0.9;">
+                        Analisa seus dados + Pesquisa o mercado real = Decisão Perfeita.
+                    </p>
+                </div>
+                <div style="font-size: 40px;">🤖</div>
             </div>
         """, unsafe_allow_html=True)
         
-        col_ai_btn, _ = st.columns([1, 3])
-        with col_ai_btn:
-            if st.button("✨ Analisar Agora", use_container_width=True):
-                with st.spinner("A IA está lendo seus dados..."):
-                    analise = consultar_ia_financeira(dados)
-                    st.session_state["analise_ia"] = analise
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Botão Único e Grande
+        if st.button("🚀 GERAR CONSULTORIA COMPLETA", use_container_width=True):
+            with st.spinner("🔄 Conectando dados internos com indicadores de mercado do Google..."):
+                # Chama a função unificada
+                analise_completa = consultar_ia_integrada(dados)
+                st.session_state["analise_ia_resultado"] = analise_completa
         
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Mostrar o resultado se já tiver sido gerado
-        if "analise_ia" in st.session_state and st.session_state["analise_ia"]:
-            st.markdown(f"""
+        # Exibir Resultado
+        if "analise_ia_resultado" in st.session_state and st.session_state["analise_ia_resultado"]:
+            st.markdown("""
             <div style="
                 background: #1f2937; 
                 border: 1px solid #7c3aed; 
                 border-radius: 12px; 
-                padding: 20px; 
+                padding: 24px; 
                 margin-bottom: 24px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             ">
-                <h4 style="color: #a78bfa; margin-top:0;">💡 Análise do Consultor Virtual</h4>
-                <div style="color: #e5e7eb; line-height: 1.6;">
-                    {st.session_state["analise_ia"].replace(chr(10), '<br>')}
-                </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown(st.session_state["analise_ia_resultado"])
+            
+            st.markdown("""
+            <div style="margin-top: 20px; font-size: 12px; color: #9ca3af; text-align: right;">
+                * Análise gerada por IA (Gemini 2.5) cruzando seus dados com pesquisa web em tempo real.
+            </div>
             </div>
             """, unsafe_allow_html=True)    
 
