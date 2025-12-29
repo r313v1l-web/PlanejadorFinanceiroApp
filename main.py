@@ -729,7 +729,7 @@ def consultar_ia_integrada_completa(dados):
 
     # --- 5. CHAMAR IA ---
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash-lite')
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -7279,7 +7279,7 @@ elif menu == "📊 Dashboard/IA":
                     color: #9ca3af; 
                     text-align: right;
                 ">
-                    * Dados pessoais + Indicadores do Banco Central + IA Gemini 1.5<br>
+                    * Dados pessoais + Indicadores do Banco Central + IA Gemini-2.5-flash-lite<br>
                     * Para decisões de investimento, consulte um profissional certificado
                 </div>
             </div>
