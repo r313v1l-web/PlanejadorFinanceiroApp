@@ -494,21 +494,18 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 
 
 # =========================================================
-# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI)
+# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI) - VERSÃO ROBUSTA
 # =========================================================
 def consultar_ia_financeira(dados):
     # 1. Configurar a API
     try:
-        # Repare que agora é apenas st.secrets["API_KEY"]
         genai.configure(api_key=st.secrets["API_KEY"])
     except:
         return "⚠️ Erro: Chave da API do Google não configurada."
 
-    # 2. Preparar o resumo dos dados para a IA entender
-    # Vamos calcular totais para não enviar dados demais
+    # 2. Preparar o resumo (mantemos igual para não gastar tokens a toa)
     patrimonio = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
     
-    # Resumo de Gastos
     gastos_str = "Sem gastos registrados."
     if not dados["controle_gastos"].empty:
         df_g = dados["controle_gastos"]
@@ -517,7 +514,6 @@ def consultar_ia_financeira(dados):
         top3 = df_g.nlargest(3, "valor")[["descricao", "valor"]].to_string(index=False)
         gastos_str = f"Total gasto no mês: R$ {total_gasto:.2f}. Maiores gastos:\n{top3}"
 
-    # Resumo de Fluxo Fixo
     fluxo_str = "Sem fluxos fixos."
     if not dados["fluxo_fixo"].empty:
         df_f = dados["fluxo_fixo"]
@@ -525,7 +521,6 @@ def consultar_ia_financeira(dados):
         desp = df_f[df_f["tipo"] == "Despesa"]["valor"].sum()
         fluxo_str = f"Receitas Fixas: R$ {rec:.2f}. Despesas Fixas: R$ {desp:.2f}."
 
-    # Resumo de Metas
     metas_str = "Sem metas."
     if not dados["sonhos_projetos"].empty:
         df_s = dados["sonhos_projetos"]
@@ -533,26 +528,42 @@ def consultar_ia_financeira(dados):
         total_guardado = df_s["valor_atual"].sum()
         metas_str = f"Total necessário para sonhos: R$ {total_meta:.2f}. Já guardado: R$ {total_guardado:.2f}."
 
-    # 3. Criar o Prompt (O pedido para a IA)
+    # 3. Prompt
     prompt = f"""
-    Atue como um consultor financeiro pessoal experiente, direto e empático.
-    Analise os dados financeiros abaixo do usuário e forneça um resumo executivo curto (máximo 5 linhas) e 3 dicas práticas de ação.
-    Não use frases genéricas como "economize mais". Seja específico com base nos números. Use emojis.
+    Atue como um consultor financeiro pessoal experiente.
+    Analise os dados e forneça um resumo curto (5 linhas) e 3 dicas práticas.
+    Seja específico. Use emojis.
 
-    DADOS DO USUÁRIO:
-    - Patrimônio Total Investido: R$ {patrimonio:.2f}
-    - Fluxo Mensal: {fluxo_str}
-    - Gastos do Mês Atual: {gastos_str}
-    - Situação dos Sonhos/Metas: {metas_str}
+    DADOS:
+    - Patrimônio: R$ {patrimonio:.2f}
+    - Fluxo: {fluxo_str}
+    - Gastos Mês: {gastos_str}
+    - Metas: {metas_str}
     """
 
-    # 4. Chamar a IA
-    try:
-        model = genai.GenerativeModel('gemini-pro') # Modelo rápido e gratuito
-        response = model.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        return f"Desculpe, não consegui analisar agora. Erro: {e}"
+    # 4. TENTATIVA INTELIGENTE DE MODELOS (Plano A, B, C e D)
+    # Se um falhar, o código tenta o próximo automaticamente
+    modelos_para_tentar = [
+        'gemini-1.5-flash',       # Mais rápido e novo
+        'gemini-1.5-flash-latest',# Alternativa do novo
+        'gemini-1.0-pro',         # Versão estável anterior
+        'gemini-pro'              # Nome genérico antigo
+    ]
+
+    erro_log = ""
+
+    for modelo in modelos_para_tentar:
+        try:
+            model = genai.GenerativeModel(modelo)
+            response = model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            # Se der erro, guarda o motivo e tenta o próximo da lista
+            erro_log = str(e)
+            continue 
+    
+    # Se todos falharem:
+    return f"Desculpe, não consegui conectar com nenhum modelo da IA. Erro técnico: {erro_log}"
 
 # =========================================================
 # FUNÇÃO: GERAR LANÇAMENTOS AUTOMÁTICOS
