@@ -1776,7 +1776,7 @@ with st.sidebar:
         },
         {
             "emoji": "📊",
-            "label": "Dashboard",
+            "label": "Dashboard/IA",
             "color": "#8b5cf6",
             "bg_color": "rgba(139, 92, 246, 0.1)"
         },
@@ -6837,10 +6837,10 @@ elif menu == "🛒 Limite do Cartão/Mês":
 
 
 # =========================================================
-# 📊 Dashboard - VERSÃO ESTILIZADA CORRIGIDA
+# 📊 Dashboard/IA - VERSÃO ESTILIZADA CORRIGIDA
 # =========================================================
 
-elif menu == "📊 Dashboard":
+elif menu == "📊 Dashboard/IA":
 
     st.markdown("""
     <div style="
