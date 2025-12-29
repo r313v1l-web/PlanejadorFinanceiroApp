@@ -499,7 +499,7 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 # NOVO PROMPT DE ENGENHARIA AVANÇADA
 def consultar_ia_financeira(dados):
     """
-    Versão moderna, direta e visualmente limpa da IA financeira
+    Versão moderna, direta e visualmente atrativa da IA financeira
     """
     try:
         genai.configure(api_key=st.secrets["API_KEY"])
@@ -532,10 +532,10 @@ def consultar_ia_financeira(dados):
         
         # TOP 3 despesas fixas
         top_fixas = df_f[df_f["tipo"] == "Despesa"].nlargest(3, "valor")
-        top_fixas_str = "\n".join([f"• {row['nome']}: R$ {row['valor']:.0f}" for _, row in top_fixas.iterrows()])
+        top_fixas_list = [{"nome": row['nome'], "valor": row['valor']} for _, row in top_fixas.iterrows()]
     else:
         receitas = despesas_fixas = saldo_fixo = 0
-        top_fixas_str = "Nenhuma despesa fixa registrada"
+        top_fixas_list = []
     
     # Gastos variáveis com categorização inteligente
     gastos_var = 0
@@ -545,7 +545,7 @@ def consultar_ia_financeira(dados):
         df_g = dados["controle_gastos"]
         gastos_var = df_g["valor"].sum()
         
-        # Categorização automática simplificada
+        # Categorização automática simplificada com emojis
         categorias = {
             "🍔 Alimentação": ["restaurante", "lanche", "mercado", "supermercado", "café", "feira"],
             "🚗 Transporte": ["uber", "táxi", "gasolina", "combustível", "ônibus", "metro", "estacionamento"],
@@ -574,74 +574,80 @@ def consultar_ia_financeira(dados):
     taxa_poupanca = (saldo_fixo / receitas * 100) if receitas > 0 else 0
     uso_reserva = (gastos_var / config["reserva"] * 100) if config["reserva"] > 0 else 0
     
-    score = 0
-    if comprometimento < 50: score += 30
-    if taxa_poupanca >= 15: score += 30
-    if gastos_var <= config["reserva"]: score += 20
-    if perc_meta > 30: score += 20
-    
-    emoji_saude = "🟢" if score >= 70 else "🟡" if score >= 50 else "🔴"
-    
-    # --- PROMPT MODERNO E DIRETO ---
+    # Determinar emoji baseado no score
+    if comprometimento < 50 and taxa_poupanca >= 20:
+        emoji_principal = "🚀"
+        tom = "excelente"
+    elif comprometimento < 60 and taxa_poupanca >= 15:
+        emoji_principal = "📈"
+        tom = "bom"
+    else:
+        emoji_principal = "🎯"
+        tom = "atenção"
+
+    # --- PROMPT MODERNO COM EMOJIS ---
     prompt = f"""
-    Você é um consultor financeiro direto, prático e sem firulas. Fale como um amigo experiente em dinheiro.
+    Você é um consultor financeiro moderno que fala de forma direta e usa emojis para deixar a análise visual. 
+    Responda APENAS com o conteúdo da análise, sem introduções ou saudações.
 
-    ANÁLISE RÁPIDA DA {config["nome_familia"].upper()}:
+    FAMÍLIA: {config["nome_familia"]}
+    
+    {emoji_principal} **VISÃO GERAL**
+    👛 Patrimônio: R$ {patrimonio:,.0f} ({perc_meta:.1f}% da meta)
+    💰 Saldo Livre/Mês: R$ {saldo_fixo:,.0f}
+    📈 Taxa de Poupança: {taxa_poupanca:.1f}%
+    🎯 Saúde Financeira: {tom.upper()}
 
-    📊 SITUAÇÃO ATUAL
-    • Patrimônio: R$ {patrimonio:,.0f} ({perc_meta:.1f}% da meta de R$ {config["meta"]:,.0f})
-    • Saldo Fixo Mensal: R$ {saldo_fixo:,.0f} (Taxa de poupança: {taxa_poupanca:.1f}%)
-    • Saúde Financeira: {score}/100 {emoji_saude}
+    ⚠️ **PONTOS DE ATENÇÃO**
+    1. 📉 Comprometimento: {comprometimento:.1f}% da renda (ideal <50%)
+    2. 💳 Uso da Reserva: {uso_reserva:.1f}% (limite: R$ {config["reserva"]:.0f})
+    3. 🔥 Maiores Gastos Fixos:
+    {chr(10).join([f'   • {item["nome"]}: R$ {item["valor"]:.0f}' for item in top_fixas_list[:3]]) if top_fixas_list else '   • Nenhum gasto fixo registrado'}
 
-    🚩 PRINCIPAIS PONTOS
-    1. Comprometimento da renda: {comprometimento:.1f}% (ideal <50%)
-    2. Uso da reserva: {uso_reserva:.1f}% do limite de R$ {config["reserva"]:.0f}
-    3. Maiores despesas fixas:
-    {top_fixas_str}
+    🎯 ONDE VOCÊ GASTA MAIS
+    {chr(10).join([f'   {cat}: R$ {valor:.0f}' for cat, valor in categorias_gastos.items()]) if categorias_gastos else '   📝 Nenhum gasto variável registrado este mês'}
 
-    🎯 ONDE SEU DINHEIRO VAI (GASTOS VARIÁVEIS)
-    {chr(10).join([f"• {cat}: R$ {valor:.0f}" for cat, valor in categorias_gastos.items()]) if categorias_gastos else "• Nenhum gasto registrado este mês"}
+    🚀 PLANO DE AÇÃO (3 ETAPAS)
 
-    ⚡ PLANO DE 3 PASSOS
+    🟢 ETAPA 1: CORTES IMEDIATOS
+    • {"Reduza " + top_fixas_list[0]["nome"] + f" em R$ {top_fixas_list[0]["valor"]*0.1:.0f}" if top_fixas_list else "Identifique sua maior despesa"}
+    • {"Controle gastos com " + list(categorias_gastos.keys())[0] if categorias_gastos else "Registre TODOS os gastos"}
 
-    1️⃣ CORTE IMEDIATO (esta semana)
-    - {f"Reduza '{top_fixas.iloc[0]['nome'] if not top_fixas.empty else 'sua maior despesa'}': Economize R$ {top_fixas.iloc[0]['valor']*0.1:.0f} renegociando ou cortando"
-    if not top_fixas.empty else "Identifique sua maior despesa fixa para cortar"}
-    - Controle {list(categorias_gastos.keys())[0] if categorias_gastos else "seus gastos"} nos próximos 7 dias
+    🟡 ETAPA 2: OTIMIZAÇÃO (30 DIAS)
+    • {"Mantenha" if taxa_poupanca >= 20 else "Aumente para"} {max(20, taxa_poupanca + 5)}% de poupança
+    • {"Diversifique investimentos" if patrimonio > 1000 else "Comece com R$ 50/mês"}
 
-    2️⃣ AJUSTE ESTRATÉGICO (próximo mês)
-    - {f"Aumente sua poupança para {max(20, taxa_poupanca + 5):.0f}%" if taxa_poupanca < 20 else "Mantenha a ótima taxa de poupança"}
-    - {"Diversifique seus investimentos além de 'Outros'" if patrimonio > 0 else "Comece a investir, mesmo que R$ 50 por mês"}
+    🔵 ETAPA 3: ACELERAÇÃO (90 DIAS)
+    • {"Supere" if perc_meta >= 100 else "Atinga"} {min(100, perc_meta + 15)}% da meta
+    • {"Busque R$ 300/mês extra" if saldo_fixo < 1500 else "Invista 5% a mais"}
 
-    3️⃣ META ACELERADA (3 meses)
-    - Foque em {f"atingir {min(100, perc_meta + 10):.1f}% da meta" if perc_meta < 100 else "superar sua meta!"}
-    - {"Busque R$ 200/mês extra" if saldo_fixo < 1000 else "Aumente seu patrimônio em 5%"}
-
-    💡 DICA DO DIA
-    {"Você está no caminho certo! Só precisa otimizar onde o dinheiro vaza mais." if score >= 60 else 
-    "Não se assuste. Todo mundo começa de algum lugar. Foque em um problema de cada vez."}
+    💡 DICA PRÁTICA
+    {"Você está no caminho certo! Só ajustar os detalhes. 🎉" if taxa_poupanca >= 15 else 
+    "Foque em UM problema por vez. Pequenas vitórias levam ao sucesso! ✨"}
+    
+    ⏰ Atualizado: {datetime.now().strftime("%d/%m %H:%M")}
     """
 
-    # Modelos a tentar
-    modelos = [        'gemini-2.5-flash-lite',
-        'gemini-2.5-flash'   ]
+    # Modelos a tentar (mais modernos)
+    modelos = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-1.5-flash']
     
     for modelo in modelos:
         try:
             model = genai.GenerativeModel(modelo)
             response = model.generate_content(prompt)
             return response.text
-        except:
+        except Exception as e:
             continue
     
-    return "🤖 Nossa consultoria financeira está ocupada no momento. Tente novamente em alguns segundos."
+    return "🤖 Consultoria temporariamente indisponível. Tente novamente!"
 
 
-# E na hora de exibir no Streamlit:
-def mostrar_analise_ia_estilizada(analise_texto):
+# Função SIMPLES para exibir - SEM transformações complexas
+def mostrar_analise_ia_simples(analise_texto):
     """
-    Exibe a análise da IA com formatação visualmente atrativa
+    Exibe a análise da IA de forma limpa e visual
     """
+    # Container estilizado
     st.markdown("""
     <div style='
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
@@ -650,129 +656,38 @@ def mostrar_analise_ia_estilizada(analise_texto):
         margin: 20px 0;
         border: 1px solid #334155;
     '>
+    """, unsafe_allow_html=True)
+    
+    # Cabeçalho fixo
+    st.markdown("""
+    <div style='
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    '>
         <div style='
+            background: #7c3aed;
+            border-radius: 10px;
+            width: 48px;
+            height: 48px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
+            justify-content: center;
         '>
-            <div style='
-                background: #7c3aed;
-                border-radius: 10px;
-                width: 48px;
-                height: 48px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            '>
-                <span style='font-size: 24px;'>🤖</span>
-            </div>
-            <div>
-                <h3 style='margin: 0; color: white;'>Consultor Financeiro AI</h3>
-                <p style='margin: 0; color: #94a3b8; font-size: 14px;'>Análise inteligente em tempo real</p>
-            </div>
+            <span style='font-size: 24px;'>🤖</span>
         </div>
-    """, unsafe_allow_html=True)
-    
-    # Substitui formatações Markdown por HTML limpo
-    analise_limpa = analise_texto
-    
-    # Converte títulos
-    analise_limpa = analise_limpa.replace("📊 SITUAÇÃO ATUAL", """
-    <div style="
-        color: #3b82f6;
-        font-size: 18px;
-        font-weight: bold;
-        margin: 20px 0 10px 0;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #3b82f6;
-    ">
-        📊 SITUAÇÃO ATUAL
-    </div>
-    """)
-    
-    analise_limpa = analise_limpa.replace("🚩 PRINCIPAIS PONTOS", """
-    <div style="
-        color: #ef4444;
-        font-size: 18px;
-        font-weight: bold;
-        margin: 20px 0 10px 0;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #ef4444;
-    ">
-        🚩 PRINCIPAIS PONTOS
-    </div>
-    """)
-    
-    analise_limpa = analise_limpa.replace("🎯 ONDE SEU DINHEIRO VAI", """
-    <div style="
-        color: #10b981;
-        font-size: 18px;
-        font-weight: bold;
-        margin: 20px 0 10px 0;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #10b981;
-    ">
-        🎯 ONDE SEU DINHEIRO VAI
-    </div>
-    """)
-    
-    analise_limpa = analise_limpa.replace("⚡ PLANO DE 3 PASSOS", """
-    <div style="
-        color: #f59e0b;
-        font-size: 18px;
-        font-weight: bold;
-        margin: 20px 0 10px 0;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #f59e0b;
-    ">
-        ⚡ PLANO DE 3 PASSOS
-    </div>
-    """)
-    
-    analise_limpa = analise_limpa.replace("💡 DICA DO DIA", """
-    <div style="
-        background: rgba(59, 130, 246, 0.1);
-        border-radius: 10px;
-        padding: 16px;
-        margin: 20px 0;
-        border-left: 4px solid #3b82f6;
-    ">
-        <div style="
-            color: #3b82f6;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        ">
-            💡 DICA DO DIA
+        <div>
+            <h3 style='margin: 0; color: white;'>Consultor Financeiro AI</h3>
+            <p style='margin: 0; color: #94a3b8; font-size: 14px;'>Análise inteligente em tempo real</p>
         </div>
-    """) + "</div>"
-    
-    # Converte bullets
-    analise_limpa = analise_limpa.replace("• ", "• ")
-    
-    # Exibe o conteúdo
-    st.markdown(f"""
-    <div style='
-        color: #e5e7eb;
-        line-height: 1.6;
-        font-size: 15px;
-    '>
-        {analise_limpa.replace(chr(10), '<br>')}
-    </div>
-    
-    <div style='
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid #334155;
-        text-align: right;
-        color: #94a3b8;
-        font-size: 12px;
-    '>
-        Análise gerada em {datetime.now().strftime('%d/%m às %H:%M')}
     </div>
     """, unsafe_allow_html=True)
     
+    # Apenas exibe o texto como markdown (já vem formatado com emojis)
+    st.markdown(analise_texto)
+    
+    # Fecha o container
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
