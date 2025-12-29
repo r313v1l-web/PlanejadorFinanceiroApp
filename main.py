@@ -1487,33 +1487,33 @@ with st.sidebar:
     # ===============================
     menu_data = [
         {
-            "emoji": "💸",
-            "label": "CONTROLE DE GASTOS",
+            "emoji": "🛒",
+            "label": "Limite do Cartão/Mês",
             "color": "#3b82f6",
             "bg_color": "rgba(59, 130, 246, 0.1)"
         },
         {
             "emoji": "📊",
-            "label": "DASHBOARD",
+            "label": "Dashboard",
             "color": "#8b5cf6",
             "bg_color": "rgba(139, 92, 246, 0.1)"
         },
         {
             "emoji": "📄",
-            "label": "RELATÓRIO EXECUTIVO",
+            "label": "Relatório Executivo",
             "color": "#6366f1",
             "bg_color": "rgba(99, 102, 241, 0.1)"
         },
 
         {
-            "emoji": "💰",
-            "label": "INVESTIMENTOS",
+            "emoji": "🐷",
+            "label": "Meu Dinheiro Guardado",
             "color": "#f59e0b",
             "bg_color": "rgba(245, 158, 11, 0.1)"
         },
         {
             "emoji": "🎯",
-            "label": "SONHOS & METAS",
+            "label": "Sonhos & Metas",
             "color": "#ef4444",
             "bg_color": "rgba(239, 68, 68, 0.1)"
         },
@@ -1524,21 +1524,21 @@ with st.sidebar:
             "bg_color": "rgba(16, 185, 129, 0.1)"
         },
         {
-            "emoji": "🏢",
-            "label": "FLUXOS FIXOS",
+            "emoji": "📅",
+            "label": "Contas Mensais",
             "color": "#ec4899",
             "bg_color": "rgba(236, 72, 153, 0.1)"
         },
         {
             "emoji": "🏷️",
-            "label": "CATEGORIAS",
+            "label": "Categorias",
             "color": "#14b8a6",
             "bg_color": "rgba(20, 184, 166, 0.1)"
         },
 
         {
             "emoji": "⚙️",
-            "label": "CONFIGURAÇÕES",
+            "label": "Planejamento",
             "color": "#6b7280",
             "bg_color": "rgba(107, 114, 128, 0.1)"
         }
