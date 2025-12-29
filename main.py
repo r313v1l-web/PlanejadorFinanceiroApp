@@ -492,6 +492,67 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 
 
 
+
+# =========================================================
+# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI)
+# =========================================================
+def consultar_ia_financeira(dados):
+    # 1. Configurar a API
+    try:
+        genai.configure(api_key=st.secrets["google"]["API_KEY"])
+    except:
+        return "⚠️ Erro: Chave da API do Google não configurada."
+
+    # 2. Preparar o resumo dos dados para a IA entender
+    # Vamos calcular totais para não enviar dados demais
+    patrimonio = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
+    
+    # Resumo de Gastos
+    gastos_str = "Sem gastos registrados."
+    if not dados["controle_gastos"].empty:
+        df_g = dados["controle_gastos"]
+        total_gasto = df_g["valor"].sum()
+        # Top 3 maiores gastos
+        top3 = df_g.nlargest(3, "valor")[["descricao", "valor"]].to_string(index=False)
+        gastos_str = f"Total gasto no mês: R$ {total_gasto:.2f}. Maiores gastos:\n{top3}"
+
+    # Resumo de Fluxo Fixo
+    fluxo_str = "Sem fluxos fixos."
+    if not dados["fluxo_fixo"].empty:
+        df_f = dados["fluxo_fixo"]
+        rec = df_f[df_f["tipo"] == "Receita"]["valor"].sum()
+        desp = df_f[df_f["tipo"] == "Despesa"]["valor"].sum()
+        fluxo_str = f"Receitas Fixas: R$ {rec:.2f}. Despesas Fixas: R$ {desp:.2f}."
+
+    # Resumo de Metas
+    metas_str = "Sem metas."
+    if not dados["sonhos_projetos"].empty:
+        df_s = dados["sonhos_projetos"]
+        total_meta = df_s["valor_alvo"].sum()
+        total_guardado = df_s["valor_atual"].sum()
+        metas_str = f"Total necessário para sonhos: R$ {total_meta:.2f}. Já guardado: R$ {total_guardado:.2f}."
+
+    # 3. Criar o Prompt (O pedido para a IA)
+    prompt = f"""
+    Atue como um consultor financeiro pessoal experiente, direto e empático.
+    Analise os dados financeiros abaixo do usuário e forneça um resumo executivo curto (máximo 5 linhas) e 3 dicas práticas de ação.
+    Não use frases genéricas como "economize mais". Seja específico com base nos números. Use emojis.
+
+    DADOS DO USUÁRIO:
+    - Patrimônio Total Investido: R$ {patrimonio:.2f}
+    - Fluxo Mensal: {fluxo_str}
+    - Gastos do Mês Atual: {gastos_str}
+    - Situação dos Sonhos/Metas: {metas_str}
+    """
+
+    # 4. Chamar a IA
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash') # Modelo rápido e gratuito
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"Desculpe, não consegui analisar agora. Erro: {e}"
+
 # =========================================================
 # FUNÇÃO: GERAR LANÇAMENTOS AUTOMÁTICOS
 # =========================================================
@@ -6710,6 +6771,51 @@ elif menu == "📊 Dashboard":
         </div>
         """, unsafe_allow_html=True)
         st.session_state["msg"] = None
+
+    # ================= BOTÃO DA IA =================
+    with st.container():
+        st.markdown("""
+        <div style="
+            background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        ">
+            <div>
+                <h3 style="margin:0; color:white;">🤖 Consultor IA</h3>
+                <p style="margin:0; font-size:14px; opacity:0.9;">Peça uma análise inteligente das suas finanças</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        col_ai_btn, _ = st.columns([1, 3])
+        with col_ai_btn:
+            if st.button("✨ Analisar Agora", use_container_width=True):
+                with st.spinner("A IA está lendo seus dados..."):
+                    analise = consultar_ia_financeira(dados)
+                    st.session_state["analise_ia"] = analise
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # Mostrar o resultado se já tiver sido gerado
+        if "analise_ia" in st.session_state and st.session_state["analise_ia"]:
+            st.markdown(f"""
+            <div style="
+                background: #1f2937; 
+                border: 1px solid #7c3aed; 
+                border-radius: 12px; 
+                padding: 20px; 
+                margin-bottom: 24px;
+            ">
+                <h4 style="color: #a78bfa; margin-top:0;">💡 Análise do Consultor Virtual</h4>
+                <div style="color: #e5e7eb; line-height: 1.6;">
+                    {st.session_state["analise_ia"].replace(chr(10), '<br>')}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)    
 
     # ================= CARDS DE MÉTRICAS PRINCIPAIS =================
     st.markdown("### 📈 Métricas Principais")
