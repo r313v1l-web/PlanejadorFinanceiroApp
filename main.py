@@ -3414,10 +3414,10 @@ elif menu == "🐷 Meu Dinheiro Guardado":
 
 
 # =========================================================
-# 🎯 SONHOS & METAS - VERSÃO ESTILIZADA COMPLETA
+# 🎯 Sonhos & Metas - VERSÃO ESTILIZADA COMPLETA
 # =========================================================
 
-elif menu == "🎯 SONHOS & METAS":
+elif menu == "🎯 Sonhos & Metas":
     
     st.markdown("""
     <div style="
@@ -6525,10 +6525,10 @@ elif menu == "🛒 Limite do Cartão/Mês":
 
 
 # =========================================================
-# 📊 DASHBOARD - VERSÃO ESTILIZADA CORRIGIDA
+# 📊 Dashboard - VERSÃO ESTILIZADA CORRIGIDA
 # =========================================================
 
-elif menu == "📊 DASHBOARD":
+elif menu == "📊 Dashboard":
 
     st.markdown("""
     <div style="
@@ -7207,10 +7207,10 @@ elif menu == "📊 DASHBOARD":
         </div>
         """, unsafe_allow_html=True)
 # =========================================================
-# 🏷️ CATEGORIAS
+# 🏷️ Categorias
 # =========================================================
 
-elif menu == "🏷️ CATEGORIAS":
+elif menu == "🏷️ Categorias":
 
     st.markdown("🏷️ Gestão de Categorias")
     if st.session_state.get("msg"):
@@ -7411,9 +7411,9 @@ elif menu == "🏷️ CATEGORIAS":
     st.divider()
 
 # =========================================================
-# ⚙️ CONFIGURAÇÕES - VERSÃO PASSO A PASSO EXPLICATIVA
+# ⚙️ Planejamento - VERSÃO PASSO A PASSO EXPLICATIVA
 # =========================================================
-elif menu == "⚙️ CONFIGURAÇÕES":
+elif menu == "⚙️ Planejamento":
     
     st.markdown("""
     <div style="
@@ -8141,10 +8141,10 @@ elif menu == "👥 USUÁRIOS":
 
 
 # =========================================================
-# 📄 RELATÓRIO EXECUTIVO - VERSÃO ESTILIZADA
+# 📄 Relatório Executivo - VERSÃO ESTILIZADA
 # =========================================================
 
-elif menu == "📄 RELATÓRIO EXECUTIVO":
+elif menu == "📄 Relatório Executivo":
     
     st.markdown("""
     <div style="
