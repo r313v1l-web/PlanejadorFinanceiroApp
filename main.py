@@ -573,14 +573,14 @@ def consultar_ia_financeira(dados):
 
     RESPONDA NESTE FORMATO EXATO (Use Markdown):
 
-    **📊 Diagnóstico Rápido:** (Uma frase resumindo se a saúde financeira é Boa, Alerta ou Crítica e o porquê).
+    📊 Diagnóstico Rápido: (Uma frase resumindo se a saúde financeira é Boa, Alerta ou Crítica e o porquê).
 
-    **🚩 Pontos de Atenção:**
-    * (Analise se o Custo Fixo está alto demais - ideal é <50%)
-    * (Analise se estourou a Reserva de Gastos Variáveis)
-    * (Comente sobre a taxa de poupança atual vs ideal de 20%)
+    🚩 Pontos de Atenção:
+     (Analise se o Custo Fixo está alto demais - ideal é <50%)
+     (Analise se estourou a Reserva de Gastos Variáveis)
+     (Comente sobre a taxa de poupança atual vs ideal de 20%)
 
-    **💡 Plano de Ação Imediato:**
+    💡 Plano de Ação Imediato:
     1. (Uma ação prática para cortar custos ou melhorar a renda hoje)
     2. (Uma recomendação sobre os investimentos/meta baseada no progresso)
     3. (Uma dica comportamental baseada nos "maiores vilões")
