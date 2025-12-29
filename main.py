@@ -494,7 +494,7 @@ def verificar_e_mostrar_onboarding(dados, usuario):
 
 
 # =========================================================
-# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI) - VERSÃO ROBUSTA
+# 🤖 FUNÇÃO DE INTELIGÊNCIA ARTIFICIAL (GEMINI) - VERSÃO PRO
 # =========================================================
 def consultar_ia_financeira(dados):
     # 1. Configurar a API
@@ -503,69 +503,101 @@ def consultar_ia_financeira(dados):
     except:
         return "⚠️ Erro: Chave da API do Google não configurada."
 
-    # 2. Preparar o resumo (mantemos igual para não gastar tokens a toa)
-    patrimonio = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
+    # --- PREPARAÇÃO DE DADOS (CONTEXTO RICO) ---
     
-    gastos_str = "Sem gastos registrados."
-    if not dados["controle_gastos"].empty:
-        df_g = dados["controle_gastos"]
-        total_gasto = df_g["valor"].sum()
-        # Top 3 maiores gastos
-        top3 = df_g.nlargest(3, "valor")[["descricao", "valor"]].to_string(index=False)
-        gastos_str = f"Total gasto no mês: R$ {total_gasto:.2f}. Maiores gastos:\n{top3}"
+    # A. Ler Configurações (Para saber se você está dentro do SEU plano)
+    orcamento_mensal = 0.0
+    reserva_gastos = 0.0
+    meta_patrimonio = 0.0
+    nome_familia = "Família"
+    
+    if not dados["config"].empty:
+        df_c = dados["config"].set_index("chave")
+        if "orcamento_mensal" in df_c.index: orcamento_mensal = float(df_c.loc["orcamento_mensal"]["valor"])
+        if "reserva_gastos" in df_c.index: reserva_gastos = float(df_c.loc["reserva_gastos"]["valor"])
+        if "meta_patrimonio" in df_c.index: meta_patrimonio = float(df_c.loc["meta_patrimonio"]["valor"])
+        if "nome_familia" in df_c.index: nome_familia = str(df_c.loc["nome_familia"]["valor"])
 
-    fluxo_str = "Sem fluxos fixos."
+    # B. Patrimônio e Progresso
+    patrimonio = dados["investimentos"]["valor_atual"].sum() if not dados["investimentos"].empty else 0
+    perc_meta = (patrimonio / meta_patrimonio * 100) if meta_patrimonio > 0 else 0
+
+    # C. Fluxo de Caixa (Fixo)
+    rec_fixa = 0
+    desp_fixa = 0
     if not dados["fluxo_fixo"].empty:
         df_f = dados["fluxo_fixo"]
-        rec = df_f[df_f["tipo"] == "Receita"]["valor"].sum()
-        desp = df_f[df_f["tipo"] == "Despesa"]["valor"].sum()
-        fluxo_str = f"Receitas Fixas: R$ {rec:.2f}. Despesas Fixas: R$ {desp:.2f}."
+        rec_fixa = df_f[df_f["tipo"] == "Receita"]["valor"].sum()
+        desp_fixa = df_f[df_f["tipo"] == "Despesa"]["valor"].sum()
+    
+    saldo_fixo = rec_fixa - desp_fixa
 
-    metas_str = "Sem metas."
-    if not dados["sonhos_projetos"].empty:
-        df_s = dados["sonhos_projetos"]
-        total_meta = df_s["valor_alvo"].sum()
-        total_guardado = df_s["valor_atual"].sum()
-        metas_str = f"Total necessário para sonhos: R$ {total_meta:.2f}. Já guardado: R$ {total_guardado:.2f}."
+    # D. Gastos Variáveis (Onde o dinheiro vaza)
+    total_gasto_variavel = 0
+    top_gastos_str = "Nenhum gasto registrado."
+    
+    if not dados["controle_gastos"].empty:
+        df_g = dados["controle_gastos"]
+        total_gasto_variavel = df_g["valor"].sum()
+        
+        # Agrupar por descrição para ver onde gasta mais
+        top_itens = df_g.groupby("descricao")["valor"].sum().nlargest(3)
+        top_gastos_str = ", ".join([f"{idx} (R$ {val:.0f})" for idx, val in top_itens.items()])
 
-    # 3. Prompt
+    # E. Cálculos Financeiros (A IA precisa disso mastigado)
+    total_saidas = desp_fixa + total_gasto_variavel
+    balanco_mensal = rec_fixa - total_saidas
+    taxa_poupanca = (balanco_mensal / rec_fixa * 100) if rec_fixa > 0 else 0
+    comprometimento_fixo = (desp_fixa / rec_fixa * 100) if rec_fixa > 0 else 0
+
+    # 3. PROMPT DE ENGENHARIA (O Segredo)
     prompt = f"""
-    Atue como um consultor financeiro pessoal experiente.
-    Analise os dados e forneça um resumo curto (5 linhas) e 3 dicas práticas.
-    Seja específico. Use emojis.
+    Atue como um Consultor Financeiro Sênior (CFP) para a {nome_familia}.
+    Analise os dados abaixo friamente e forneça um relatório curto, direto e estratégico.
+    
+    --- DADOS FINANCEIROS ---
+    1. META E PATRIMÔNIO:
+       - Meta: R$ {meta_patrimonio:,.2f}
+       - Atual: R$ {patrimonio:,.2f} ({perc_meta:.1f}% concluído)
+    
+    2. SAÚDE MENSAL (FLUXO):
+       - Renda Fixa Mensal: R$ {rec_fixa:,.2f} (Orçamento Planejado: R$ {orcamento_mensal:,.2f})
+       - Custos Fixos: R$ {desp_fixa:,.2f} ({comprometimento_fixo:.1f}% da renda)
+       - Gastos Variáveis: R$ {total_gasto_variavel:,.2f} (Limite da Reserva: R$ {reserva_gastos:,.2f})
+       - Maiores vilões variáveis: {top_gastos_str}
+    
+    3. RESULTADO FINAL:
+       - Sobra/Falta no mês: R$ {balanco_mensal:,.2f}
+       - Capacidade de Aporte (Taxa de Poupança): {taxa_poupanca:.1f}%
+    -------------------------
 
-    DADOS:
-    - Patrimônio: R$ {patrimonio:.2f}
-    - Fluxo: {fluxo_str}
-    - Gastos Mês: {gastos_str}
-    - Metas: {metas_str}
+    RESPONDA NESTE FORMATO EXATO (Use Markdown):
+
+    **📊 Diagnóstico Rápido:** (Uma frase resumindo se a saúde financeira é Boa, Alerta ou Crítica e o porquê).
+
+    **🚩 Pontos de Atenção:**
+    * (Analise se o Custo Fixo está alto demais - ideal é <50%)
+    * (Analise se estourou a Reserva de Gastos Variáveis)
+    * (Comente sobre a taxa de poupança atual vs ideal de 20%)
+
+    **💡 Plano de Ação Imediato:**
+    1. (Uma ação prática para cortar custos ou melhorar a renda hoje)
+    2. (Uma recomendação sobre os investimentos/meta baseada no progresso)
+    3. (Uma dica comportamental baseada nos "maiores vilões")
     """
 
-    # 4. TENTATIVA INTELIGENTE DE MODELOS (Plano A, B, C e D)
-    # Se um falhar, o código tenta o próximo automaticamente
-    modelos_para_tentar = [
-        'gemini-1.5-flash',       # Mais rápido e novo
-        'gemini-1.5-flash-latest',# Alternativa do novo
-        'gemini-1.0-pro',         # Versão estável anterior
-        'gemini-pro',
-        'gemini-2.5-flash-lite',
-        'gemini-2.5-flash'              
-    ]
-
-    erro_log = ""
+    # 4. TENTATIVA DE MODELOS
+    modelos_para_tentar = ['gemini-2.5-flash-lite','gemini-2.5-flash']
 
     for modelo in modelos_para_tentar:
         try:
             model = genai.GenerativeModel(modelo)
             response = model.generate_content(prompt)
             return response.text
-        except Exception as e:
-            # Se der erro, guarda o motivo e tenta o próximo da lista
-            erro_log = str(e)
-            continue 
+        except Exception:
+            continue
     
-    # Se todos falharem:
-    return f"Desculpe, não consegui conectar com nenhum modelo da IA. Erro técnico: {erro_log}"
+    return "⚠️ A IA está sobrecarregada no momento. Tente novamente em alguns segundos."
 
 # =========================================================
 # FUNÇÃO: GERAR LANÇAMENTOS AUTOMÁTICOS
