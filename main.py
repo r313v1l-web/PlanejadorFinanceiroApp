@@ -622,7 +622,7 @@ def consultar_ia_integrada(dados):
 
     # --- 4. CHAMAR IA COM MODELO CORRETO ---
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash-lite')
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
