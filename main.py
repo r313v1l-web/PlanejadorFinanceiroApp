@@ -1721,10 +1721,10 @@ with st.sidebar:
             st.session_state.clear()
             st.rerun()
 # =========================================================
-# 📝 LANÇAMENTOS - VERSÃO ESTILIZADA COMPLETA
+# 💸 Anotar Gasto - VERSÃO ESTILIZADA COMPLETA
 # =========================================================
 
-if menu == "📝 LANÇAMENTOS":
+if menu == "💸 Anotar Gasto":
     
     st.markdown("""
     <div style="
@@ -2740,10 +2740,10 @@ if menu == "📝 LANÇAMENTOS":
 
 
 # =========================================================
-# 💰 INVESTIMENTOS - VERSÃO ESTILIZADA CORRIGIDA
+# 🐷 Meu Dinheiro Guardado - VERSÃO ESTILIZADA CORRIGIDA
 # =========================================================
 
-elif menu == "💰 INVESTIMENTOS":
+elif menu == "🐷 Meu Dinheiro Guardado":
     
     st.markdown("""
     <div style="
@@ -4023,10 +4023,10 @@ elif menu == "🎯 SONHOS & METAS":
 
 
 # =========================================================
-# 🏢 FLUXOS FIXOS - VERSÃO ESTILIZADA COMPLETA
+# 📅 Contas Mensais - VERSÃO ESTILIZADA COMPLETA
 # =========================================================
 
-elif menu == "🏢 FLUXOS FIXOS":
+elif menu == "📅 Contas Mensais":
     
     st.markdown("""
     <div style="
@@ -5235,10 +5235,10 @@ elif menu == "🏢 FLUXOS FIXOS":
 
 
 # =========================================================
-# 💸 CONTROLE DE GASTOS - VERSÃO COM CARDS
+# 🛒 Limite do Cartão/Mês - VERSÃO COM CARDS
 # =========================================================
 
-elif menu == "💸 CONTROLE DE GASTOS":
+elif menu == "🛒 Limite do Cartão/Mês":
     
     st.markdown("""
     <div style="
@@ -7882,7 +7882,7 @@ elif menu == "⚙️ CONFIGURAÇÕES":
                     🏷️ Como usar esta reserva
                 </div>
                 <div style="font-size: 13px; color: #d1d5db;">
-                    Na aba <strong>"💸 Controle de Gastos"</strong> você poderá registrar cada gasto e 
+                    Na aba <strong>"🛒 Limite do Cartão/Mês"</strong> você poderá registrar cada gasto e 
                     o sistema mostrará quanto ainda pode gastar no mês, organizando por categorias como:
                     Alimentação, Transporte, Lazer, Saúde, etc.
                 </div>
