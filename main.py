@@ -588,36 +588,36 @@ def consultar_ia_financeira(dados):
 
     ANÁLISE RÁPIDA DA {config["nome_familia"].upper()}:
 
-    📊 **SITUAÇÃO ATUAL**
+    📊 SITUAÇÃO ATUAL
     • Patrimônio: R$ {patrimonio:,.0f} ({perc_meta:.1f}% da meta de R$ {config["meta"]:,.0f})
     • Saldo Fixo Mensal: R$ {saldo_fixo:,.0f} (Taxa de poupança: {taxa_poupanca:.1f}%)
     • Saúde Financeira: {score}/100 {emoji_saude}
 
-    🚩 **PRINCIPAIS PONTOS**
+    🚩 PRINCIPAIS PONTOS
     1. Comprometimento da renda: {comprometimento:.1f}% (ideal <50%)
     2. Uso da reserva: {uso_reserva:.1f}% do limite de R$ {config["reserva"]:.0f}
     3. Maiores despesas fixas:
     {top_fixas_str}
 
-    🎯 **ONDE SEU DINHEIRO VAI (GASTOS VARIÁVEIS)**
+    🎯 ONDE SEU DINHEIRO VAI (GASTOS VARIÁVEIS)
     {chr(10).join([f"• {cat}: R$ {valor:.0f}" for cat, valor in categorias_gastos.items()]) if categorias_gastos else "• Nenhum gasto registrado este mês"}
 
-    ⚡ **PLANO DE 3 PASSOS**
+    ⚡ PLANO DE 3 PASSOS
 
-    1️⃣ **CORTE IMEDIATO (esta semana)**
+    1️⃣ CORTE IMEDIATO (esta semana)
     - {f"Reduza '{top_fixas.iloc[0]['nome'] if not top_fixas.empty else 'sua maior despesa'}': Economize R$ {top_fixas.iloc[0]['valor']*0.1:.0f} renegociando ou cortando"
     if not top_fixas.empty else "Identifique sua maior despesa fixa para cortar"}
     - Controle {list(categorias_gastos.keys())[0] if categorias_gastos else "seus gastos"} nos próximos 7 dias
 
-    2️⃣ **AJUSTE ESTRATÉGICO (próximo mês)**
+    2️⃣ AJUSTE ESTRATÉGICO (próximo mês)
     - {f"Aumente sua poupança para {max(20, taxa_poupanca + 5):.0f}%" if taxa_poupanca < 20 else "Mantenha a ótima taxa de poupança"}
     - {"Diversifique seus investimentos além de 'Outros'" if patrimonio > 0 else "Comece a investir, mesmo que R$ 50 por mês"}
 
-    3️⃣ **META ACELERADA (3 meses)**
+    3️⃣ META ACELERADA (3 meses)
     - Foque em {f"atingir {min(100, perc_meta + 10):.1f}% da meta" if perc_meta < 100 else "superar sua meta!"}
     - {"Busque R$ 200/mês extra" if saldo_fixo < 1000 else "Aumente seu patrimônio em 5%"}
 
-    💡 **DICA DO DIA**
+    💡 DICA DO DIA
     {"Você está no caminho certo! Só precisa otimizar onde o dinheiro vaza mais." if score >= 60 else 
     "Não se assuste. Todo mundo começa de algum lugar. Foque em um problema de cada vez."}
     """
