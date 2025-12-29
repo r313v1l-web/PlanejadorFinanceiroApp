@@ -587,7 +587,7 @@ def consultar_ia_financeira(dados):
 
     # --- PROMPT MODERNO COM EMOJIS ---
     prompt = f"""
-    Você é um consultor financeiro moderno que fala de forma direta e usa emojis para deixar a análise visual. 
+    Você é um consultor financeiro moderno que fala de forma direta e usa emojis para deixar a análise visual, você não usa negrito para destacar porque fica com * indesejados.. 
     Responda APENAS com o conteúdo da análise, sem introduções ou saudações.
 
     FAMÍLIA: {config["nome_familia"]}
